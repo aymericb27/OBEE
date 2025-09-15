@@ -11,15 +11,31 @@ header{
     padding: 2%;
     text-align: center;
     border-bottom: 1px solid #42429d;
+    color: #42429d;
 }
 
 .menu{
     border-right: 1px solid #42429d;
+    text-align: center;
 }
 
 button{
-    
     border: 1px solid #42429d;
     background-color: #ffffff;
     color: #42429d;
+}
+
+.btn-primary{
+    background-color: #42429d !important;
+    border-color: #42429d !important;
+}
+
+.btn-primary:hover {
+    background-color: #ffffff !important;
+    color:#42429d !important;
+}
+
+.btn_fa:hover {
+    border-color: #42429da2;
+    color: #42429da2;
 }

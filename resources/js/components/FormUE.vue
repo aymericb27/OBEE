@@ -1,6 +1,5 @@
 <template>
-  <div v-if="show" class="p-3 border rounded bg-light">
-    <h2>Créer unité d'enseignement</h2>
+  <div v-if="show" class="p-3 border mt-2 rounded bg-light w-50">
     <form @submit.prevent="submitForm">
       <div class="mb-3">
         <label for="UEname" class="form-label">Nom de l'unité d'enseignement</label>
@@ -34,12 +33,8 @@ export default {
           _token: this.csrf
         });
 
-        // Réinitialise le formulaire
         this.name = '';
-        // Éventuellement masquer le formulaire
         this.$emit('submitted');
-
-        // Rafraîchir les données côté parent
         this.$emit('refresh');
       } catch (error) {
         console.error(error);
