@@ -1,0 +1,25 @@
+html,body {
+    height: 100%;
+    width: 100%;
+}
+
+main {
+    height: 100%;
+}
+
+header{
+    padding: 2%;
+    text-align: center;
+    border-bottom: 1px solid #42429d;
+}
+
+.menu{
+    border-right: 1px solid #42429d;
+}
+
+button{
+    
+    border: 1px solid #42429d;
+    background-color: #ffffff;
+    color: #42429d;
+}

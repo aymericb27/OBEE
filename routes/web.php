@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\UE;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +17,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::post('/UEStore', [UE::class, 'store'])->name('UE.store');
+Route::get('/UEGet', [UE::class, 'get'])->name('UE.get');

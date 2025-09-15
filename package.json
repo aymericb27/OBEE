@@ -3,11 +3,22 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "dev:all": "concurrently \"npm run dev\" \"php artisan serve\""
+
     },
     "devDependencies": {
         "axios": "^1.1.2",
+        "concurrently": "^9.2.1",
         "laravel-vite-plugin": "^0.8.0",
         "vite": "^4.0.0"
+    },
+    "dependencies": {
+        "@fullcalendar/daygrid": "^6.1.19",
+        "@fullcalendar/interaction": "^6.1.19",
+        "@fullcalendar/timegrid": "^6.1.19",
+        "@fullcalendar/vue3": "^6.1.19",
+        "@vitejs/plugin-vue": "^4.5.0",
+        "vue": "^3.5.21"
     }
 }
