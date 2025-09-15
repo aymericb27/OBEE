@@ -14,6 +14,10 @@ header{
     color: #42429d;
 }
 
+ul {
+    list-style-type: none;
+}
+
 .menu{
     border-right: 1px solid #42429d;
     text-align: center;

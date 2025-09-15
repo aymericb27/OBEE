@@ -4,10 +4,12 @@
     <div id="app" class=" h-100">
         <div class="row h-100">
             <div class="col-md-2 menu pt-3">
-                <button @click="showForm = !showForm" class="btn btn-primary mb-3">
-                    @{{ showForm ? 'Masquer le formulaire' : 'Créer unité d\'enseignement' }}
+                <button @click="toggleForm('UE')" class="btn btn-primary mb-3">
+                    Créer unité d'enseignement
                 </button>
-
+                <button @click="toggleForm('EC') && loadUEs()" class="btn btn-primary mb-3">
+                    Créer élément constitutif
+                </button>
             </div>
             <div class="col-md-10 mainBody pt-3">
                 <div class="listBtn">
@@ -19,12 +21,19 @@
                     </button>
 
                 </div>
-                <form-ue :show="showForm" @submitted="hideForm" csrf="{{ csrf_token() }}"
+                <form-ue :show="activeForm === 'UE'" @submitted="hideForm" csrf="{{ csrf_token() }}"
                     route="{{ route('UE.store') }}" @refresh="loadUEs">
                 </form-ue>
+                <form-ec :show="activeForm === 'EC'" @submitted="hideForm" csrf="{{ csrf_token() }}"
+                    route="{{ route('EC.store') }}" @refresh="loadECs">
+                </form-ec>
                 <ul>
                     <li v-for="ue in ues" :key="ue.id">
-                        @{{ ue.name }}
+                        <p>@{{ ue.nom }}</p>
+                        <p>@{{ ue.code }}</p>
+                        <p>@{{ ue.description}}</p>
+
+
                     </li>
                 </ul>
             </div>

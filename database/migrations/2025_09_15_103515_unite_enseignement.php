@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('UE', function (Blueprint $table) {
+        Schema::create('unite_enseignement', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('nom');
+            $table->string('code');
+            $table->text('description');
+            $table->integer('ects');
             $table->timestamps();
         });
     }

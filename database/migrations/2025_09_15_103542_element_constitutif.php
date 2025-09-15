@@ -11,9 +11,14 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('EC', function (Blueprint $table) {
+        Schema::create('element_constitutif', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('nom');
+            $table->string('code');
+            $table->text('description');
+            $table->integer('volume_horaire');
+            $table->integer('fk_unite_enseignement')->unsigned()->nullable();
+            $table->foreign('fk_unite_enseignement')->references('id')->on('ue');
             $table->timestamps();
         });
     }
@@ -24,6 +29,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('EC');
-
     }
 };

@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\UE;
+use App\Http\Controllers\ElementConstitutif;
+use App\Http\Controllers\UniteEnseignement;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,5 +19,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::post('/UEStore', [UE::class, 'store'])->name('UE.store');
-Route::get('/UEGet', [UE::class, 'get'])->name('UE.get');
+Route::post('/UEStore', [UniteEnseignement::class, 'store'])->name('UE.store');
+Route::get('/UEGet', [UniteEnseignement::class, 'get'])->name('UE.get');
+
+Route::get('/ECGEt', [ElementConstitutif::class, 'get'])->name('EC.get');
+Route::post('/ECStore', [ElementConstitutif::class, 'store'])->name('EC.store');
