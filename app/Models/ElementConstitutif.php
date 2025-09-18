@@ -9,4 +9,12 @@ class ElementConstitutif extends Model
 {
     use HasFactory;
     protected $table = 'element_constitutif';
+
+        protected $fillable = [
+        'nom',
+        'description',
+        'code',
+        'fk_unite_enseignement',
+        'volume_horaire',
+    ];
 }

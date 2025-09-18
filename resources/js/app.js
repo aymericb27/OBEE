@@ -1,17 +1,23 @@
 import { createApp, ref, onMounted } from "vue";
 import FormEC from "./components/FormEC.vue";
 import FormUE from "./components/FormUE.vue";
-
+import calendar from "./components/calendar.vue";
+import calendarV2 from "./components/calendarV2.vue";
 import axios from "axios";
 
 const app = createApp({
     setup() {
         const showForm = ref(false);
         const activeForm = ref(null);
+        const activeView = ref("calendar");
         const ues = ref([]);
 
         const toggleForm = (form) => {
             activeForm.value = activeForm.value === form ? null : form;
+        };
+
+        const toggleView = (view) => {
+            activeView.value = view;
         };
 
         const loadUEs = async () => {
@@ -42,6 +48,8 @@ const app = createApp({
             showForm,
             activeForm,
             toggleForm,
+            activeView,
+            toggleView,
             ues,
             loadUEs,
             loadECs,
@@ -50,6 +58,8 @@ const app = createApp({
     },
 });
 
+app.component("calendar", calendar);
+app.component("calendarv2", calendarV2);
 app.component("form-ue", FormUE);
 app.component("form-ec", FormEC);
 app.mount("#app");

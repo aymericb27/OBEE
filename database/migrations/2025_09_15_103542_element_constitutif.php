@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('description');
             $table->integer('volume_horaire');
             $table->integer('fk_unite_enseignement')->unsigned()->nullable();
-            $table->foreign('fk_unite_enseignement')->references('id')->on('ue');
+            $table->foreign('fk_unite_enseignement')->references('id')->on('unite_enseignement');
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('EC');
+        Schema::dropIfExists('ECelement_constitutif');
     }
 };

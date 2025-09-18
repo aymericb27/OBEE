@@ -22,5 +22,5 @@ Route::get('/', function () {
 Route::post('/UEStore', [UniteEnseignement::class, 'store'])->name('UE.store');
 Route::get('/UEGet', [UniteEnseignement::class, 'get'])->name('UE.get');
 
-Route::get('/ECGEt', [ElementConstitutif::class, 'get'])->name('EC.get');
+Route::get('/ECGet', [ElementConstitutif::class, 'get'])->name('EC.get');
 Route::post('/ECStore', [ElementConstitutif::class, 'store'])->name('EC.store');
