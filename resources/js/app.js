@@ -2,7 +2,6 @@ import { createApp, ref, onMounted } from "vue";
 import FormEC from "./components/FormEC.vue";
 import FormUE from "./components/FormUE.vue";
 import calendar from "./components/calendar.vue";
-import calendarV2 from "./components/calendarV2.vue";
 import axios from "axios";
 
 const app = createApp({
@@ -59,7 +58,6 @@ const app = createApp({
 });
 
 app.component("calendar", calendar);
-app.component("calendarv2", calendarV2);
 app.component("form-ue", FormUE);
 app.component("form-ec", FormEC);
 app.mount("#app");

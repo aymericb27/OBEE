@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('calendar', function (Blueprint $table) {
+        Schema::create('calendar_lesson_recursive', function (Blueprint $table) {
             $table->id();
-            $table->datetime('date_debut');
-            $table->datetime('date_fin');
+            $table->time('time_begin');
+            $table->time('time_end');
+            $table->date('date_lesson_begin');
+            $table->date('date_lesson_end');
+            $table->integer('day_week');
             $table->integer('fk_element_constitutif')->unsigned()->nullable();
             $table->foreign('fk_element_constitutif')->references('id')->on('element_constitutif');
             $table->timestamps();
@@ -26,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('calendar');
+            Schema::dropIfExists('calendar_lesson_recursive');
     }
 };

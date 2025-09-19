@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Calendar;
+use App\Http\Controllers\CalendarLesson;
 use App\Http\Controllers\ElementConstitutif;
 use App\Http\Controllers\UniteEnseignement;
 use Illuminate\Support\Facades\Route;
@@ -24,3 +26,5 @@ Route::get('/UEGet', [UniteEnseignement::class, 'get'])->name('UE.get');
 
 Route::get('/ECGet', [ElementConstitutif::class, 'get'])->name('EC.get');
 Route::post('/ECStore', [ElementConstitutif::class, 'store'])->name('EC.store');
+
+Route::post('/calendarStore', [CalendarLesson::class, 'store'])->name('calendar.store');

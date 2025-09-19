@@ -16,9 +16,6 @@
                     <button class=" btn_fa" @click="toggleView('calendar')">
                         <i class="fa-solid fa-calendar"></i>
                     </button>
-                    <button class="ml-1 btn_fa" @click="toggleView('calendarV2')">
-                        <i class="fa-solid fa-calendar"></i>
-                    </button>
                     <button class="ml-1 btn_fa" @click="toggleView('list')">
                         <i class="fa-solid fa-list"></i>
                     </button>
@@ -44,11 +41,8 @@
                         </li>
                     </ul>
                 </div>
-                <div id="calendar" v-if="activeView === 'calendar'" class="mt-3">
-                    <calendar></calendar>
-                </div>
-                <div id="calendar" v-if="activeView === 'calendarV2'" class="mt-3">
-                    <calendarv2></calendarv2>
+                <div id="calendar" v-if="activeView === 'calendar'" class="mt-3" >
+                    <calendar csrf="{{ csrf_token() }}" :route-calendar="'{{ route('calendar.store') }}'" route="{{ route('calendar.store') }}"></calendar>
                 </div>
             </div>
         </div>

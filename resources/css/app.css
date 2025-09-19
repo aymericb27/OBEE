@@ -1,4 +1,5 @@
-html,body {
+html,
+body {
     height: 100%;
     width: 100%;
 }
@@ -7,7 +8,7 @@ main {
     height: 100%;
 }
 
-header{
+header {
     padding: 0.5%;
     text-align: center;
     border-bottom: 1px solid #42429d;
@@ -18,22 +19,22 @@ ul {
     list-style-type: none;
 }
 
-textarea{
+textarea {
     height: 150px !important;
 }
 
-.menu{
+.menu {
     border-right: 1px solid #42429d;
     text-align: center;
 }
 
-button{
+button {
     border: 1px solid #42429d;
     background-color: #ffffff;
     color: #42429d;
 }
 
-.btn-primary{
+.btn-primary {
     background-color: #42429d !important;
     border-color: #42429d !important;
     padding: 5px 10px;
@@ -41,7 +42,7 @@ button{
 
 .btn-primary:hover {
     background-color: #ffffff !important;
-    color:#42429d !important;
+    color: #42429d !important;
 }
 
 .btn_fa:hover {
@@ -49,7 +50,7 @@ button{
     color: #42429da2;
 }
 
-.primary_color{
+.primary_color {
     color: #42429d;
 }
 
@@ -62,11 +63,10 @@ button{
 }
 
 .vuecal__cell--selected {
-    background-color: #42429d !important;
+    background-color: #42429d3a !important;
     color: white;
-
 }
-  .modal_calendar {
+.modal_calendar {
     position: fixed;
     top: 0;
     left: 0;
@@ -75,4 +75,9 @@ button{
     z-index: 1000;
     overflow: hidden;
     outline: 0;
-  }
+}
+.box_checkbox {
+    display: flex;
+    align-items: center;
+    accent-color: #42429d;
+}
