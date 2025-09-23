@@ -9,6 +9,26 @@ use Carbon\Carbon;
 
 class CalendarLesson extends Controller
 {
+
+        public function index()
+    {
+        $events = ModelCalendarLesson::select("calendar_lesson.id","date_lesson", "time_begin", "time_end", "element_constitutif.name as name")
+        ->join('element_constitutif', 'calendar_lesson.fk_element_constitutif', '=', 'element_constitutif.id')
+        ->get();
+
+        //$eventsRecursive = ModelCalendarLessonRecursive::select("date_lesson_begin,date_lesson_end,day_week,time_begin,time_end")
+        //->get();
+        $formatted = $events->map(function ($event) {
+            return [
+                'start' => $event->date_lesson . ' ' . $event->time_begin,
+                'end'   => $event->date_lesson . ' ' . $event->time_end,
+                'title' => $event->name,
+                'id'    => $event->id,
+            ];
+        });
+
+        return response()->json($formatted);
+    }
  public function store(Request $request)
     {
         $validated = $request->validate([

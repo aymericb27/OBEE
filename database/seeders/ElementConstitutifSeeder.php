@@ -13,7 +13,7 @@ class ElementConstitutifSeeder extends Seeder
         DB::table('element_constitutif')->insert([
             'fk_unite_enseignement' => 1,
             'code' => 'EC101',
-            'nom' => 'Algorithmique et structures de données',
+            'name' => 'Algorithmique et structures de données',
             'description' => 'Bases des algorithmes et structures',
             'volume_horaire' => 30,
         ]);
@@ -21,7 +21,7 @@ class ElementConstitutifSeeder extends Seeder
         DB::table('element_constitutif')->insert([
             'fk_unite_enseignement' => 1,
             'code' => 'EC102',
-            'nom' => 'Introduction à la programmation',
+            'name' => 'Introduction à la programmation',
             'description' => 'Initiation à Python et Java',
             'volume_horaire' => 40,
         ]);
@@ -30,7 +30,7 @@ class ElementConstitutifSeeder extends Seeder
         DB::table('element_constitutif')->insert([
             'fk_unite_enseignement' => 2,
             'code' => 'EC201',
-            'nom' => 'Analyse mathématique',
+            'name' => 'Analyse mathématique',
             'description' => 'Fonctions, limites, dérivées',
             'volume_horaire' => 25,
         ]);
@@ -38,7 +38,7 @@ class ElementConstitutifSeeder extends Seeder
         DB::table('element_constitutif')->insert([
             'fk_unite_enseignement' => 2,
             'code' => 'EC202',
-            'nom' => 'Algèbre linéaire',
+            'name' => 'Algèbre linéaire',
             'description' => 'Matrices, vecteurs et systèmes linéaires',
             'volume_horaire' => 30,
         ]);
@@ -47,7 +47,7 @@ class ElementConstitutifSeeder extends Seeder
         DB::table('element_constitutif')->insert([
             'fk_unite_enseignement' => 3,
             'code' => 'EC301',
-            'nom' => 'Expression écrite et orale',
+            'name' => 'Expression écrite et orale',
             'description' => 'Communication écrite et orale',
             'volume_horaire' => 20,
         ]);
@@ -55,7 +55,7 @@ class ElementConstitutifSeeder extends Seeder
         DB::table('element_constitutif')->insert([
             'fk_unite_enseignement' => 3,
             'code' => 'EC302',
-            'nom' => 'Anglais niveau 1',
+            'name' => 'Anglais niveau 1',
             'description' => 'Cours d’anglais général',
             'volume_horaire' => 15,
         ]);

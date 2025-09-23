@@ -7,7 +7,7 @@
                         type="text"
                         class="form-control"
                         placeholder="Nom de l'unité d'enseignement"
-                        v-model="nom"
+                        v-model="name"
                         id="nom"
                         required
                     />
@@ -61,21 +61,21 @@ export default {
     },
     data() {
         return {
-            nom: "",
+            name: "",
         };
     },
     methods: {
         async submitForm() {
             try {
                 await axios.post(this.route, {
-                    nom: this.nom,
+                    name: this.name,
                     description: this.description,
                     code: this.code,
                     ects: this.ects,
                     _token: this.csrf,
                 });
 
-                this.nom = "";
+                this.name = "";
                 this.description = "";
                 this.code = "";
                 this.ects = "";

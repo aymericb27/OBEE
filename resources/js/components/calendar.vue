@@ -20,7 +20,7 @@
                         <option
                             v-for="ec in ecs"
                             :key="ec.id"
-                            :value="ec.nom"
+                            :value="ec.name"
                         ></option>
                     </datalist>
                 </div>
@@ -138,17 +138,30 @@
     >
         Ajouter un cours
     </button>
-    <div>
+    <div style="height: 1600px">
         <!-- Calendrier -->
         <vue-cal
-            style="height: 600px"
-            :events="events"
+            style="width: 100%"
+            :events="lessons"
             default-view="week"
             :time-from="8 * 60"
             :time-to="20 * 60"
             @view-change="onViewChange"
             @cell-click="onCellClick"
-        />
+        >
+            <!-- slot event-content fournit l'objet event -->
+            <template #event-content="{ event }">
+                <!-- title permet d'afficher le name complet au survol -->
+                <div class="my-vc-event" :title="event.title">
+                    <!-- on peut couper visuellement mais le hover montre tout -->
+                    <div class="my-vc-event-title">{{ event.title }}</div>
+                    <!-- optionnel: afficher UE / prof en petite ligne -->
+                    <div class="my-vc-event-sub" v-if="event.sub">
+                        {{ event.sub }}
+                    </div>
+                </div>
+            </template>
+        </vue-cal>
         <!-- Bouton visible seulement en vue week -->
     </div>
 </template>
@@ -170,7 +183,7 @@ export default {
     components: { VueCal },
     data() {
         return {
-            events: [],
+            lessons: [],
             selectedDate: "",
             currentView: "week", // vue par défaut
             showFormAddLesson: false,
@@ -185,9 +198,18 @@ export default {
                 time_end: "",
                 date_lesson_begin_recurring: "",
                 date_lesson_end_recurring: "",
-				day_week_recurring: '',
+                day_week_recurring: "",
             },
         };
+    },
+    async mounted() {
+        try {
+            const res = await axios.get("/calendarLesson/index");
+            this.lessons = res.data;
+            console.log(res);
+        } catch (error) {
+            console.error("Erreur chargement events :", error);
+        }
     },
     methods: {
         onCellClick(cell) {
@@ -205,7 +227,7 @@ export default {
         },
         async ajouterEvenement() {
             const ec = this.ecs.find(
-                (item) => item.nom === this.form.selectedEC
+                (item) => item.name === this.form.selectedEC
             );
             this.selected_ec = ec ? ec.id : null;
             console.log(this.routeCalendar);
@@ -216,13 +238,15 @@ export default {
                     date_lesson: this.form.date_lesson,
                     time_begin: this.form.time_begin,
                     time_end: this.form.time_end,
-                    date_lesson_begin_recurring: this.form.date_lesson_begin_recurring,
-                    date_lesson_end_recurring: this.form.date_lesson_end_recurring,
-					day_week_recurring : this.form.day_week_recurring,
+                    date_lesson_begin_recurring:
+                        this.form.date_lesson_begin_recurring,
+                    date_lesson_end_recurring:
+                        this.form.date_lesson_end_recurring,
+                    day_week_recurring: this.form.day_week_recurring,
                     _token: this.csrf,
                 });
                 console.log(response.data);
-                //this.ecs = response.data;
+                this.ecs = response.data;
             } catch (error) {
                 console.error("Erreur chargement UE :", error);
             }

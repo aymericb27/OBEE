@@ -12,7 +12,7 @@ class UniteEnseignement extends Model
 
     protected $table = "unite_enseignement";
     protected $fillable = [
-        'nom',
+        'name',
         'description',
         'code',
         'ects',

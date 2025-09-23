@@ -28,3 +28,4 @@ Route::get('/ECGet', [ElementConstitutif::class, 'get'])->name('EC.get');
 Route::post('/ECStore', [ElementConstitutif::class, 'store'])->name('EC.store');
 
 Route::post('/calendarStore', [CalendarLesson::class, 'store'])->name('calendar.store');
+Route::get('/calendarLesson/index', [CalendarLesson::class, 'index'])->name('calendar.index');

@@ -11,7 +11,7 @@ class ElementConstitutif extends Model
     protected $table = 'element_constitutif';
 
         protected $fillable = [
-        'nom',
+        'name',
         'description',
         'code',
         'fk_unite_enseignement',

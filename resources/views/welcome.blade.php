@@ -10,6 +10,9 @@
                 <button @click="toggleForm('EC') && loadUEs()" class="btn btn-primary mb-3">
                     Créer élément constitutif
                 </button>
+                <button @click="toggleForm('AAV') && loadUEs()" class="btn btn-primary mb-3">
+                    Créer acuis d'apprentissage visé
+                </button>
             </div>
             <div class="col-md-10 mainBody pt-3">
                 <div class="listBtn">
@@ -26,23 +29,11 @@
                 <form-ec :show="activeForm === 'EC'" @submitted="hideForm" csrf="{{ csrf_token() }}"
                     route="{{ route('EC.store') }}" @refresh="loadECs">
                 </form-ec>
-                <div id="listUniteEnseignement" v-if="activeView === 'list'" class="mt-3">
-                    <ul>
-                        <li v-for="ue in ues" :key="ue.id">
-                            <div class="row mb-2">
-                                <div class="box_code">
-                                    @{{ ue.code }}
-                                </div>
-                                <div class="col-md-9">
-                                    <h3 class="primary_color">@{{ ue.nom }}</h3>
-                                </div>
-                            </div>
-                            <p>@{{ ue.description }}</p>
-                        </li>
-                    </ul>
-                </div>
+                <list-framework v-if="activeView === 'list'"> </list-framework>
                 <div id="calendar" v-if="activeView === 'calendar'" class="mt-3" >
                     <calendar csrf="{{ csrf_token() }}" :route-calendar="'{{ route('calendar.store') }}'" route="{{ route('calendar.store') }}"></calendar>
+                </div>
+                <div>
                 </div>
             </div>
         </div>

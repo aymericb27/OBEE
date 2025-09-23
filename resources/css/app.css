@@ -81,3 +81,20 @@ button {
     align-items: center;
     accent-color: #42429d;
 }
+
+.listChildUE{
+    background-color: #f1f1f1;
+    padding: 1.5em;
+}
+
+a {
+    color:#42429d !important;
+}
+
+.linkedbtn {
+    padding: 1em;
+}
+
+.menu .btn {
+    width: 80%;
+}

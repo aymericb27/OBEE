@@ -22,7 +22,7 @@
                                     :key="ec.id"
                                     :value="ec.id"
                                 >
-                                    {{ ec.nom }}
+                                    {{ ec.name }}
                                 </option>
                             </datalist>
                         </div>

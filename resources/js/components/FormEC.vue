@@ -7,7 +7,7 @@
                         placeholder="Nom de l'élément constitutif"
                         type="text"
                         class="form-control"
-                        v-model="nom"
+                        v-model="name"
                         id="ECName"
                         required
                     />
@@ -44,7 +44,7 @@
                             -- Choisir une unité d'enseignement --
                         </option>
                         <option v-for="ue in ues" :key="ue.id" :value="ue.id">
-                            {{ ue.nom }}
+                            {{ ue.name }}
                         </option>
                     </select>
                 </div>
@@ -83,7 +83,7 @@ export default {
     },
     data() {
         return {
-            nom: "",
+            name: "",
             selectedUE: "", // id de l’UE choisi
             code: "",
             volume_horaire: "",
@@ -105,7 +105,7 @@ export default {
         async submitForm() {
             try {
                 await axios.post(this.route, {
-                    nom: this.nom,
+                    name: this.name,
                     code: this.code,
                     selectedUE: this.selectedUE,
                     volume_horaire: this.volume_horaire,
@@ -113,7 +113,7 @@ export default {
                     _token: this.csrf,
                 });
 
-                this.nom = "";
+                this.name = "";
                 this.$emit("submitted");
                 this.$emit("refresh");
             } catch (error) {
