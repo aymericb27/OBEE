@@ -1,6 +1,7 @@
 import { createApp, ref } from "vue";
 import calendar from "./components/calendar.vue";
 import calendarV2 from "./components/calendarV2.vue";
+import listtree from "./components/listtree.vue";
 import listFramework from "./components/listFramework.vue";
 
 const app = createApp({
@@ -29,6 +30,7 @@ const app = createApp({
     },
 });
 
+app.component("listtree", listtree);
 app.component("calendar", calendar);
 app.component("calendarv2", calendarV2);
 app.component("list-framework", listFramework);

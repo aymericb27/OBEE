@@ -9,11 +9,12 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('PR', function (Blueprint $table) {
+        Schema::create('acquis_apprentissage_terminaux', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('code');
+            $table->text('description');
             $table->timestamps();
         });
     }
@@ -23,7 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('PR');
-
+        Schema::dropIfExists('acquis_apprentissage_terminaux');
     }
 };

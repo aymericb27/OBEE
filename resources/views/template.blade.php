@@ -15,6 +15,8 @@
 
     @vite('resources/js/app.js')
     @vite('resources/css/app.css')
+
+    @vite('resources/css/bootstrap_extend.css')
     <!-- Polices, icônes ou autres ressources -->
     <script src="https://kit.fontawesome.com/32b77cab3e.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
@@ -25,9 +27,6 @@
 
 <body>
     <!-- En-tête -->
-    <header>
-        <h1>OBEE-tool</h1>
-    </header>
 
     <!-- Contenu principal -->
     <main>

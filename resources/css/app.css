@@ -106,3 +106,8 @@ a {
 .fc-event-time{
     display: none;
 }
+
+.listBtn {
+    position: absolute;
+    left: 0px;
+}

@@ -11,53 +11,41 @@ class ElementConstitutifSeeder extends Seeder
     {
         // EC pour UE101
         DB::table('element_constitutif')->insert([
-            'fk_unite_enseignement' => 1,
             'code' => 'EC101',
             'name' => 'Algorithmique et structures de données',
             'description' => 'Bases des algorithmes et structures',
-            'volume_horaire' => 30,
         ]);
 
         DB::table('element_constitutif')->insert([
-            'fk_unite_enseignement' => 1,
             'code' => 'EC102',
             'name' => 'Introduction à la programmation',
             'description' => 'Initiation à Python et Java',
-            'volume_horaire' => 40,
         ]);
 
         // EC pour UE102
         DB::table('element_constitutif')->insert([
-            'fk_unite_enseignement' => 2,
             'code' => 'EC201',
             'name' => 'Analyse mathématique',
             'description' => 'Fonctions, limites, dérivées',
-            'volume_horaire' => 25,
         ]);
 
         DB::table('element_constitutif')->insert([
-            'fk_unite_enseignement' => 2,
             'code' => 'EC202',
             'name' => 'Algèbre linéaire',
             'description' => 'Matrices, vecteurs et systèmes linéaires',
-            'volume_horaire' => 30,
         ]);
 
         // EC pour UE103
         DB::table('element_constitutif')->insert([
-            'fk_unite_enseignement' => 3,
             'code' => 'EC301',
             'name' => 'Expression écrite et orale',
             'description' => 'Communication écrite et orale',
-            'volume_horaire' => 20,
         ]);
 
         DB::table('element_constitutif')->insert([
-            'fk_unite_enseignement' => 3,
             'code' => 'EC302',
             'name' => 'Anglais niveau 1',
             'description' => 'Cours d’anglais général',
-            'volume_horaire' => 15,
         ]);
     }
 }

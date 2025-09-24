@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('aavue', function (Blueprint $table) {
+            $table->id();
+            $table->integer('fk_acquis_apprentissage_vise')->unsigned()->nullable();
+            $table->foreign('fk_acquis_apprentissage_vise')->references('id')->on('acquis_apprentissage_vise');
+            $table->integer('fk_unite_enseignement')->unsigned()->nullable();
+            $table->foreign('fk_unite_enseignement')->references('id')->on('unite_enseignement');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('aavue');
+    }
+};

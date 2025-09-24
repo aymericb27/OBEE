@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ElementConstitutif as EC;
+use App\Models\UEEC;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
 
@@ -31,7 +32,8 @@ class UniteEnseignement extends Controller
         if(isset($withUE) && $withUE){
             $listUE = [];
             foreach($ues as $ue){
-                $ue->ecs = EC::select('name as ECname', 'description as ECdescription', 'code as ECcode')
+                $ue->ecs = UEEC::select('name as ECname', 'description as ECdescription', 'code as ECcode')
+                ->leftJoin('element_constitutif', 'element_constitutif.id', '=', 'fk_element_constitutif')
                 ->where('fk_unite_enseignement',$ue->UEid)->get();
                 array_push($listUE,$ue);
             }

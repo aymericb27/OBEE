@@ -2,16 +2,25 @@
 
 @section('content')
     <div id="app" class=" h-100">
+        <header>
+            <div class="listBtn m-3">
+                <button class=" btn_fa" @click="toggleView('calendar')">
+                    <i class="fa-solid fa-calendar"></i>
+                </button>
+                <button class="ml-1 btn_fa" @click="toggleView('list')">
+                    <i class="fa-solid fa-list"></i>
+                </button>
+                <button class="ml-1 btn_fa" @click="toggleView('tree')">
+                    <i class="fa-solid fa-folder-tree"></i>
+                </button>
+            </div>
+            <h1>OBEE-tool</h1>
+        </header>
         <div class="row h-100 m-0">
-            <div class="col-md-2 menu pt-3">
-                <div class="listBtn m-3">
-                    <button class=" btn_fa" @click="toggleView('calendar')">
-                        <i class="fa-solid fa-calendar"></i>
-                    </button>
-                    <button class="ml-1 btn_fa" @click="toggleView('list')">
-                        <i class="fa-solid fa-list"></i>
-                    </button>
-                </div>
+            <div class="col-md-2 menu pt-3" v-if="activeView !== 'tree'">
+                <button @click="toggleFormListFramework('AAT') " class="btn btn-primary mb-3" v-if="activeView === 'list'">
+                    Créer acquis d'apprentissage terminaux
+                </button>
                 <button @click="toggleFormListFramework('UE')" class="btn btn-primary mb-3" v-if="activeView === 'list'">
                     Créer unité d'enseignement
                 </button>
@@ -37,7 +46,8 @@
                         :route-calendar="'{{ route('calendar.store') }}'" route="{{ route('calendar.store') }}">
                     </calendarv2>
                 </div>
-                <div>
+                <div v-if="activeView === 'tree'">
+                    <listtree></listtree>
                 </div>
             </div>
         </div>
