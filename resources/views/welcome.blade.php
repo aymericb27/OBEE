@@ -4,18 +4,7 @@
     <div id="app" class=" h-100">
         <div class="row h-100 m-0">
             <div class="col-md-2 menu pt-3">
-                <button @click="toggleForm('UE')" class="btn btn-primary mb-3">
-                    Créer unité d'enseignement
-                </button>
-                <button @click="toggleForm('EC') && loadUEs()" class="btn btn-primary mb-3">
-                    Créer élément constitutif
-                </button>
-                <button @click="toggleForm('AAV') && loadUEs()" class="btn btn-primary mb-3">
-                    Créer acuis d'apprentissage visé
-                </button>
-            </div>
-            <div class="col-md-10 mainBody pt-3">
-                <div class="listBtn">
+                <div class="listBtn m-3">
                     <button class=" btn_fa" @click="toggleView('calendar')">
                         <i class="fa-solid fa-calendar"></i>
                     </button>
@@ -23,15 +12,30 @@
                         <i class="fa-solid fa-list"></i>
                     </button>
                 </div>
-                <form-ue :show="activeForm === 'UE'" @submitted="hideForm" csrf="{{ csrf_token() }}"
-                    route="{{ route('UE.store') }}" @refresh="loadUEs">
-                </form-ue>
-                <form-ec :show="activeForm === 'EC'" @submitted="hideForm" csrf="{{ csrf_token() }}"
-                    route="{{ route('EC.store') }}" @refresh="loadECs">
-                </form-ec>
-                <list-framework v-if="activeView === 'list'"> </list-framework>
-                <div id="calendar" v-if="activeView === 'calendar'" class="mt-3" >
-                    <calendar csrf="{{ csrf_token() }}" :route-calendar="'{{ route('calendar.store') }}'" route="{{ route('calendar.store') }}"></calendar>
+                <button @click="toggleFormListFramework('UE')" class="btn btn-primary mb-3" v-if="activeView === 'list'">
+                    Créer unité d'enseignement
+                </button>
+                <button @click="toggleFormListFramework('EC') && loadUEs()" class="btn btn-primary mb-3"
+                    v-if="activeView === 'list'">
+                    Créer élément constitutif
+                </button>
+                <button @click="toggleFormListFramework('AAV') " class="btn btn-primary mb-3" v-if="activeView === 'list'">
+                    Créer acquis d'apprentissage visé
+                </button>
+                <button @click="toggleFormListFramework('PR')" class="btn btn-primary mb-3" v-if="activeView === 'list'">
+                    Créer prérequis
+                </button>
+                <button class="btn btn-primary m-1" @click="openFormAddLesson" v-if="activeView === 'calendar'">
+                    Ajouter un cours
+                </button>
+            </div>
+            <div class="col-md-10 mainBody pt-3">
+                <list-framework v-if="activeView === 'list'" ref="listFrameworkComp" csrfform="{{ csrf_token() }}"
+                    ueroutestore="{{ route('UE.store') }}" ecroutestore="{{ route('EC.store') }}"> </list-framework>
+                <div id="calendar" v-if="activeView === 'calendar'" class="mt-3">
+                    <calendarv2 csrf="{{ csrf_token() }}" ref="calendarComp"
+                        :route-calendar="'{{ route('calendar.store') }}'" route="{{ route('calendar.store') }}">
+                    </calendarv2>
                 </div>
                 <div>
                 </div>

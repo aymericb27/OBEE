@@ -259,6 +259,7 @@ export default {
             this.showFormAddLesson = false;
         },
         openFormAddLesson() {
+            console.log("this =", this);
             this.loadElementConstitutifs();
             this.showFormAddLesson = true;
         },
