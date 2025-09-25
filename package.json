@@ -20,6 +20,7 @@
         "@fullcalendar/vue3": "^6.1.19",
         "@vitejs/plugin-vue": "^4.5.0",
         "vue": "^3.5.21",
-        "vue-cal": "^4.10.2"
+        "vue-cal": "^4.10.2",
+        "vue-router": "^4.5.1"
     }
 }

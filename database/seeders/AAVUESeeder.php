@@ -27,15 +27,15 @@ class AAVUESeeder extends Seeder
             'fk_acquis_apprentissage_vise' => 3,
         ]);
         DB::table('aavue')->insert([
-            'fk_unite_enseignement' => 1,
+            'fk_unite_enseignement' => 2,
             'fk_acquis_apprentissage_vise' => 4,
         ]);
         DB::table('aavue')->insert([
-            'fk_unite_enseignement' => 1,
+            'fk_unite_enseignement' => 2,
             'fk_acquis_apprentissage_vise' => 5,
         ]);
         DB::table('aavue')->insert([
-            'fk_unite_enseignement' => 1,
+            'fk_unite_enseignement' => 2,
             'fk_acquis_apprentissage_vise' => 6,
         ]);
         DB::table('aavue')->insert([

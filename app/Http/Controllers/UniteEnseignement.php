@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcquisApprentissageVise;
 use App\Models\ElementConstitutif as EC;
 use App\Models\UEEC;
 use App\Models\UniteEnseignement as UE;
@@ -26,6 +27,23 @@ class UniteEnseignement extends Controller
         ]);
         return UE::get();
     }
+
+    public function getDetailed(Request $request){
+        $validated = $request->validate([
+            'ueid' => 'required|integer',
+        ]);
+        $response = UE::select('code as UECode', 'id as UEid', 'name as UEname','description as UEdescription')
+        ->where('unite_enseignement.id',$validated['ueid'])
+        ->first();
+
+        $response->aavs = AcquisApprentissageVise::select('acquis_apprentissage_terminaux.code as AATCode','acquis_apprentissage_vise.description as AAVDescription', 'acquis_apprentissage_vise.code as AAVCode')
+        ->leftJoin('aavue', 'aavue.fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
+        ->leftJoin('acquis_apprentissage_terminaux', 'acquis_apprentissage_terminaux.id','=','acquis_apprentissage_vise.fk_AAT')
+        ->where('aavue.fk_unite_enseignement',$validated['ueid'])
+        ->get();
+        return $response;
+    }
+
     public function get(Request $request) {
         $withUE = $request->query('withUE');
         $ues = UE::select('id as UEid','name as UEname', 'ects','code as UEcode', 'description as UEdescription')->get();

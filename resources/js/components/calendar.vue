@@ -1,5 +1,5 @@
 <template>
-    <div v-if="showFormAddLesson" class="p-4 border mt-3 rounded bg-light">
+    <div v-if="showFormAddLesson" class=" container p-4 border mt-3 rounded bg-light">
         <h2 class="text-lg font-bold mb-4">Nouveau cours</h2>
         <form @submit.prevent="ajouterEvenement">
             <div class="row mb-3">

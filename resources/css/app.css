@@ -24,8 +24,10 @@ textarea {
 }
 
 .menu {
-    border-right: 1px solid #42429d;
     text-align: center;
+    position: fixed;
+    left: 0;
+    width: 20%;
 }
 
 button {
@@ -50,7 +52,7 @@ button {
     color: #42429da2;
 }
 
-.fa-solid{
+.fa-solid {
     color: #42429d;
 }
 
@@ -59,12 +61,22 @@ button {
 }
 
 .box_code {
-    background-color: #42429d;
     padding: 0.5em;
+    font-weight: bold;
+    background-color: #42429d;
     color: white;
     border-radius: 8px;
-    font-weight: bold;
 }
+
+.box_code.aav{
+    background-color: #29a853;
+}
+
+.box_code.aat{
+    background-color: #c21c1c;
+}
+
+
 
 .vuecal__cell--selected {
     background-color: #42429d3a !important;
@@ -86,13 +98,13 @@ button {
     accent-color: #42429d;
 }
 
-.listChildUE{
+.listChildUE {
     background-color: #f1f1f1;
     padding: 1.5em;
 }
 
 a {
-    color:#42429d !important;
+    color: #42429d !important;
 }
 
 .linkedbtn {
@@ -103,11 +115,38 @@ a {
     width: 80%;
 }
 
-.fc-event-time{
+.fc-event-time {
     display: none;
 }
 
 .listBtn {
     position: absolute;
     left: 0px;
+}
+
+.box_AAT {
+    padding: 3em;
+    color: whitesmoke;
+    background-color: #42429d;
+    transition: background-color 1s, color 1s;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0px 0px 12px #a7a7a7;
+}
+
+.box_AAT:hover {
+    background-color: whitesmoke;
+    color: #42429d;
+}
+
+.box_AAT.selected {
+    background-color: whitesmoke;
+    color: #42429d;
+}
+
+.back_btn {
+    position: fixed;
+    left: 0;
+    padding: 1em;
+    font-size: larger;
 }

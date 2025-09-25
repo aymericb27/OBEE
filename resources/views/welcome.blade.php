@@ -13,32 +13,14 @@
                 <button class="ml-1 btn_fa" @click="toggleView('tree')">
                     <i class="fa-solid fa-folder-tree"></i>
                 </button>
+                <button class="ml-1 btn_fa" @click="toggleView('form')">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
             </div>
             <h1>OBEE-tool</h1>
         </header>
         <div class="row h-100 m-0">
-            <div class="col-md-2 menu pt-3" v-if="activeView !== 'tree'">
-                <button @click="toggleFormListFramework('AAT') " class="btn btn-primary mb-3" v-if="activeView === 'list'">
-                    Créer acquis d'apprentissage terminaux
-                </button>
-                <button @click="toggleFormListFramework('UE')" class="btn btn-primary mb-3" v-if="activeView === 'list'">
-                    Créer unité d'enseignement
-                </button>
-                <button @click="toggleFormListFramework('EC') && loadUEs()" class="btn btn-primary mb-3"
-                    v-if="activeView === 'list'">
-                    Créer élément constitutif
-                </button>
-                <button @click="toggleFormListFramework('AAV') " class="btn btn-primary mb-3" v-if="activeView === 'list'">
-                    Créer acquis d'apprentissage visé
-                </button>
-                <button @click="toggleFormListFramework('PR')" class="btn btn-primary mb-3" v-if="activeView === 'list'">
-                    Créer prérequis
-                </button>
-                <button class="btn btn-primary m-1" @click="openFormAddLesson" v-if="activeView === 'calendar'">
-                    Ajouter un cours
-                </button>
-            </div>
-            <div class="col-md-10 mainBody pt-3">
+            <div class=" mainBody w-100">
                 <list-framework v-if="activeView === 'list'" ref="listFrameworkComp" csrfform="{{ csrf_token() }}"
                     ueroutestore="{{ route('UE.store') }}" ecroutestore="{{ route('EC.store') }}"> </list-framework>
                 <div id="calendar" v-if="activeView === 'calendar'" class="mt-3">
@@ -48,6 +30,9 @@
                 </div>
                 <div v-if="activeView === 'tree'">
                     <listtree></listtree>
+                </div>
+                <div v-if="activeView === 'form'">
+                    <addform></addform>
                 </div>
             </div>
         </div>

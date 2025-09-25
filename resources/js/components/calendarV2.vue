@@ -1,5 +1,14 @@
 <template>
-    <div class="p-4">
+    <div class="p-4 container">
+        <div class="menu">
+            <button
+                class="btn btn-primary m-1"
+                @click="openFormAddLesson"
+                v-if="activeView === 'calendar'"
+            >
+                Ajouter un cours
+            </button>
+        </div>
         <!-- Formulaire modal (simple) -->
         <div v-if="showFormAddLesson" class="p-4 border mb-3 rounded bg-light">
             <h2 class="text-lg font-bold mb-4">Nouveau cours</h2>
@@ -164,6 +173,7 @@ export default {
             showFormAddLesson: false,
             selectedEC: "",
             selected_ec: "",
+
             ecs: [],
             form: {
                 selectedEC: "",
@@ -177,8 +187,10 @@ export default {
             },
             calendarOptions: {
                 plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
-                initialView: "dayGridMonth",
+                initialView: "timeGridWeek",
                 dateClick: this.loadDateClick,
+                eventClick: this.handleEventClick,
+
                 headerToolbar: {
                     left: "prev,next",
                     center: "title",
@@ -198,18 +210,28 @@ export default {
                 console.error("Erreur chargement UE :", error);
             }
         },
+        handleEventClick(info) {
+            // info.event contient toutes les infos de l'événement
+            console.log("ID de l'événement :", info.event.id);
+            console.log("Titre :", info.event.title);
+            console.log("Début :", info.event.start);
+
+            // Si tu veux faire autre chose, par ex. ouvrir un modal :
+            // this.selectedEventId = info.event.id;
+            // this.showEventModal = true;
+        },
         loadDateClick(info) {
             this.form.date_lesson = info.dateStr; // date cliquée
         },
         openFormAddLesson() {
-            this.loadElementConstitutifs()
-            this.showFormAddLesson = true
+            this.loadElementConstitutifs();
+            this.showFormAddLesson = true;
         },
         async addEvent() {
             const ec = this.ecs.find(
                 (item) => item.name === this.form.selectedEC
             );
-            this.selected_ec = ec ? ec.id : null
+            this.selected_ec = ec ? ec.id : null;
             try {
                 const response = await axios.post(this.route, {
                     selected_ec: this.selected_ec,
@@ -223,16 +245,16 @@ export default {
                         this.form.date_lesson_end_recurring,
                     day_week_recurring: this.form.day_week_recurring,
                     _token: this.csrf,
-                })
-                this.ecs = response.data
+                });
+                this.ecs = response.data;
             } catch (error) {
                 console.error("Erreur chargement UE :", error);
             }
-            this.loadCalendarLesson()
-            this.closeFormAddLesson()
+            this.loadCalendarLesson();
+            this.closeFormAddLesson();
         },
         closeFormAddLesson() {
-			console.log("close");
+            console.log("close");
             this.showFormAddLesson = false;
         },
         async loadCalendarLesson() {
@@ -240,8 +262,11 @@ export default {
                 const res = await axios.get("/calendarLesson/index");
                 this.lessons = res.data;
                 const calendarApi = this.$refs.calendrier.getApi();
+				console.log(res);
                 this.lessons.forEach((element) => {
                     calendarApi.addEvent({
+						idcal: element.idcal,
+						id : element.idec,
                         title: element.title,
                         start: element.start,
                         end: element.end,
