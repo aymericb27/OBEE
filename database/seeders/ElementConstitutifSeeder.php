@@ -19,7 +19,7 @@ class ElementConstitutifSeeder extends Seeder
         DB::table('element_constitutif')->insert([
             'code' => 'EC102',
             'name' => 'Introduction à la programmation',
-            'description' => 'Initiation à Python et Java',
+            'description' => "Ce cours initie l’étudiant aux principes fondamentaux de la programmation et de l’algorithmique. Il aborde la logique de résolution de problèmes, la conception d’algorithmes et leur traduction dans un langage de programmation moderne (par exemple Python). Les notions couvertes incluent les variables, les types de données, les structures de contrôle (conditions et boucles), les fonctions, ainsi que les structures de données de base. Le cours met également l’accent sur la pratique à travers des exercices et mini-projets, afin de développer la capacité à écrire, comprendre et déboguer des programmes simples. À l’issue du cours, l’étudiant sera en mesure de concevoir des programmes autonomes répondant à des problèmes concrets et disposera des bases nécessaires pour poursuivre son apprentissage en informatique.",
         ]);
 
         // EC pour UE102

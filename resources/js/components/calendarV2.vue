@@ -1,150 +1,240 @@
 <template>
-    <div class="p-4 container">
-        <div class="menu">
-            <button
-                class="btn btn-primary m-1"
-                @click="openFormAddLesson"
-                v-if="activeView === 'calendar'"
-            >
-                Ajouter un cours
-            </button>
-        </div>
-        <!-- Formulaire modal (simple) -->
-        <div v-if="showFormAddLesson" class="p-4 border mb-3 rounded bg-light">
-            <h2 class="text-lg font-bold mb-4">Nouveau cours</h2>
-            <form @submit.prevent="addEvent">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <input
-                            list="unite_enseignement"
-                            name="selectedEC"
-                            placeholder="Choisir une unité d'enseignement"
-                            v-model="form.selectedEC"
-                            class="h-100 custom-select p-2"
-                        />
+    <div class="w-75 m-auto">
+        <div class="p-4" v-if="!selectedUE">
+            <transition name="scale-y">
+                <div
+                    v-if="showFormAddLesson"
+                    class="p-4 border mb-3 rounded bg-light"
+                >
+                    <h2 class="text-lg font-bold mb-4">Nouveau cours</h2>
+                    <form @submit.prevent="addEvent">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <input
+                                    list="unite_enseignement"
+                                    name="selectedEC"
+                                    placeholder="Choisir une unité d'enseignement"
+                                    v-model="form.selectedEC"
+                                    class="h-100 custom-select p-2"
+                                />
 
-                        <datalist
-                            id="unite_enseignement"
-                            class="form-datalist"
-                            required
-                        >
-                            <option
-                                v-for="ec in ecs"
-                                :key="ec.id"
-                                :value="ec.name"
-                            ></option>
-                        </datalist>
-                    </div>
+                                <datalist
+                                    id="unite_enseignement"
+                                    class="form-datalist"
+                                    required
+                                >
+                                    <option
+                                        v-for="ec in ecs"
+                                        :key="ec.id"
+                                        :value="ec.name"
+                                    ></option>
+                                </datalist>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-2">
+                                <input
+                                    placeholder="date"
+                                    v-model="form.date_lesson"
+                                    :disabled="form.is_recurring"
+                                    type="date"
+                                    class="form-control"
+                                    required
+                                />
+                            </div>
+                            <div class="col-md-4 box_checkbox">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    v-model="form.is_recurring"
+                                    value=""
+                                    id="flexCheckChecked"
+                                    checked
+                                />
+                                <label
+                                    class="form-check-label"
+                                    for="flexCheckChecked"
+                                >
+                                    répeter le cours pour chaque semaine
+                                </label>
+                            </div>
+                        </div>
+                        <div v-if="form.is_recurring" class="row mb-3">
+                            <div class="col-md-2">
+                                <label class="d-inline-block"
+                                    >répéter du
+                                </label>
+                                <input
+                                    placeholder="date"
+                                    v-model="form.date_lesson_begin_recurring"
+                                    type="date"
+                                    class="form-control d-inline-block"
+                                    required
+                                />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="d-inline-block"> au </label>
+                                <input
+                                    placeholder="date"
+                                    v-model="form.date_lesson_end_recurring"
+                                    type="date"
+                                    class="form-control d-inline-block"
+                                    required
+                                />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="d-inline-block"> chaque </label>
+                                <select
+                                    v-model="form.day_week_recurring"
+                                    class="form-control d-inline-block"
+                                >
+                                    <option value="1" selected>Lundi</option>
+                                    <option value="2">Mardi</option>
+                                    <option value="3">Mercredi</option>
+                                    <option value="4">Jeudi</option>
+                                    <option value="5">Vendredi</option>
+                                    <option value="6">Samedi</option>
+                                    <option value="7">Dimanche</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-2">
+                                <input
+                                    placeholder="heure de début"
+                                    class="form-control h-100"
+                                    type="time"
+                                    v-model="form.time_begin"
+                                    name="time_begin"
+                                    min="09:00"
+                                    max="18:00"
+                                    required
+                                />
+                            </div>
+                            <div class="col-md-2">
+                                <input
+                                    placeholder="heure de fin"
+                                    class="form-control h-100"
+                                    type="time"
+                                    name="time_end"
+                                    v-model="form.time_end"
+                                    min="09:00"
+                                    max="18:00"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-4 space-x-2">
+                            <button
+                                type="button"
+                                @click="closeFormAddLesson"
+                                class="mr-2 bg-gray-300 btn-primary rounded"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="submit"
+                                @click="submitFormAddLesson"
+                                class="btn-primary rounded"
+                            >
+                                Ajouter
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-md-2">
-                        <input
-                            placeholder="date"
-                            v-model="form.date_lesson"
-                            :disabled="form.is_recurring"
-                            type="date"
-                            class="form-control"
-                            required
-                        />
+            </transition>
+            <div>
+                <!-- Formulaire modal (simple) -->
+
+                <FullCalendar ref="calendrier" :options="calendarOptions" />
+                <transition name="scale-x">
+                    <div class="eventDetailed p-3" v-if="detailed">
+                        <div class="close_detailed">
+                            <i
+                                class="fa-solid fa-close"
+                                @click="closeDetailed()"
+                            ></i>
+                        </div>
+                        <div class="mb-3">
+                            <h3 class="primary_color d-inline-block ml-2 mb-0">
+                                <span
+                                    class="box_code ec"
+                                    @click="openDetailed(1)"
+                                >
+                                    {{ ecDetailed.ECCode }}
+                                </span>
+                                {{ ecDetailed.ECName }}
+                            </h3>
+                        </div>
+
+                        <p>{{ ecDetailed.ECDescription }}</p>
+                        <div class="listComponent">
+                            <div class="mb-2">
+                                <h5 class="d-inline-block primary_color">
+                                    Unité d'apprentissage(s) lié(s)
+                                </h5>
+                            </div>
+                            <div class="mb-4">
+                                <div v-for="ue in ecDetailed.ues">
+                                    <div class="mb-2">
+                                        <h6 class="d-inline-block ml-2 mb-0">
+                                            <span
+                                                class="box_code ue"
+                                                @click="openDetailed(ue.UEId)"
+                                            >
+                                                {{ ue.UECode }}
+                                            </span>
+                                            {{ ue.UEName }}
+                                        </h6>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <h5 class="d-inline-block primary_color">
+                                    Liste des élèves inscrits
+                                </h5>
+                            </div>
+
+                            <div class="mb-4 list_student">
+                                <div class="row border-bottom">
+                                    <div class="col-md-4 p-2">Nom</div>
+                                    <div class="col-md-4 p-2 bg-light">
+                                        Prénom
+                                    </div>
+                                    <div class="col-md-4 p-2">Code</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 p-2">Hagrita</div>
+                                    <div class="col-md-4 p-2 bg-light">
+                                        Samantha
+                                    </div>
+                                    <div class="col-md-4 p-2">HE201240</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 p-2">Larebeke</div>
+                                    <div class="col-md-4 p-2 bg-light">
+                                        Henry
+                                    </div>
+                                    <div class="col-md-4 p-2">HE201271</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 p-2">Delpierre</div>
+                                    <div class="col-md-4 p-2 bg-light">
+                                        Thierry
+                                    </div>
+                                    <div class="col-md-4 p-2">HE201298</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div></div>
                     </div>
-                    <div class="col-md-4 box_checkbox">
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            v-model="form.is_recurring"
-                            value=""
-                            id="flexCheckChecked"
-                            checked
-                        />
-                        <label class="form-check-label" for="flexCheckChecked">
-                            répeter le cours pour chaque semaine
-                        </label>
-                    </div>
-                </div>
-                <div v-if="form.is_recurring" class="row mb-3">
-                    <div class="col-md-2">
-                        <label class="d-inline-block">répéter du </label>
-                        <input
-                            placeholder="date"
-                            v-model="form.date_lesson_begin_recurring"
-                            type="date"
-                            class="form-control d-inline-block"
-                            required
-                        />
-                    </div>
-                    <div class="col-md-2">
-                        <label class="d-inline-block"> au </label>
-                        <input
-                            placeholder="date"
-                            v-model="form.date_lesson_end_recurring"
-                            type="date"
-                            class="form-control d-inline-block"
-                            required
-                        />
-                    </div>
-                    <div class="col-md-2">
-                        <label class="d-inline-block"> chaque </label>
-                        <select
-                            v-model="form.day_week_recurring"
-                            class="form-control d-inline-block"
-                        >
-                            <option value="1" selected>Lundi</option>
-                            <option value="2">Mardi</option>
-                            <option value="3">Mercredi</option>
-                            <option value="4">Jeudi</option>
-                            <option value="5">Vendredi</option>
-                            <option value="6">Samedi</option>
-                            <option value="7">Dimanche</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-2">
-                        <input
-                            placeholder="heure de début"
-                            class="form-control h-100"
-                            type="time"
-                            v-model="form.time_begin"
-                            name="time_begin"
-                            min="09:00"
-                            max="18:00"
-                            required
-                        />
-                    </div>
-                    <div class="col-md-2">
-                        <input
-                            placeholder="heure de fin"
-                            class="form-control h-100"
-                            type="time"
-                            name="time_end"
-                            v-model="form.time_end"
-                            min="09:00"
-                            max="18:00"
-                            required
-                        />
-                    </div>
-                </div>
-                <div class="flex justify-end mt-4 space-x-2">
-                    <button
-                        type="button"
-                        @click="closeFormAddLesson"
-                        class="mr-2 bg-gray-300 btn-primary rounded"
-                    >
-                        Annuler
-                    </button>
-                    <button
-                        type="submit"
-                        @click="submitFormAddLesson"
-                        class="btn-primary rounded"
-                    >
-                        Ajouter
-                    </button>
-                </div>
-            </form>
+                </transition>
+            </div>
         </div>
-        <FullCalendar ref="calendrier" :options="calendarOptions" />
     </div>
+
     <!-- Le calendrier -->
+    <UEDetail v-if="selectedUE" :ueid="selectedUE" @close="selectedUE = null" />
 </template>
 
 <script>
@@ -154,6 +244,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import frLocale from "@fullcalendar/core/locales/fr";
 import interactionPlugin from "@fullcalendar/interaction";
 import axios from "axios";
+import UEDetail from "./UEDetailed.vue";
 
 export default {
     props: {
@@ -164,16 +255,21 @@ export default {
             required: true,
         },
     },
-    components: { FullCalendar },
+    components: { FullCalendar, UEDetail },
     data() {
         return {
+            detailed: false,
             lessons: [],
+            selectedUE: "",
             selectedDate: "",
             currentView: "week", // vue par défaut
             showFormAddLesson: false,
             selectedEC: "",
             selected_ec: "",
-
+            ecDetailed: {
+                aavs: {},
+                ues: {},
+            },
             ecs: [],
             form: {
                 selectedEC: "",
@@ -186,13 +282,23 @@ export default {
                 day_week_recurring: "",
             },
             calendarOptions: {
+                eventColor: "#42429d", // bleu par défaut
+                allDaySlot: false, // supprime la row "Toute la journée"
+
                 plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
                 initialView: "timeGridWeek",
                 dateClick: this.loadDateClick,
                 eventClick: this.handleEventClick,
-
+                customButtons: {
+                    addLesson: {
+                        text: "Ajouter",
+                        click: () => {
+                            this.openFormAddLesson();
+                        },
+                    },
+                },
                 headerToolbar: {
-                    left: "prev,next",
+                    left: "prev,next addLesson",
                     center: "title",
                     right: "dayGridMonth,timeGridWeek,timeGridDay",
                 },
@@ -202,6 +308,10 @@ export default {
         };
     },
     methods: {
+        openDetailed(ueid) {
+            console.log(ueid);
+            this.selectedUE = ueid;
+        },
         async loadElementConstitutifs() {
             try {
                 const response = await axios.get("/ECGet");
@@ -210,15 +320,25 @@ export default {
                 console.error("Erreur chargement UE :", error);
             }
         },
-        handleEventClick(info) {
+        closeDetailed() {
+            this.detailed = false;
+        },
+        async handleEventClick(info) {
             // info.event contient toutes les infos de l'événement
-            console.log("ID de l'événement :", info.event.id);
-            console.log("Titre :", info.event.title);
-            console.log("Début :", info.event.start);
-
-            // Si tu veux faire autre chose, par ex. ouvrir un modal :
-            // this.selectedEventId = info.event.id;
-            // this.showEventModal = true;
+            try {
+                const response = await axios.get(
+                    "/CalendarLesson/get/detailed",
+                    {
+                        params: {
+                            idcal: info.event.id,
+                        },
+                    }
+                );
+                this.ecDetailed = response.data;
+            } catch (error) {
+                console.log(error);
+            }
+            this.detailed = true;
         },
         loadDateClick(info) {
             this.form.date_lesson = info.dateStr; // date cliquée
@@ -262,11 +382,13 @@ export default {
                 const res = await axios.get("/calendarLesson/index");
                 this.lessons = res.data;
                 const calendarApi = this.$refs.calendrier.getApi();
-				console.log(res);
+
+                // supprimer tous les events existants
+                calendarApi.removeAllEvents();
+                console.log(res);
                 this.lessons.forEach((element) => {
                     calendarApi.addEvent({
-						idcal: element.idcal,
-						id : element.idec,
+                        id: element.idcal,
                         title: element.title,
                         start: element.start,
                         end: element.end,

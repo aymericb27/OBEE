@@ -1,5 +1,8 @@
 <template>
-    <div v-if="showFormAddLesson" class=" container p-4 border mt-3 rounded bg-light">
+    <div
+        v-if="showFormAddLesson"
+        class="container p-4 border mt-3 rounded bg-light"
+    >
         <h2 class="text-lg font-bold mb-4">Nouveau cours</h2>
         <form @submit.prevent="ajouterEvenement">
             <div class="row mb-3">
@@ -131,13 +134,12 @@
             </div>
         </form>
     </div>
-    <button
-        class="btn-primary m-1"
-        v-if="!showFormAddLesson"
-        @click="openFormAddLesson"
-    >
-        Ajouter un cours
-    </button>
+    <div v-if="!showFormAddLesson">
+        <button class="btn btn-primary m-1" @click="openFormAddLesson">
+            Ajouter un cours
+        </button>
+    </div>
+
     <div style="height: 1600px">
         <!-- Calendrier -->
         <vue-cal
@@ -259,7 +261,6 @@ export default {
             this.showFormAddLesson = false;
         },
         openFormAddLesson() {
-            console.log("this =", this);
             this.loadElementConstitutifs();
             this.showFormAddLesson = true;
         },

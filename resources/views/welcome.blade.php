@@ -32,7 +32,7 @@
                     <listtree></listtree>
                 </div>
                 <div v-if="activeView === 'form'">
-                    <addform></addform>
+                    <addform csrf="{{ csrf_token() }}" ueroutestore="{{ route('UE.store') }}" ecroutestore="{{ route('EC.store') }}" ></addform>
                 </div>
             </div>
         </div>

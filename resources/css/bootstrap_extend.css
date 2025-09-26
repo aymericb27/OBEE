@@ -1,3 +1,7 @@
 .cursor_pointer{
     cursor: pointer;
 }
+
+.w-30 {
+    max-width: 30%;
+}

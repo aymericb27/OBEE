@@ -1,12 +1,12 @@
 <template>
-    <div class="container" v-if="!selectedUE">
-        <div class="p-3 border mb-3 rounded bg-light">
+    <div class="container" v-if="!selectedUE && !selectedEC && !selectedAAT">
+        <div class="p-3 border m-3 rounded bg-light">
             <div id="filter">
                 <form @submit.prevent="submitFormFilter">
                     <i class="fa-solid fa-filter mr-2"></i>
                     <select
                         v-model="formFilter.displayElelement"
-                        class="mr-2 w-25 form-control d-inline-block"
+                        class="mr-2 w-30 form-control d-inline-block"
                     >
                         <option disabled value="" selected>
                             -- Affichage par --
@@ -15,6 +15,9 @@
                             Unité d'enseignement
                         </option>
                         <option value="EC">éléments constitutifs</option>
+                        <option value="AAT">
+                            acquis d'apprentissages terminaux
+                        </option>
                     </select>
                     <select class="mr-2 w-25 form-control d-inline-block">
                         <option disabled value="" selected>
@@ -29,107 +32,117 @@
                 </form>
             </div>
         </div>
-
-        <div id="listUniteEnseignement" class="mt-3">
-            <ul>
-                <li v-for="ue in ues" :key="ue.id" class="mb-3">
-                    <div class="row mb-2">
-                        <div class="box_code" @click="openDetailed(ue.UEid)">
-                            {{ ue.UEcode }}
-                        </div>
-                        <h3 class="primary_color ml-2 mb-0">
-                            <a href="#" @click="openDetailed(ue.UEid)">{{
-                                ue.UEname
-                            }}</a>
-                        </h3>
-                    </div>
-                    <p>{{ ue.UEdescription }}</p>
-                    <div class="row">
-                        <div class="col-md-4 mb-2">
-                            <a
-                                href="#"
-                                class="linkedbtn"
-                                @click="openDataUE('listEC', ue.UEid)"
-                            >
-                                <i
-                                    class="fa-solid fa-chevron-right"
-                                    v-if="!openedUE.includes(ue.UEid)"
-                                ></i>
-                                <i
-                                    class="fa-solid fa-chevron-down"
-                                    v-if="openedUE.includes(ue.UEid)"
-                                ></i>
-                                voir les éléments constitutifs</a
-                            >
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <a
-                                href="#"
-                                class="linkedbtn"
-                                @click="openDataUE('listEC', ue.UEid)"
-                            >
-                                <i class="fa-solid fa-chevron-right"></i>
-                                <i
-                                    class="fa-solid fa-chevron-down"
-                                    v-if="false"
-                                ></i>
-                                voir les acquis d'apprentissages</a
-                            >
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <a
-                                href="#"
-                                class="linkedbtn"
-                                @click="openDataUE('listEC', ue.UEid)"
-                            >
-                                <i class="fa-solid fa-chevron-right"></i>
-                                <i
-                                    class="fa-solid fa-chevron-down"
-                                    v-if="false"
-                                ></i>
-                                voir les prérequis</a
-                            >
-                        </div>
-                    </div>
-                    <div class="listChildUE" v-if="openedUE.includes(ue.UEid)">
-                        <ul class="p-0">
-                            <li v-for="ec in ue.ecs">
-                                <div class="row mb-2">
-                                    <div class="box_code">{{ ec.ECcode }}</div>
-                                    <div class="col-md-9">
-                                        <h4 class="primary_color mb-0">
-                                            {{ ec.ECname }}
-                                        </h4>
-                                    </div>
-                                </div>
-                                <p>{{ ec.ECdescription }}</p>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-            </ul>
+        <div
+            id="listUniteEnseignement"
+            class="mt-3 container border"
+            v-if="listToDisplay === 'UE'"
+        >
+            <div class="row border-bottom">
+                <div class="col-md-1 p-2">Code</div>
+                <div class="col-md-9 p-2">Unité d'enseignement</div>
+                <div class="col-md-1 p-2">Semestre</div>
+                <div class="col-md-1 p-2">ECTS</div>
+            </div>
+            <div
+                v-for="(ue, index) in ues"
+                :key="ue.id"
+                :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
+                class="row"
+            >
+                <div class="col-md-1 p-2 ue" @click="openDetailed(ue.UEid)">
+                    {{ ue.UEcode }}
+                </div>
+                <div class="col-md-10 p-2">
+                    <p class="primary_color mb-0">
+                        <a href="#" @click="openDetailed(ue.UEid)">{{
+                            ue.UEname
+                        }}</a>
+                    </p>
+                </div>
+                <div class="col-md-1 p-2">
+                    {{ ue.ects }}
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 container border" v-if="listToDisplay === 'EC'">
+            <div class="row border-bottom">
+                <div class="col-md-1 p-2">Code</div>
+                <div class="col-md-9 p-2">élement constitutif</div>
+            </div>
+            <div
+                v-for="(ec, index) in ecs"
+                :key="ec.id"
+                :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
+                class="row"
+            >
+                <div class="col-md-1 p-2" @click="openDetailedEC(ec.id)">
+                    {{ ec.code }}
+                </div>
+                <div class="col-md-11 p-2">
+                    <p class="primary_color mb-0">
+                        <a href="#" @click="openDetailedEC(ec.id)">{{
+                            ec.name
+                        }}</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 container border" v-if="listToDisplay === 'AAT'">
+            <div class="row border-bottom">
+                <div class="col-md-1 p-2">Code</div>
+                <div class="col-md-9 p-2">
+                    Acquis d'apprentissages terminaux
+                </div>
+            </div>
+            <div
+                v-for="(aat, index) in aats"
+                :key="aat.id"
+                :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
+                class="row"
+            >
+                <div class="col-md-1 p-2" @click="openDetailedAAT(aat.AATId)">
+                    {{ aat.AATCode }}
+                </div>
+                <div class="col-md-11 p-2">
+                    <p class="primary_color mb-0">
+                        <a href="#" @click="openDetailedAAT(aat.AATId)">{{
+                            aat.AATName
+                        }}</a>
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
     <UEDetail v-if="selectedUE" :ueid="selectedUE" @close="selectedUE = null" />
+    <ECDetail v-if="selectedEC" :ecid="selectedEC" @close="selectedEC = null" />
+    <AATDetailed
+        v-if="selectedAAT"
+        :aatid="selectedAAT"
+        @close="selectedAAT = null"
+    />
 </template>
 
 <script>
 import axios from "axios";
 import UEDetail from "./UEDetailed.vue";
+import ECDetail from "./ECDetailed.vue";
+import AATDetailed from "./AATDetailed.vue";
 
 export default {
-    components: { UEDetail },
+    components: { UEDetail, ECDetail, AATDetailed },
 
     data() {
         return {
             ues: [], // liste des UE
-            showData: false,
-            openedUE: [],
+            ecs: [],
+            aats: [],
             detailed: false,
+            selectedEC: null,
+            selectedAAT: null,
             selectedUE: null, // l’UE sélectionnée
-
+            listToDisplay: "UE",
             formFilter: {
-                displayElelement: "",
+                displayElelement: "UE",
             },
         };
     },
@@ -137,7 +150,34 @@ export default {
         openDetailed(ueid) {
             this.selectedUE = ueid;
         },
-        async submitFormFilter() {},
+        openDetailedEC(ecid) {
+            this.selectedEC = ecid;
+        },
+        openDetailedAAT(aatid) {
+            this.selectedAAT = aatid;
+        },
+        async submitFormFilter() {
+            let displayElelement = this.formFilter.displayElelement;
+            this.listToDisplay = displayElelement;
+            if (displayElelement === "EC") {
+                this.loadECs();
+            }
+            if (displayElelement === "UE") {
+                this.loadUEs();
+            }
+            if (displayElelement === "AAT") {
+                this.loadAATs();
+            }
+        },
+        async loadECs() {
+            try {
+                const response = await axios.get("/ECGet");
+                this.ecs = response.data;
+                console.log(response);
+            } catch (error) {
+                console.log(error);
+            }
+        },
         async loadUEs() {
             try {
                 const response = await axios.get("/UEGet", {
@@ -150,15 +190,14 @@ export default {
                 console.log(error);
             }
         },
-        openDataUE(listData, ueID) {
-            if (this.openedUE.includes(ueID)) {
-                // déjà dedans → on le retire
-                this.openedUE = this.openedUE.filter((id) => id !== ueID);
-            } else {
-                // pas dedans → on l’ajoute
-                this.openedUE.push(ueID);
+        async loadAATs() {
+            try {
+                const response = await axios.get("/AATGet");
+                this.aats = response.data;
+                console.log(response);
+            } catch (error) {
+                console.log(error);
             }
-            console.log(this.openedUE);
         },
     },
     mounted() {

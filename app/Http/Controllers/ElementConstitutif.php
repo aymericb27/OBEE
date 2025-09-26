@@ -32,6 +32,28 @@ class ElementConstitutif extends Controller
         return response()->json(['message' => 'Element constitutif enregistré avec succès']);
     }
 
+    public function getDetailed(Request $request)
+    {
+        $validated = $request->validate([
+            'ecid' => 'required|integer',
+        ]);
+        $response = EC::select('code as ECCode', 'id as ECid', 'name as ECname', 'description as ECDescription')
+            ->where('element_constitutif.id', $validated['ecid'])
+            ->first();
+
+/*         $response->aavs = AcquisApprentissageVise::select('acquis_apprentissage_terminaux.code as AATCode', 'acquis_apprentissage_vise.description as AAVDescription', 'acquis_apprentissage_vise.code as AAVCode')
+            ->leftJoin('aavue', 'aavue.fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
+            ->leftJoin('acquis_apprentissage_terminaux', 'acquis_apprentissage_terminaux.id', '=', 'acquis_apprentissage_vise.fk_AAT')
+            ->where('aavue.fk_unite_enseignement', $validated['ueid'])
+            ->get();
+
+        $response->ecs = ElementConstitutif::select('code as ECCode', 'element_constitutif.id as ECId', 'name as ECName')
+            ->join('ueec', 'fk_element_constitutif', '=', 'element_constitutif.id')
+            ->where('fk_unite_enseignement', $validated['ueid'])
+            ->get(); */
+        return $response;
+    }
+
     public function get(Request $request)
     {
         return EC::get();

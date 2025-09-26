@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcquisApprentissageVise;
 use App\Models\CalendarLesson as ModelCalendarLesson;
-use App\Models\calendarLessonRecursive as ModelCalendarLessonRecursive;
+use App\Models\UniteEnseignement;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class CalendarLesson extends Controller
 {
+
     public function index()
     {
         $events = ModelCalendarLesson::select('calendar_lesson.id as idcal','element_constitutif.id as idec', 'date_lesson', 'time_begin', 'time_end', 'element_constitutif.name as name')
         ->join('element_constitutif', 'calendar_lesson.fk_element_constitutif', '=', 'element_constitutif.id')->get();
 
-        /*         $eventsRecursive = ModelCalendarLessonRecursive::select("date_lesson_begin,date_lesson_end,day_week,time_begin,time_end")
-         ->get(); */
         $formatted = $events->map(function ($event) {
             return [
                 'start' => $event->date_lesson . ' ' . $event->time_begin,
@@ -29,7 +29,23 @@ class CalendarLesson extends Controller
         return response()->json($formatted);
     }
 
-    public function addToCalendar($date, $event) {}
+    public function getDetailed(Request $request){
+        $validated = $request->validate([
+            'idcal' => 'required|integer',
+        ]);
+        $result = ModelCalendarLesson::select('element_constitutif.id as ECId','element_constitutif.name as ECName','element_constitutif.code as ECCode','element_constitutif.description as ECDescription')
+        ->leftJoin('element_constitutif', 'calendar_lesson.fk_element_constitutif', '=', 'element_constitutif.id')
+        ->where('calendar_lesson.id',$validated['idcal'])
+        ->first();
+       $result->ues = UniteEnseignement::select('unite_enseignement.name as UEName','unite_enseignement.id as UEId','unite_enseignement.code as UECode')
+           ->leftJoin('ueec', 'fk_unite_enseignement', '=','unite_enseignement.id')
+           ->where('ueec.fk_element_constitutif',$result->ECId)
+           ->get();
+        
+        return $result;
+    }
+
+
     public function store(Request $request)
     {
         $validated = $request->validate([

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AcquisApprentissageTerminaux;
 use App\Http\Controllers\Calendar;
 use App\Http\Controllers\CalendarLesson;
 use App\Http\Controllers\ElementConstitutif;
@@ -28,10 +29,11 @@ Route::get('/UEGet/detailed', [UniteEnseignement::class, 'getDetailed'])->name('
 
 Route::get('/ECGet', [ElementConstitutif::class, 'get'])->name('EC.get');
 Route::post('/ECStore', [ElementConstitutif::class, 'store'])->name('EC.store');
-
+Route::get('/ECGet/detailed',[ElementConstitutif::class, 'getDetailed'])->name('ec.get.detailed');
 
 Route::post('/calendarStore', [CalendarLesson::class, 'store'])->name('calendar.store');
 Route::get('/calendarLesson/index', [CalendarLesson::class, 'index'])->name('calendar.index');
-
+Route::get('/CalendarLesson/get/detailed', [CalendarLesson::class, 'getDetailed'])->name('calendar.get.detailed');
 Route::get('/AATGet', [treeController::class, 'get']);
 Route::get('/AATGetChildren', [treeController::class, 'getChildren']);
+Route::get('/AATGet/detailed', [AcquisApprentissageTerminaux::class, 'getDetailed']);

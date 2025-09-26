@@ -60,23 +60,27 @@ button {
     color: #42429d;
 }
 
-.box_code {
-    padding: 0.5em;
-    font-weight: bold;
-    background-color: #42429d;
-    color: white;
-    border-radius: 8px;
+
+.eventDetailed {
+    background-color: #ffffff;
+    position: fixed;
+    top: 0;
+    z-index: 2;
+    right: 0;
+    width: 30%;
+    height: 100%;
+    box-shadow: 0px 0px 12px #a7a7a7;
 }
 
-.box_code.aav{
-    background-color: #29a853;
+.close_detailed {
+    text-align: right;
+    margin-bottom: 1rem;
+    font-size: larger;
 }
 
-.box_code.aat{
-    background-color: #c21c1c;
+.close_detailed .fa-solid {
+    cursor: pointer;
 }
-
-
 
 .vuecal__cell--selected {
     background-color: #42429d3a !important;
@@ -115,6 +119,10 @@ a {
     width: 80%;
 }
 
+.fc-event{
+    cursor: pointer;
+}
+
 .fc-event-time {
     display: none;
 }
@@ -145,8 +153,56 @@ a {
 }
 
 .back_btn {
-    position: fixed;
+    position: absolute;
     left: 0;
     padding: 1em;
     font-size: larger;
+}
+
+.scale-y-enter-active,
+.scale-y-leave-active {
+    transition: all 0.3s ease;
+}
+
+.scale-y-enter-from,
+.scale-y-leave-to {
+    opacity: 0;
+    transform: scaley(2em);
+}
+
+.scale-x-enter-active,
+.scale-x-leave-active {
+    transition: all 0.3s ease;
+}
+
+.scale-x-enter-from,
+.scale-x-leave-to {
+    opacity: 0;
+    transform: scalex(2em);
+}
+.box_code {
+    border-right: 1px solid;
+    padding-right: 6px;
+    color: #c75158;
+    cursor: pointer;
+}
+
+.box_code:hover {
+    text-decoration: underline;
+}
+
+.box_code.ue{
+    color: #92429d;
+}
+
+.box_code.aav{
+    color:#156e1c;
+}
+
+.box_code.ec{
+    color:#b80f0f;
+}
+
+.fc-day-today{
+        background-color: rgb(183 174 239 / 32%) !important
 }

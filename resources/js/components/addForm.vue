@@ -8,7 +8,10 @@
                 Créer unité d'enseignement
             </button>
             <button
-                @click="toggleForm('EC') && loadUEs()"
+                @click="
+                    toggleForm('EC');
+                    loadUEs();
+                "
                 class="btn btn-primary mb-3"
             >
                 Créer élément constitutif
@@ -21,11 +24,18 @@
             </button>
         </div>
         <div class="container border mt-3 p-3 rounded bg-light">
+            <div v-if="activeForm === null">
+                Veuillez choisir un élément à créer
+            </div>
+            <div v-if="activeForm === 'Success'">
+                <i class="fa-solid fa-circle-check"></i>
+                Élément rajouté avec succès
+            </div>
             <div v-if="activeForm === 'UE'">
                 <form
                     @submit.prevent="submitFormUniteEnseignement"
                     v-if="activeForm === 'UE'"
-                    class="w-75"
+                    class="w-75 m-auto"
                 >
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -83,7 +93,7 @@
                     </div>
                 </form>
             </div>
-            <div v-if="activeForm === 'AAT'">
+<!--             <div v-if="activeForm === 'AAT'">
                 <form @submit.prevent="submitFormAAT" class="w-75">
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -140,14 +150,14 @@
                         </button>
                     </div>
                 </form>
-            </div>
+            </div> -->
             <div v-if="activeForm === 'EC'">
                 <form
                     @submit.prevent="submitFormElementConstitutif"
-                    class="w-75"
+                    class="w-75 m-auto"
                 >
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <input
                                 placeholder="Nom de l'élément constitutif"
                                 type="text"
@@ -157,19 +167,7 @@
                                 required
                             />
                         </div>
-                        <div class="col-md-3">
-                            <input
-                                placeholder="code"
-                                type="text"
-                                class="form-control"
-                                v-model="formEC.code"
-                                id="code"
-                                required
-                            />
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <select
                                 v-model="formEC.currentUE"
                                 class="form-select form-control"
@@ -186,11 +184,11 @@
                                     {{ ue.UEname }}
                                 </option>
                             </select>
-                            <div class="mt-3">
+                            <div class="">
                                 <p
                                     v-for="id in formEC.selectedUE"
                                     :key="id"
-                                    class="primary_color me-2"
+                                    class="primary_color mt-2 mb-2"
                                 >
                                     {{ getUEName(id) }}
 
@@ -200,6 +198,16 @@
                                     ></i>
                                 </p>
                             </div>
+                        </div>
+                        <div class="col-md-2">
+                            <input
+                                placeholder="code"
+                                type="text"
+                                class="form-control"
+                                v-model="formEC.code"
+                                id="code"
+                                required
+                            />
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -244,7 +252,8 @@ export default {
     data() {
         return {
             activeForm: null,
-			formAAT : {},
+            formAAT: {},
+            ues: {},
             formEC: {
                 currentUE: "",
                 selectedUE: [],
@@ -260,6 +269,9 @@ export default {
         hideForm() {
             this.activeForm = null;
         },
+        SuccessForm() {
+            this.activeForm = "Success";
+        },
         addUEFormEC() {
             if (
                 this.formEC.currentUE &&
@@ -270,6 +282,19 @@ export default {
             // reset le select après ajout
             this.formEC.currentUE = "";
             console.log(this.formEC.selectedUE);
+        },
+        async loadUEs() {
+            try {
+                const response = await axios.get("/UEGet", {
+                    params: {
+                        withUE: true,
+                    },
+                });
+                console.log(response.data);
+                this.ues = response.data;
+            } catch (error) {
+                console.log(error);
+            }
         },
         removeUE(id) {
             this.formEC.selectedUE = this.formEC.selectedUE.filter(
@@ -295,8 +320,7 @@ export default {
                 this.description = "";
                 this.code = "";
                 this.ects = "";
-                this.loadUEs();
-                this.hideForm();
+                this.SuccessForm();
             } catch (error) {
                 console.error(error);
                 alert("Erreur lors de l'ajout de l'UE.");
@@ -311,8 +335,7 @@ export default {
                     description: this.formEC.description,
                     _token: this.csrfform,
                 });
-                this.loadUEs();
-                this.hideForm();
+                this.SuccessForm();
             } catch (error) {
                 console.error(error);
                 alert("Erreur lors de l'ajout de l'EC.");

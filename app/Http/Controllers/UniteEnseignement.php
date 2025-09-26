@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AcquisApprentissageVise;
 use App\Models\ElementConstitutif as EC;
+use App\Models\ElementConstitutif;
 use App\Models\UEEC;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
@@ -40,6 +41,11 @@ class UniteEnseignement extends Controller
         ->leftJoin('aavue', 'aavue.fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
         ->leftJoin('acquis_apprentissage_terminaux', 'acquis_apprentissage_terminaux.id','=','acquis_apprentissage_vise.fk_AAT')
         ->where('aavue.fk_unite_enseignement',$validated['ueid'])
+        ->get();
+
+        $response->ecs = ElementConstitutif::select('code as ECCode', 'element_constitutif.id as ECId','name as ECName')
+        ->join('ueec','fk_element_constitutif','=','element_constitutif.id')
+        ->where('fk_unite_enseignement',$validated['ueid'])
         ->get();
         return $response;
     }
