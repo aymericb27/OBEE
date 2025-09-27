@@ -1,6 +1,6 @@
 <template>
     <div class="back_btn">
-        <a href="#" @click.prevent="$emit('close')">
+        <a href="#" @click="$router.back()">
             <i class="fa-solid fa-circle-arrow-left"></i> Retour
         </a>
     </div>
@@ -18,16 +18,14 @@
     </div>
 </template>
 <script>
+
 import axios from "axios";
 export default {
     props: {
-        ecid: {
+        id: {
             type: [String, Number],
             required: true,
         },
-        csrfform: String,
-        ueroutestore: String,
-        ecroutestore: String,
     },
 
     emits: ["close"],
@@ -45,7 +43,7 @@ export default {
             try {
                 const response = await axios.get("/ECGet/detailed", {
                     params: {
-                        ecid: this.ecid,
+                        id: this.id,
                     },
                 });
                 this.ec = response.data;

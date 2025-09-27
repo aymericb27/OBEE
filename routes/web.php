@@ -22,18 +22,24 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
-
 Route::post('/UEStore', [UniteEnseignement::class, 'store'])->name('UE.store');
-Route::get('/UEGet', [UniteEnseignement::class, 'get'])->name('UE.get');
+Route::get('/ues/get', [UniteEnseignement::class, 'get'])->name('UE.get');
 Route::get('/UEGet/detailed', [UniteEnseignement::class, 'getDetailed'])->name('UE.get.detailed');
+Route::get('/ue/ecs/get', [UniteEnseignement::class, 'getECs'])->name('ue.get.ecs');
+Route::get('/ue/aavs/get',[UniteEnseignement::class, 'getAAVs'])->name('ue.get.aavs');
 
-Route::get('/ECGet', [ElementConstitutif::class, 'get'])->name('EC.get');
+Route::get('/ecs/get', [ElementConstitutif::class, 'get'])->name('EC.get');
 Route::post('/ECStore', [ElementConstitutif::class, 'store'])->name('EC.store');
-Route::get('/ECGet/detailed',[ElementConstitutif::class, 'getDetailed'])->name('ec.get.detailed');
+Route::get('/ECGet/detailed', [ElementConstitutif::class, 'getDetailed'])->name('ec.get.detailed');
 
 Route::post('/calendarStore', [CalendarLesson::class, 'store'])->name('calendar.store');
 Route::get('/calendarLesson/index', [CalendarLesson::class, 'index'])->name('calendar.index');
 Route::get('/CalendarLesson/get/detailed', [CalendarLesson::class, 'getDetailed'])->name('calendar.get.detailed');
-Route::get('/AATGet', [treeController::class, 'get']);
+
+Route::get('/aats/get', [AcquisApprentissageTerminaux::class, 'get']);
 Route::get('/AATGetChildren', [treeController::class, 'getChildren']);
 Route::get('/AATGet/detailed', [AcquisApprentissageTerminaux::class, 'getDetailed']);
+
+Route::get('/{any}', function () {
+    return view('welcome');
+})->where('any', '.*');

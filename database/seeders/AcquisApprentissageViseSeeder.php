@@ -11,19 +11,19 @@ class AcquisApprentissageViseSeeder extends Seeder
     {
         // UE101 : Fondamentaux en informatique
         DB::table('acquis_apprentissage_vise')->insert([
-            'description' => 'Comprendre les bases de l’algorithmique et des structures de données',
+            'name' => 'Comprendre les bases de l’algorithmique et des structures de données',
             'fk_AAT' => 1,
             'code' => 'AAV101',
         ]);
         DB::table('acquis_apprentissage_vise')->insert([
-            'description' => 'Se familiariser avec la programmation procédurale et orientée objet',
+            'name' => 'Se familiariser avec la programmation procédurale et orientée objet',
             'fk_AAT' => 1,
             'code' => 'AAV102',
 
 
         ]);
         DB::table('acquis_apprentissage_vise')->insert([
-            'description' => 'Développer une première autonomie dans la résolution de problèmes informatiques',
+            'name' => 'Développer une première autonomie dans la résolution de problèmes informatiques',
             'fk_AAT' => 1,
             'code' => 'AAV103',
 
@@ -31,19 +31,19 @@ class AcquisApprentissageViseSeeder extends Seeder
 
         // UE102 : Mathématiques et logique
         DB::table('acquis_apprentissage_vise')->insert([
-            'description' => 'Acquérir les connaissances de base en analyse et algèbre pour les sciences informatiques',
+            'name' => 'Acquérir les connaissances de base en analyse et algèbre pour les sciences informatiques',
             'fk_AAT' => 1,
             'code' => 'AAV104',
 
         ]);
         DB::table('acquis_apprentissage_vise')->insert([
-            'description' => 'Développer la rigueur du raisonnement logique et mathématique',
+            'name' => 'Développer la rigueur du raisonnement logique et mathématique',
             'fk_AAT' => 1,
             'code' => 'AAV105',
 
         ]);
         DB::table('acquis_apprentissage_vise')->insert([
-            'description' => 'Comprendre l’importance des mathématiques pour la modélisation de problèmes',
+            'name' => 'Comprendre l’importance des mathématiques pour la modélisation de problèmes',
             'fk_AAT' => 1,
             'code' => 'AAV106',
 
@@ -51,19 +51,19 @@ class AcquisApprentissageViseSeeder extends Seeder
 
         // UE103 : Communication et méthodologie
         DB::table('acquis_apprentissage_vise')->insert([
-            'description' => 'Développer des compétences de communication écrite et orale',
+            'name' => 'Développer des compétences de communication écrite et orale',
             'fk_AAT' => 2,
             'code' => 'AAV107',
 
         ]);
         DB::table('acquis_apprentissage_vise')->insert([
-            'description' => 'S’initier à la méthodologie de travail universitaire',
+            'name' => 'S’initier à la méthodologie de travail universitaire',
             'fk_AAT' => 2,
             'code' => 'AAV108',
 
         ]);
         DB::table('acquis_apprentissage_vise')->insert([
-            'description' => 'Améliorer ses capacités de communication en anglais',
+            'name' => 'Améliorer ses capacités de communication en anglais',
             'fk_AAT' => 2,
             'code' => 'AAV109',
 

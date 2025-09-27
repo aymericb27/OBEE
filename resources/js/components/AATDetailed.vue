@@ -25,9 +25,6 @@ export default {
             type: [String, Number],
             required: true,
         },
-        csrfform: String,
-        ueroutestore: String,
-        ecroutestore: String,
     },
 
     emits: ["close"],

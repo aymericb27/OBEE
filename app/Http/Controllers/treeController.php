@@ -9,11 +9,7 @@ use Illuminate\Http\Request;
 
 class treeController extends Controller
 {
-    public function get(){
-        $result = AcquisApprentissageTerminaux::select('id as AATId','code as AATCode','name as AATName', 'description as AATDescription')
-        ->get();
-        return $result;
-    }
+
 
     public function getChildren(Request $request){
         $result = AcquisApprentissageVise::select('description as AAVDescription','id as AAVid', 'code as AAVCode')
