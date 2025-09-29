@@ -11,6 +11,7 @@ class AcquisApprentissageTerminaux extends Model
     protected $table = "acquis_apprentissage_terminaux";
     protected $fillable = [
         'description',
+        'name',
         'code',
     ];
 }

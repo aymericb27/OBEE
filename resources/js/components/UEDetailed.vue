@@ -9,7 +9,7 @@
             <div class="p-4 border rounded bg-light mt-3">
                 <div class="row mb-2">
                     <h3 class="primary_color ml-2 mb-0">
-                        <span class="box_code UE">{{ ue.code }}</span>
+                        <span class="box_code UE  pl-2 pr-2">{{ ue.code }}</span>
                         {{ ue.name }}
                     </h3>
                 </div>
@@ -50,23 +50,18 @@
                 <div class="d-inline-block mb-4 w-50">
                     <p>
                         progression de l'élève sélectionné
-                        <span class="primary-color">(1/5)</span>
+                        <span class="primary-color">(1/3)</span>
                     </p>
                     <div class="progress">
                         <div
                             class="progress-bar bg-success"
                             role="progressbar"
-                            style="width: 30%"
+                            style="width: 33%"
                             aria-valuenow="25"
                             aria-valuemin="0"
                             aria-valuemax="100"
                         ></div>
                     </div>
-                </div>
-                <div class="mb-2">
-                    <h5 class="d-inline-block primary_color">
-                        Liste des prérequis
-                    </h5>
                 </div>
             </div>
         </div>

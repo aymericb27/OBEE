@@ -4,6 +4,7 @@ import ListFramework from "./components/listFramework.vue";
 import UEDetailed from "./components/UEDetailed.vue";
 import ECDetailed from "./components/ECDetailed.vue";
 import AATDetailed from "./components/AATDetailed.vue";
+import AAVDetailed from "./components/AAVDetailed.vue";
 import Calendar from "./components/calendar.vue";
 import AddForm from "./components/addForm.vue";
 const routes = [
@@ -55,7 +56,7 @@ const routes = [
         {
         path: "/aav/:id",
         name: "aav-detail",
-        component: AATDetailed,
+        component: AAVDetailed,
         props: true,
     },
 ];

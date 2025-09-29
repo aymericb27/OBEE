@@ -8,24 +8,26 @@
         <div class="p-4 border rounded bg-light mt-3">
             <div class="row mb-2">
                 <h3 class="primary_color ml-2 mb-0">
-                    <span class="box_code EC pl-2 pr-2">{{ ec.code }}</span>
+                    <span class="box_code AAV pl-2 pr-2">{{ aav.code }}</span>
 
-                    {{ ec.name }}
+                    {{ aav.name }}
                 </h3>
             </div>
-            <p class="mb-4">{{ ec.description }}</p>
+            <p class="mb-4">{{ aav.description }}</p>
             <div class="listComponent mb-4">
                 <div class="mb-2">
-                    <h5 class="d-inline-block primary_color">unité d'enseignement(s) lié(s)</h5>
+                    <h5 class="d-inline-block primary_color">
+                        acquis d'apprentissage terminaux lié(s)
+                    </h5>
                 </div>
 
                 <div>
                     <list
-                        v-if="ec.id"
-                        routeGET="/ec/ues/get"
-                        :paramsRouteGET="{ id: ec.id }"
-                        linkDetailed="ue-detail"
-                        typeList="UE"
+                        v-if="aav.id"
+                        routeGET="/aav/aats/get"
+                        :paramsRouteGET="{ id: aav.id }"
+                        linkDetailed="aat-detail"
+                        typeList="AAT"
                         :listColonne="['code', 'name']"
                     />
                 </div>
@@ -43,26 +45,28 @@ export default {
             required: true,
         },
     },
-	components: { list },
+    components: {
+        list,
+    },
 
     data() {
         return {
-            ec: {
-                ename: "",
+            aav: {
+                name: "",
                 description: "",
                 code: "",
             },
         };
     },
     methods: {
-        async loadEC() {
+        async loadAAT() {
             try {
-                const response = await axios.get("/ec/get/detailed", {
+                const response = await axios.get("/aav/get/detailed", {
                     params: {
                         id: this.id,
                     },
                 });
-                this.ec = response.data;
+                this.aav = response.data;
                 console.log(response);
             } catch (error) {
                 console.log(error);
@@ -71,7 +75,7 @@ export default {
     },
 
     mounted() {
-        this.loadEC();
+        this.loadAAT();
     },
 };
 </script>

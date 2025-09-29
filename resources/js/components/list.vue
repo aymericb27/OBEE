@@ -1,5 +1,5 @@
 <template>
-    <div class="row border-bottom">
+    <div class="row m-auto border-bottom">
         <div class="col-md-1 p-2" v-if="listColonne.includes('code')">Code</div>
         <div class="col-md-9 p-2"  v-if="listColonne.includes('name')">Nom</div>
         <div class="col-md-1 p-2"  v-if="listColonne.includes('semestre')">Semestre</div>
@@ -9,7 +9,7 @@
         v-for="(item, index) in items"
         :key="item.id"
         :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
-        class="row"
+        class="row m-auto"
     >
         <div class="col-md-1 p-2" :class="typeList" v-if="listColonne.includes('code')">
             {{ item.code }}

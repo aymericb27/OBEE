@@ -162,14 +162,7 @@ a {
 .box_code {
     border-right: 1px solid;
     padding-right: 6px;
-    color: #c75158;
-    cursor: pointer;
 }
-
-.box_code:hover {
-    text-decoration: underline;
-}
-
 .UE {
     color: #92429d !important;
 }
@@ -182,7 +175,7 @@ a {
     color: #b80f0f !important;
 }
 .AAT {
-    color: #92429d;
+    color: #ddcf61;
 }
 
 .fc-day-today {

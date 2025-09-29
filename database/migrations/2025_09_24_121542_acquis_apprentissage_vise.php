@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('acquis_apprentissage_vise', function (Blueprint $table) {
             $table->id();
             $table->string('code');
-            $table->text('name');
+            $table->string('name');
+            $table->text('description');
             $table->integer('fk_AAT')->unsigned()->nullable();
             $table->foreign('fk_AAT')->references('id')->on('acquis_apprentissage_vise');
             $table->timestamps();

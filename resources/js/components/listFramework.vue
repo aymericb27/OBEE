@@ -18,6 +18,9 @@
                         <option value="AAT">
                             acquis d'apprentissages terminaux
                         </option>
+                        <option value="AAV">
+                            acquis d'apprentissages visés
+                        </option>
                     </select>
                     <select class="mr-2 w-25 form-control d-inline-block">
                         <option disabled value="" selected>
@@ -53,6 +56,14 @@
                 routeGET="/aats/get"
                 linkDetailed="aat-detail"
                 typeList="AAT"
+                :listColonne="['code', 'name']"
+            />
+        </div>
+        <div class="mt-3 container border" v-if="listToDisplay === 'AAV'">
+            <list
+                routeGET="/aavs/get"
+                linkDetailed="aav-detail"
+                typeList="AAV"
                 :listColonne="['code', 'name']"
             />
         </div>

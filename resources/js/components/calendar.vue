@@ -158,7 +158,7 @@
                         <div class="mb-3">
                             <h3 class="primary_color d-inline-block ml-2 mb-0">
                                 <span
-                                    class="box_code ec"
+                                    class="box_code EC"
                                     @click="openDetailed(1)"
                                 >
                                     {{ ecDetailed.ECCode }}
@@ -169,23 +169,25 @@
 
                         <p>{{ ecDetailed.ECDescription }}</p>
                         <div class="listComponent">
-                            <div class="mb-2">
-                                <h5 class="d-inline-block primary_color">
-                                    Unité d'apprentissage(s) lié(s)
-                                </h5>
-                            </div>
                             <div class="mb-4">
-                                <div v-for="ue in ecDetailed.ues">
+                                <div class="listComponent mb-4">
                                     <div class="mb-2">
-                                        <h6 class="d-inline-block ml-2 mb-0">
-                                            <span
-                                                class="box_code ue"
-                                                @click="openDetailed(ue.UEId)"
-                                            >
-                                                {{ ue.UECode }}
-                                            </span>
-                                            {{ ue.UEName }}
-                                        </h6>
+                                        <h5
+                                            class="d-inline-block primary_color"
+                                        >
+                                            unité d'enseignement(s) lié(s)
+                                        </h5>
+                                    </div>
+
+                                    <div>
+                                        <list
+                                            v-if="ecDetailed.ECId"
+                                            routeGET="/ec/ues/get"
+                                            :paramsRouteGET="{ id: ecDetailed.ECId }"
+                                            linkDetailed="ue-detail"
+                                            typeList="UE"
+                                            :listColonne="['code', 'name']"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -243,6 +245,8 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import frLocale from "@fullcalendar/core/locales/fr";
 import interactionPlugin from "@fullcalendar/interaction";
 import axios from "axios";
+import list from "./list.vue";
+import { inject } from "vue";
 
 export default {
     props: {
@@ -253,7 +257,7 @@ export default {
             required: true,
         },
     },
-    components: { FullCalendar },
+    components: { FullCalendar, list },
     data() {
         return {
             detailed: false,
@@ -312,7 +316,7 @@ export default {
         },
         async loadElementConstitutifs() {
             try {
-                const response = await axios.get("/ECGet");
+                const response = await axios.get("/ecs/get");
                 this.ecs = response.data;
             } catch (error) {
                 console.error("Erreur chargement UE :", error);
@@ -351,7 +355,7 @@ export default {
             );
             this.selected_ec = ec ? ec.id : null;
             try {
-                const response = await axios.post(this.route, {
+                const response = await axios.post("/calendarStore", {
                     selected_ec: this.selected_ec,
                     is_recurring: this.form.is_recurring,
                     date_lesson: this.form.date_lesson,
@@ -362,7 +366,7 @@ export default {
                     date_lesson_end_recurring:
                         this.form.date_lesson_end_recurring,
                     day_week_recurring: this.form.day_week_recurring,
-                    _token: this.csrf,
+                    _token: inject("csrf"),
                 });
                 this.ecs = response.data;
             } catch (error) {

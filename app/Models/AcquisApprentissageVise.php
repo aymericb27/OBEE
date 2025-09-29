@@ -11,6 +11,8 @@ class AcquisApprentissageVise extends Model
     protected $table = "acquis_apprentissage_vise";
     protected $fillable = [
         'description',
+        'name',
         'code',
+        'fk_AAT',
     ];
 }

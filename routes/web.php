@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcquisApprentissageTerminaux;
+use App\Http\Controllers\AcquisApprentissageVise;
 use App\Http\Controllers\Calendar;
 use App\Http\Controllers\CalendarLesson;
 use App\Http\Controllers\ElementConstitutif;
@@ -30,7 +31,8 @@ Route::get('/ue/aavs/get',[UniteEnseignement::class, 'getAAVs'])->name('ue.get.a
 
 Route::get('/ecs/get', [ElementConstitutif::class, 'get'])->name('EC.get');
 Route::post('/ECStore', [ElementConstitutif::class, 'store'])->name('EC.store');
-Route::get('/ECGet/detailed', [ElementConstitutif::class, 'getDetailed'])->name('ec.get.detailed');
+Route::get('/ec/get/detailed', [ElementConstitutif::class, 'getDetailed'])->name('ec.get.detailed');
+Route::get('/ec/ues/get', [ElementConstitutif::class,'getUEs']);
 
 Route::post('/calendarStore', [CalendarLesson::class, 'store'])->name('calendar.store');
 Route::get('/calendarLesson/index', [CalendarLesson::class, 'index'])->name('calendar.index');
@@ -38,8 +40,12 @@ Route::get('/CalendarLesson/get/detailed', [CalendarLesson::class, 'getDetailed'
 
 Route::get('/aats/get', [AcquisApprentissageTerminaux::class, 'get']);
 Route::get('/AATGetChildren', [treeController::class, 'getChildren']);
-Route::get('/AATGet/detailed', [AcquisApprentissageTerminaux::class, 'getDetailed']);
+Route::get('/aat/get/detailed', [AcquisApprentissageTerminaux::class, 'getDetailed']);
+Route::get('/aat/aavs/get', [AcquisApprentissageTerminaux::class, 'getAAVs']);
 
+Route::get('/aav/get/detailed', [AcquisApprentissageVise::class, 'getDetailed']);
+Route::get('/aav/aats/get', [AcquisApprentissageVise::class, 'getAATs']);
+Route::get('/aavs/get', [AcquisApprentissageVise::class, 'get']);
 Route::get('/{any}', function () {
     return view('welcome');
 })->where('any', '.*');

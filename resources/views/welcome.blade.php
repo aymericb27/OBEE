@@ -1,7 +1,8 @@
 @extends('template')
 
 @section('content')
-    <div id="app" class=" h-100">
+    <div id="app" class=" h-100" data-csrf="{{ csrf_token() }}" data-route-calendar="{{ route('calendar.store') }}">
+
         <header>
             <div class="listBtn m-3">
                 <router-link to="/list">
@@ -17,7 +18,7 @@
                     <button class="ml-1 btn_fa">
                         <i class="fa-solid fa-plus"></i>
                     </button>
-                 </router-link>
+                </router-link>
             </div>
             <h1>OBEE-tool</h1>
         </header>
