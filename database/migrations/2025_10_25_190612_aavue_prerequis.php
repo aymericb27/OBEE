@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ueec', function (Blueprint $table) {
+        Schema::create('aavue_prerequis', function (Blueprint $table) {
             $table->id();
+            $table->integer('fk_acquis_apprentissage_prerequis')->unsigned()->nullable();
+            $table->foreign('fk_acquis_apprentissage_prerequis')->references('id')->on('acquis_apprentissage_vise');
             $table->integer('fk_unite_enseignement')->unsigned()->nullable();
             $table->foreign('fk_unite_enseignement')->references('id')->on('unite_enseignement');
-            $table->integer('fk_element_constitutif')->unsigned()->nullable();
-            $table->foreign('fk_element_constitutif')->references('id')->on('element_constitutif');
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ueec');
+        Schema::dropIfExists('aavue_prerequis');
     }
 };

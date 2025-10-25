@@ -32,6 +32,42 @@
                     />
                 </div>
             </div>
+            <div class="listComponent mb-4">
+                <div class="mb-2">
+                    <h5 class="d-inline-block primary_color">
+                        prérequis pour les unités d'enseignement
+                    </h5>
+                </div>
+
+                <div>
+                    <list
+                        v-if="aav.id"
+                        routeGET="/aav/UEPrerequis/get"
+                        :paramsRouteGET="{ id: aav.id }"
+                        linkDetailed="ue-detail"
+                        typeList="UE"
+                        :listColonne="['code', 'name']"
+                    />
+                </div>
+            </div>
+            <div class="listComponent mb-4">
+                <div class="mb-2">
+                    <h5 class="d-inline-block primary_color">
+                        acquis d'apprentissage visé pour les unités d'enseignements
+                    </h5>
+                </div>
+
+                <div>
+                    <list
+                        v-if="aav.id"
+                        routeGET="/aav/UEvise/get"
+                        :paramsRouteGET="{ id: aav.id }"
+                        linkDetailed="ue-detail"
+                        typeList="UE"
+                        :listColonne="['code', 'name']"
+                    />
+                </div>
+            </div>
         </div>
     </div>
 </template>

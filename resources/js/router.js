@@ -2,7 +2,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import ListFramework from "./components/listFramework.vue";
 import UEDetailed from "./components/UEDetailed.vue";
-import ECDetailed from "./components/ECDetailed.vue";
 import AATDetailed from "./components/AATDetailed.vue";
 import AAVDetailed from "./components/AAVDetailed.vue";
 import Calendar from "./components/calendar.vue";
@@ -42,12 +41,6 @@ const routes = [
         props: true, // 👈 active la transmission des params comme props
     },
     {
-        path: "/ec/:id",
-        name: "ec-detail",
-        component: ECDetailed,
-        props: true,
-    },
-    {
         path: "/aat/:id",
         name: "aat-detail",
         component: AATDetailed,
@@ -66,6 +59,5 @@ const router = createRouter({
     routes,
 });
 
-console.log("ok");
 
 export default router;

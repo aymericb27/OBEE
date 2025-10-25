@@ -14,7 +14,6 @@
                         <option value="UE" selected>
                             Unité d'enseignement
                         </option>
-                        <option value="EC">éléments constitutifs</option>
                         <option value="AAT">
                             acquis d'apprentissages terminaux
                         </option>
@@ -41,14 +40,6 @@
                 linkDetailed="ue-detail"
                 typeList="UE"
                 :listColonne="['code', 'name', 'ects', 'semestre']"
-            />
-        </div>
-        <div class="mt-3 container border" v-if="listToDisplay === 'EC'">
-            <list
-                routeGET="/ecs/get"
-                linkDetailed="ec-detail"
-                typeList="EC"
-                :listColonne="['code', 'name']"
             />
         </div>
         <div class="mt-3 container border" v-if="listToDisplay === 'AAT'">

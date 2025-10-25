@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('aavue', function (Blueprint $table) {
+        Schema::create('aavue_vise', function (Blueprint $table) {
             $table->id();
             $table->integer('fk_acquis_apprentissage_vise')->unsigned()->nullable();
             $table->foreign('fk_acquis_apprentissage_vise')->references('id')->on('acquis_apprentissage_vise');
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('aavue');
+        Schema::dropIfExists('aavue_vise');
     }
 };
