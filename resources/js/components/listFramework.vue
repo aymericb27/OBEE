@@ -1,5 +1,21 @@
 <template>
     <div class="container">
+        <div v-if="errorsInProgram" class="row alert alert-danger mt-3">
+            <div class="col-md-1">
+                <i
+                    class="fa-solid fa-triangle-exclamation"
+                    style="color: #f3aa24; font-size: 48px"
+                ></i>
+            </div>
+            <div class="col-md-11">
+                Une erreur est survenue dans le chargement du programme.
+                <div v-if="errors.errorsHoraire">
+                    Conflit horaire :
+                    <span> {{ errors.errorsHoraire.length }}</span> conflits au
+                    niveau des débuts de cours et de leurs prérequis
+                </div>
+            </div>
+        </div>
         <div class="p-3 border m-3 rounded bg-light">
             <div id="filter">
                 <form @submit.prevent="submitFormFilter">
@@ -36,22 +52,25 @@
         </div>
         <div id="listUniteEnseignement" v-if="listToDisplay === 'UE'">
             <list
+                :isBorder="true"
                 routeGET="/ues/get"
                 linkDetailed="ue-detail"
                 typeList="UE"
                 :listColonne="['code', 'name', 'ects', 'semestre']"
             />
         </div>
-        <div class="mt-3 container border" v-if="listToDisplay === 'AAT'">
+        <div class="mt-3 container" v-if="listToDisplay === 'AAT'">
             <list
+                :isBorder="true"
                 routeGET="/aats/get"
                 linkDetailed="aat-detail"
                 typeList="AAT"
                 :listColonne="['code', 'name']"
             />
         </div>
-        <div class="mt-3 container border" v-if="listToDisplay === 'AAV'">
+        <div class="mt-3 container" v-if="listToDisplay === 'AAV'">
             <list
+                :isBorder="true"
                 routeGET="/aavs/get"
                 linkDetailed="aav-detail"
                 typeList="AAV"
@@ -62,11 +81,13 @@
 </template>
 
 <script>
+import axios from "axios";
 import list from "./list.vue";
-
 export default {
     data() {
         return {
+            errorsInProgram: false,
+            errors: {},
             listToDisplay: "UE",
             formFilter: {
                 displayElelement: "UE",
@@ -80,7 +101,22 @@ export default {
         async submitFormFilter() {
             this.listToDisplay = this.formFilter.displayElelement;
         },
+        async loadErrorInProgram() {
+            try {
+                const response = await axios.get("/Error/UES");
+                if (response.data.isError) {
+                    this.errorsInProgram = true;
+                }
+                this.errors = response.data;
+
+                console.log(response.data);
+            } catch (error) {
+                console.log(error);
+            }
+        },
     },
-    mounted() {},
+    mounted() {
+        this.loadErrorInProgram();
+    },
 };
 </script>

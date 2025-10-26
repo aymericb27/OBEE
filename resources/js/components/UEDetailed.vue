@@ -14,6 +14,16 @@
                     </h3>
                 </div>
                 <p class="mb-4">{{ ue.description }}</p>
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <span class="primary_color">date de début :</span>
+                        {{ ue.date_begin }}
+                    </div>
+                    <div class="col-md-6">
+                        <span class="primary_color">date de fin :</span>
+                        {{ ue.date_end }}
+                    </div>
+                </div>
                 <div class="listComponent mb-4">
                     <div class="mb-2">
                         <h5 class="d-inline-block primary_color">
@@ -52,6 +62,9 @@
 <script>
 import axios from "axios";
 import list from "./list.vue";
+import dayjs from 'dayjs';
+
+const formatDate = (dateStr) => dayjs(dateStr).format('DD/MM/YYYY');
 export default {
     props: {
         id: {
@@ -80,8 +93,11 @@ export default {
                         id: this.id,
                     },
                 });
-                this.ue = response.data;
-                console.log(response);
+                this.ue = response.data
+				this.ue.date_begin = formatDate(this.ue.date_begin)
+				this.ue.date_end = formatDate(this.ue.date_end)
+
+				console.log(response);
             } catch (error) {
                 console.log(error);
             }

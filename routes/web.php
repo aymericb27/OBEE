@@ -4,7 +4,7 @@ use App\Http\Controllers\AcquisApprentissageTerminaux;
 use App\Http\Controllers\AcquisApprentissageVise;
 use App\Http\Controllers\Calendar;
 use App\Http\Controllers\CalendarLesson;
-use App\Http\Controllers\ElementConstitutif;
+use App\Http\Controllers\ErrorController;
 use App\Http\Controllers\treeController;
 use App\Http\Controllers\UniteEnseignement;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +45,7 @@ Route::get('/aavs/get', [AcquisApprentissageVise::class, 'get']);
 Route::get('/aav/UEvise/get', [AcquisApprentissageVise::class, 'getUEvise']);
 Route::get('/aav/UEPrerequis/get', [AcquisApprentissageVise::class, 'getUEprerequis']);
 
+Route::get('/Error/UES', [ErrorController::class, 'searchErrorInAllUE']);
 
 Route::get('/{any}', function () {
     return view('welcome');

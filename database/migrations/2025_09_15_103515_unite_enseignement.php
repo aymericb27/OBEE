@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('code');
+            $table->date('date_begin');
+            $table->date('date_end');
             $table->text('description');
             $table->integer('ects');
             $table->timestamps();
@@ -27,6 +29,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('unite_enseignement');
-
     }
 };

@@ -56,7 +56,7 @@ class UniteEnseignement extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
-        $response = UE::select('code', 'id', 'name', 'description')
+        $response = UE::select('code', 'id', 'name', 'description', 'date_begin', "date_end")
             ->where('unite_enseignement.id', $validated['id'])
             ->first();
         return $response;
@@ -64,7 +64,7 @@ class UniteEnseignement extends Controller
 
     public function get()
     {
-        $ues = UE::select('id', 'name', 'ects', 'code', 'description')->get();
+        $ues = UE::select('id', 'name', 'ects', 'code', 'description', 'date_begin', 'date_end')->get();
         return $ues;
     }
 }
