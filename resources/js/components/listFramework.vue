@@ -11,8 +11,14 @@
                 Une erreur est survenue dans le chargement du programme.
                 <div v-if="errors.errorsHoraire">
                     Conflit horaire :
-                    <span> {{ errors.errorsHoraire.length }}</span> conflits au
-                    niveau des débuts de cours et de leurs prérequis
+                    <span> {{ errors.errorsHoraire.length }}</span> conflits
+                    <router-link
+                        :to="{
+                            name: 'sheduleError',
+                        }"
+                    >
+                        voir plus
+                    </router-link>
                 </div>
             </div>
         </div>

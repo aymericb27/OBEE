@@ -6,6 +6,7 @@ import AATDetailed from "./components/AATDetailed.vue";
 import AAVDetailed from "./components/AAVDetailed.vue";
 import Calendar from "./components/calendar.vue";
 import AddForm from "./components/addForm.vue";
+import sheduleError from "./components/sheduleError.vue";
 const routes = [
     {
         path: "/",
@@ -52,6 +53,11 @@ const routes = [
         component: AAVDetailed,
         props: true,
     },
+    {
+        path: "/scheduleError",
+        name:'sheduleError',
+        component: sheduleError,
+    }
 ];
 
 const router = createRouter({

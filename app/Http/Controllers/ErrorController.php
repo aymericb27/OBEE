@@ -6,9 +6,11 @@ use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
 
+use function PHPUnit\Framework\isNull;
+
 class ErrorController extends Controller
 {
-    function searchErrorInAllUE()
+    public function getUES()
     {
         $ues = UE::select("id", 'date_begin', 'code', 'name', 'date_end')->get();
 
@@ -22,8 +24,28 @@ class ErrorController extends Controller
                 ->where('aavue_vise.fk_unite_enseignement', $ue->id)
                 ->get();
         }
+        return $ues;
+    }
 
+    public function getSheduleError($intersection, $ueA, $ueB)
+    {
+        $errorsHoraire = null;
+        // S’il y a au moins un AAV commun, il faut vérifier les dates
+        if ($ueA->date_begin < $ueB->date_end) {
+            $errorsHoraire = [
+                'ueA' => $ueA,
+                'ueB' => $ueB,
+                'aav_conflits' => $intersection,
+            ];
+        }
+        return $errorsHoraire;
+    }
+
+    public function getErrorUESShedule()
+    {
+        $ues = $this->getUES();
         $isError = False;
+        $errorsHoraire = [];
 
         foreach ($ues as $ueA) {
             foreach ($ues as $ueB) {
@@ -33,20 +55,47 @@ class ErrorController extends Controller
                 // On récupère les IDs des AAV visés par B et prérequis de A
                 $aavVisesB = $ueB->vise->pluck('id')->toArray();
                 $aavPrerequisA = $ueA->prerequis->pluck('id')->toArray();
-
                 // On cherche l’intersection entre les deux listes
                 $intersection = array_intersect($aavVisesB, $aavPrerequisA);
-
-                // S’il y a au moins un AAV commun, il faut vérifier les dates
                 if (!empty($intersection)) {
-                    if ($ueA->date_begin < $ueB->date_end) {
-                        $isError = True;
-                        $errorsHoraire[] = [
-                            'ueA' => $ueA->code,
-                            'ueB' => $ueB->code,
-                            'message' => "L’UE {$ueA->code} ne peut pas commencer avant {$ueB->code} car elles partagent des acquis d'apprentissages dépendants.",
-                            'aav_conflits' => $intersection,
-                        ];
+                    $error  = $this->getSheduleError($intersection, $ueA, $ueB);
+                    if ($error !== null) {
+                        $error['aav'] = AAV::select('code', 'id', 'name')->whereIn('id', $error['aav_conflits'])
+                            ->get();
+                        $errorsHoraire[] = $error;
+                    }
+                }
+            }
+        }
+        return response()->json([
+            'status' => empty($errors) ? 'ok' : 'error',
+            'isError' => $isError,
+            'errorsHoraire' => $errorsHoraire,
+        ]);
+    }
+
+
+    public function getErrorUES()
+    {
+        $ues = $this->getUES();
+
+        $isError = False;
+        $errorsHoraire = [];
+        foreach ($ues as $ueA) {
+            foreach ($ues as $ueB) {
+                // On évite de comparer la même UE
+                if ($ueA->id === $ueB->id) continue;
+
+                // On récupère les IDs des AAV visés par B et prérequis de A
+                $aavVisesB = $ueB->vise->pluck('id')->toArray();
+                $aavPrerequisA = $ueA->prerequis->pluck('id')->toArray();
+                // On cherche l’intersection entre les deux listes
+                $intersection = array_intersect($aavVisesB, $aavPrerequisA);
+                if (!empty($intersection)) {
+                    $error  = $this->getSheduleError($intersection, $ueA, $ueB);
+                    if ($error !== null) {
+                        $isError = true;
+                        $errorsHoraire[] = $error;
                     }
                 }
             }

@@ -45,7 +45,8 @@ Route::get('/aavs/get', [AcquisApprentissageVise::class, 'get']);
 Route::get('/aav/UEvise/get', [AcquisApprentissageVise::class, 'getUEvise']);
 Route::get('/aav/UEPrerequis/get', [AcquisApprentissageVise::class, 'getUEprerequis']);
 
-Route::get('/Error/UES', [ErrorController::class, 'searchErrorInAllUE']);
+Route::get('/Error/UES', [ErrorController::class, 'getErrorUES']);
+Route::get('/Error/UES/shedule', [ErrorController::class, 'getErrorUESShedule']);
 
 Route::get('/{any}', function () {
     return view('welcome');
