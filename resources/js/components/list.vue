@@ -7,8 +7,10 @@
         </div>
         <div class="col-md-1 p-2" v-if="listColonne.includes('ects')">ECTS</div>
     </div>
-  <div :class=" { border: isBorder}"   :style="isBorder ? { borderTop: '0px !important' } : {}"
->
+    <div
+        :class="{ border: isBorder }"
+        :style="isBorder ? { borderTop: '0px !important' } : {}"
+    >
         <div
             v-for="(item, index) in items"
             :key="item.id"
@@ -32,6 +34,12 @@
                     >
                         {{ item.name }}
                     </router-link>
+                    <span v-if="item.error" class="h-100 p-2">
+                        <i
+                            class="fa-solid fa-triangle-exclamation"
+                            style="color: #f3aa24"
+                        ></i>
+                    </span>
                 </p>
             </div>
             <div class="col-md-1" v-if="listColonne.includes('semestre')"></div>

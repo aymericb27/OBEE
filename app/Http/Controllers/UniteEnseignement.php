@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
+use App\Http\Controllers\ErrorController;
 
 class UniteEnseignement extends Controller
 {
@@ -106,9 +107,30 @@ class UniteEnseignement extends Controller
         return $response;
     }
 
-    public function get()
+    public function get(Request $request)
     {
-        $ues = UE::select('id', 'name', 'ects', 'code', 'description', 'date_begin', 'date_end')->get();
-        return $ues;
+        $request->merge([
+            'onlyErrors' => filter_var($request->onlyErrors, FILTER_VALIDATE_BOOLEAN),
+        ]);
+
+        $validated = $request->validate([
+            'onlyErrors' => 'nullable|boolean',
+            'semestre' => 'nullable|integer|in:1,2',
+        ]);
+
+        $ues = UE::select('id', 'code', 'name', 'date_begin', 'date_end')
+            ->with(['prerequis', 'vise'])
+            ->get();
+        $EC = new ErrorController;
+        $result = $EC->getErrorUES($ues, true);
+
+        // ✅ Si l’utilisateur veut seulement les UE avec erreurs
+        if (!empty($validated['onlyErrors'])) {
+            $ues = collect($result)->filter(function ($ue) {
+                return isset($ue->error) && $ue->error === true;
+            })->values();
+            $result = $ues;
+        } 
+        return $result;
     }
 }

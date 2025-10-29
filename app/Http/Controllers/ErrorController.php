@@ -75,9 +75,9 @@ class ErrorController extends Controller
     }
 
 
-    public function getErrorUES()
+    public function getErrorUES($ues, $returnList = False)
     {
-        $ues = $this->getUES();
+        $ues = !empty($ues) ? $ues : $this->getUES();
 
         $isError = False;
         $errorsHoraire = [];
@@ -94,18 +94,23 @@ class ErrorController extends Controller
                 if (!empty($intersection)) {
                     $error  = $this->getSheduleError($intersection, $ueA, $ueB);
                     if ($error !== null) {
+                        $ueA->error = true;
+                        $ueB->error = true;
                         $isError = true;
                         $errorsHoraire[] = $error;
                     }
                 }
             }
         }
-
-        // Retourne la liste des conflits détectés
-        return response()->json([
-            'status' => empty($errors) ? 'ok' : 'error',
-            'isError' => $isError,
-            'errorsHoraire' => $errorsHoraire,
-        ]);
+        if ($returnList) {
+            return $ues;
+        } else {
+            // Retourne la liste des conflits détectés
+            return response()->json([
+                'status' => empty($errors) ? 'ok' : 'error',
+                'isError' => $isError,
+                'errorsHoraire' => $errorsHoraire,
+            ]);
+        }
     }
 }

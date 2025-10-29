@@ -27,4 +27,23 @@ class UniteEnseignement extends Model
     {
         return $this->belongsToMany(AcquisApprentissageVise::class, 'aavue_prerequis', 'fk_unite_enseignement', 'fk_acquis_apprentissage_prerequis');
     }
+    public function prerequis()
+    {
+        return $this->belongsToMany(
+            AcquisApprentissageVise::class,
+            'aavue_prerequis',
+            'fk_unite_enseignement',
+            'fk_acquis_apprentissage_prerequis'
+        )->select('acquis_apprentissage_vise.id', 'code');
+    }
+
+    public function vise()
+    {
+        return $this->belongsToMany(
+            AcquisApprentissageVise::class,
+            'aavue_vise',
+            'fk_unite_enseignement',
+            'fk_acquis_apprentissage_vise'
+        )->select('acquis_apprentissage_vise.id', 'code');
+    }
 }

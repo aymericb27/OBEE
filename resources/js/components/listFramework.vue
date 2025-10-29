@@ -25,31 +25,50 @@
         <div class="p-3 border m-3 rounded bg-light">
             <div id="filter">
                 <form @submit.prevent="submitFormFilter">
-                    <i class="fa-solid fa-filter mr-2"></i>
-                    <select
-                        v-model="formFilter.displayElelement"
-                        class="mr-2 w-30 form-control d-inline-block"
-                    >
-                        <option disabled value="" selected>
-                            -- Affichage par --
-                        </option>
-                        <option value="UE" selected>
-                            Unité d'enseignement
-                        </option>
-                        <option value="AAT">
-                            acquis d'apprentissages terminaux
-                        </option>
-                        <option value="AAV">
-                            acquis d'apprentissages visés
-                        </option>
-                    </select>
-                    <select class="mr-2 w-25 form-control d-inline-block">
-                        <option disabled value="" selected>
-                            -- Choisir le semestre --
-                        </option>
-                        <option value="UE" selected>1er semestre</option>
-                        <option value="EC">2ème semestre</option>
-                    </select>
+                    <div class="mb-2">
+                        <i class="fa-solid fa-filter mr-2"></i>
+                        <select
+                            v-model="formFilter.displayElement"
+                            class="mr-2 w-30 form-control d-inline-block"
+                        >
+                            <option disabled value="" selected>
+                                -- Affichage par --
+                            </option>
+                            <option value="UE" selected>
+                                Unité d'enseignement
+                            </option>
+                            <option value="AAT">
+                                acquis d'apprentissages terminaux
+                            </option>
+                            <option value="AAV">
+                                acquis d'apprentissages visés
+                            </option>
+                        </select>
+                        <select class="mr-2 w-25 form-control d-inline-block">
+                            <option disabled value="" selected>
+                                -- Choisir le semestre --
+                            </option>
+                            <option value="UE" selected>1er semestre</option>
+                            <option value="EC">2ème semestre</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2 pl-2" style="margin-left: 20px">
+                        <div
+                            class="form-check d-inline-block align-middle mr-3"
+                        >
+                            <input
+                                type="checkbox"
+                                id="filterError"
+                                class="form-check-input"
+                                v-model="formFilter.onlyErrors"
+                            />
+                            <label for="filterError" class="form-check-label">
+                                uniquement les éléments avec une erreur
+                            </label>
+                        </div>
+                    </div>
+
                     <button type="submit" class="align-bottom btn btn-primary">
                         rechercher
                     </button>
@@ -61,7 +80,9 @@
                 :isBorder="true"
                 routeGET="/ues/get"
                 linkDetailed="ue-detail"
+                :key="reloadKey"
                 typeList="UE"
+                :paramsRouteGET="formFilter"
                 :listColonne="['code', 'name', 'ects', 'semestre']"
             />
         </div>
@@ -96,16 +117,19 @@ export default {
             errors: {},
             listToDisplay: "UE",
             formFilter: {
-                displayElelement: "UE",
+                displayElement: "UE",
             },
+            reloadKey: 0, // ✅ Clé réactive pour forcer le rechargement
         };
     },
     components: {
         list,
     },
     methods: {
-        async submitFormFilter() {
-            this.listToDisplay = this.formFilter.displayElelement;
+        submitFormFilter() {
+            // ✅ Rafraîchit la liste (recrée le composant list)
+            this.listToDisplay = this.formFilter.displayElement;
+            this.reloadKey++;
         },
         async loadErrorInProgram() {
             try {
