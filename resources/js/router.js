@@ -7,6 +7,7 @@ import AAVDetailed from "./components/AAVDetailed.vue";
 import Calendar from "./components/calendar.vue";
 import AddForm from "./components/addForm.vue";
 import sheduleError from "./components/sheduleError.vue";
+import FormUE from "./components/form/formUE.vue";
 const routes = [
     {
         path: "/",
@@ -47,23 +48,28 @@ const routes = [
         component: AATDetailed,
         props: true,
     },
-        {
+    {
         path: "/aav/:id",
         name: "aav-detail",
         component: AAVDetailed,
         props: true,
     },
     {
+        path: "/modifyUE/:id",
+        name: "modifyUE",
+        component: FormUE,
+        props: true, // transmet automatiquement tous les params comme props
+    },
+    {
         path: "/scheduleError",
-        name:'sheduleError',
+        name: "sheduleError",
         component: sheduleError,
-    }
+    },
 ];
 
 const router = createRouter({
     history: createWebHistory(),
     routes,
 });
-
 
 export default router;

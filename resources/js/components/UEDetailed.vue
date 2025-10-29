@@ -8,11 +8,26 @@
         <div class="container">
             <div class="p-4 border rounded bg-light mt-3">
                 <div class="row mb-2">
-                    <h3 class="primary_color ml-2 mb-0">
-                        <span class="box_code UE pl-2 pr-2">{{ ue.code }}</span>
-                        {{ ue.name }}
+                    <h3 class="primary_color col-md-10 mb-0">
+                        <span class="box_code UE pl-2 pr-2 mr-2">{{
+                            ue.code
+                        }}</span>
+                        <span>
+                            {{ ue.name }}
+                        </span>
                     </h3>
+                    <span class="col-md-2 text-right">
+                        <router-link
+                            :to="{
+                                name: 'modifyUE',
+                                params: { id: ue.id },
+                            }"
+                        >
+                            <button class="btn btn-primary">modifier</button>
+                        </router-link>
+                    </span>
                 </div>
+                <span> </span>
                 <p class="mb-4">{{ ue.description }}</p>
                 <div class="row mb-4">
                     <div class="col-md-4">
@@ -62,9 +77,9 @@
 <script>
 import axios from "axios";
 import list from "./list.vue";
-import dayjs from 'dayjs';
+import dayjs from "dayjs";
 
-const formatDate = (dateStr) => dayjs(dateStr).format('DD/MM/YYYY');
+const formatDate = (dateStr) => dayjs(dateStr).format("DD/MM/YYYY");
 export default {
     props: {
         id: {
@@ -77,9 +92,9 @@ export default {
         return {
             selectedEC: false,
             ue: {
-                UEname: "",
-                UEDescription: "",
-                UECode: "",
+                name: "",
+                description: "",
+                code: "",
                 aavs: {},
                 ecs: {},
             },
@@ -94,10 +109,9 @@ export default {
                     },
                 });
                 this.ue = response.data
-				this.ue.date_begin = formatDate(this.ue.date_begin)
-				this.ue.date_end = formatDate(this.ue.date_end)
+                this.ue.date_begin = formatDate(this.ue.date_begin);
+                this.ue.date_end = formatDate(this.ue.date_end);
 
-				console.log(response);
             } catch (error) {
                 console.log(error);
             }

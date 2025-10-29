@@ -182,3 +182,29 @@ a {
     background-color: rgb(183 174 239 / 32%) !important;
 }
 
+.ql-container {
+    background-color: white;
+}
+
+.modal-backdrop {
+    position: fixed !important;
+    z-index: 1040 !important;
+}
+
+.modal {
+    position: fixed !important;
+    z-index: 1055 !important; /* plus haut que le backdrop */
+}
+
+.page-item.active .page-link {
+    z-index: 3;
+    color: #fff !important;
+    background-color: #42429d !important;
+    border-color: #42429d !important;
+}
+
+.page-link {
+    color: #42429d !important;
+}
+
+
