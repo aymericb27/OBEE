@@ -6,6 +6,13 @@
             </a>
         </div>
         <div class="container">
+            <div v-if="$route.query.message" class="alert alert-success mt-3">
+                <i
+                    class="fa-solid fa-check green mr-2"
+                    style="color: darkgreen"
+                ></i>
+                <span> {{ $route.query.message }} </span>
+            </div>
             <div class="p-4 border rounded bg-light mt-3">
                 <div class="row mb-2">
                     <h3 class="primary_color col-md-10 mb-0">
@@ -28,7 +35,7 @@
                     </span>
                 </div>
                 <span> </span>
-                <p class="mb-4">{{ ue.description }}</p>
+                <div class="mb-4" v-html="ue.description"></div>
                 <div class="row mb-4">
                     <div class="col-md-4">
                         <span class="primary_color">date de début :</span>
@@ -108,10 +115,9 @@ export default {
                         id: this.id,
                     },
                 });
-                this.ue = response.data
+                this.ue = response.data;
                 this.ue.date_begin = formatDate(this.ue.date_begin);
                 this.ue.date_end = formatDate(this.ue.date_end);
-
             } catch (error) {
                 console.log(error);
             }

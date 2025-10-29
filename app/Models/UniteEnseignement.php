@@ -17,4 +17,14 @@ class UniteEnseignement extends Model
         'code',
         'ects',
     ];
+
+    public function aavvise()
+    {
+        return $this->belongsToMany(AcquisApprentissageVise::class, 'aavue_vise', 'fk_unite_enseignement', 'fk_acquis_apprentissage_vise');
+    }
+
+    public function aavprerequis()
+    {
+        return $this->belongsToMany(AcquisApprentissageVise::class, 'aavue_prerequis', 'fk_unite_enseignement', 'fk_acquis_apprentissage_prerequis');
+    }
 }

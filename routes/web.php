@@ -29,6 +29,8 @@ Route::get('/UEGet/detailed', [UniteEnseignement::class, 'getDetailed'])->name('
 Route::get('/ue/ecs/get', [UniteEnseignement::class, 'getECs'])->name('ue.get.ecs');
 Route::get('/ue/aavvise/get',[UniteEnseignement::class, 'getAAVvise'])->name('ue.get.aavvise');
 Route::get('/ue/aavprerequis/get',[UniteEnseignement::class, 'getAAVprerequis'])->name('ue.get.aavprerequis');
+Route::put('/ue/update', [UniteEnseignement::class, 'update'])->name('ue.update');
+
 
 Route::post('/calendarStore', [CalendarLesson::class, 'store'])->name('calendar.store');
 Route::get('/calendarLesson/index', [CalendarLesson::class, 'index'])->name('calendar.index');
