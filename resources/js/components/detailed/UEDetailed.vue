@@ -83,7 +83,7 @@
 
 <script>
 import axios from "axios";
-import list from "./list.vue";
+import list from "../list.vue";
 import dayjs from "dayjs";
 
 const formatDate = (dateStr) => dayjs(dateStr).format("DD/MM/YYYY");

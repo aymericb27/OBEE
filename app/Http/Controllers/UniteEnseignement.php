@@ -118,7 +118,7 @@ class UniteEnseignement extends Controller
             'semestre' => 'nullable|integer|in:1,2',
         ]);
 
-        $ues = UE::select('id', 'code', 'name', 'date_begin', 'date_end')
+        $ues = UE::select('id', 'code', 'name', 'ects', 'date_begin', 'date_end')
             ->with(['prerequis', 'vise'])
             ->get();
         $EC = new ErrorController;
@@ -130,7 +130,7 @@ class UniteEnseignement extends Controller
                 return isset($ue->error) && $ue->error === true;
             })->values();
             $result = $ues;
-        } 
+        }
         return $result;
     }
 }

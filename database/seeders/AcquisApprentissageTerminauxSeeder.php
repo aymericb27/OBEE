@@ -26,5 +26,11 @@ class AcquisApprentissageTerminauxSeeder extends Seeder
             'name' => 'Savoir être bilingue',
             'description' => 'L’étudiant est capable de communiquer couramment dans deux langues, à l’oral comme à l’écrit, en adaptant son registre de langue au contexte académique, professionnel ou social. Il démontre une aisance dans la compréhension et l’expression, tant pour des interactions quotidiennes que pour des contenus spécialisés. Cet acquis favorise l’ouverture culturelle, le développement de compétences interculturelles et une meilleure insertion dans un environnement international.',
         ]);
+
+        DB::table('acquis_apprentissage_terminaux')->insert([
+            'code' => 'AAT103',
+            'name' => "Connaitre l'informatique",
+            'description' => 'À l’issue de la formation, l’étudiant est capable de définir les concepts fondamentaux de l’informatique, de décrire les principales composantes matérielles et logicielles d’un système informatique, et de situer le rôle de l’informatique dans la société et les autres disciplines.',
+        ]);
     }
 }

@@ -36,7 +36,7 @@
     </div>
 </template>
 <script>
-import list from "./list.vue";
+import list from "../list.vue";
 import axios from "axios";
 export default {
     props: {

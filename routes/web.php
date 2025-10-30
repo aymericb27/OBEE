@@ -5,6 +5,7 @@ use App\Http\Controllers\AcquisApprentissageVise;
 use App\Http\Controllers\Calendar;
 use App\Http\Controllers\CalendarLesson;
 use App\Http\Controllers\ErrorController;
+use App\Http\Controllers\ProgrammeController;
 use App\Http\Controllers\treeController;
 use App\Http\Controllers\UniteEnseignement;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+//** Unité d'enseignement **//
 Route::post('/UEStore', [UniteEnseignement::class, 'store'])->name('UE.store');
 Route::get('/ues/get', [UniteEnseignement::class, 'get'])->name('UE.get');
 Route::get('/UEGet/detailed', [UniteEnseignement::class, 'getDetailed'])->name('UE.get.detailed');
@@ -31,16 +34,21 @@ Route::get('/ue/aavvise/get',[UniteEnseignement::class, 'getAAVvise'])->name('ue
 Route::get('/ue/aavprerequis/get',[UniteEnseignement::class, 'getAAVprerequis'])->name('ue.get.aavprerequis');
 Route::put('/ue/update', [UniteEnseignement::class, 'update'])->name('ue.update');
 
+//** Programme **//
+Route::get('/pro/get', [ProgrammeController::class, 'get'])->name('pro.get');
+Route::get('/pro/get/detailed', [ProgrammeController::class, 'getDetailed'])->name('pro.get.detailed');
 
 Route::post('/calendarStore', [CalendarLesson::class, 'store'])->name('calendar.store');
 Route::get('/calendarLesson/index', [CalendarLesson::class, 'index'])->name('calendar.index');
 Route::get('/CalendarLesson/get/detailed', [CalendarLesson::class, 'getDetailed'])->name('calendar.get.detailed');
 
+//** Acquis d'apprentissage terminaux **//
 Route::get('/aats/get', [AcquisApprentissageTerminaux::class, 'get']);
 Route::get('/AATGetChildren', [treeController::class, 'getChildren']);
 Route::get('/aat/get/detailed', [AcquisApprentissageTerminaux::class, 'getDetailed']);
 Route::get('/aat/aavs/get', [AcquisApprentissageTerminaux::class, 'getAAVs']);
 
+//** Acquis d'apprentissage visé **//
 Route::get('/aav/get/detailed', [AcquisApprentissageVise::class, 'getDetailed']);
 Route::get('/aav/aats/get', [AcquisApprentissageVise::class, 'getAATs']);
 Route::get('/aavs/get', [AcquisApprentissageVise::class, 'get']);

@@ -1,13 +1,14 @@
 // resources/js/router.js
 import { createRouter, createWebHistory } from "vue-router";
 import ListFramework from "./components/listFramework.vue";
-import UEDetailed from "./components/UEDetailed.vue";
-import AATDetailed from "./components/AATDetailed.vue";
-import AAVDetailed from "./components/AAVDetailed.vue";
+import UEDetailed from "./components/detailed/UEDetailed.vue";
+import AATDetailed from "./components/detailed/AATDetailed.vue";
+import AAVDetailed from "./components/detailed/AAVDetailed.vue";
 import Calendar from "./components/calendar.vue";
 import AddForm from "./components/addForm.vue";
 import sheduleError from "./components/sheduleError.vue";
 import FormUE from "./components/form/formUE.vue";
+import PRODetailed from "./components/detailed/PRODetailed.vue";
 const routes = [
     {
         path: "/",
@@ -52,6 +53,12 @@ const routes = [
         path: "/aav/:id",
         name: "aav-detail",
         component: AAVDetailed,
+        props: true,
+    },
+    {
+        path: "/pro/:id",
+        name: "pro-detail",
+        component: PRODetailed,
         props: true,
     },
     {

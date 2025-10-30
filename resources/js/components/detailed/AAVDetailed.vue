@@ -73,7 +73,7 @@
 </template>
 <script>
 import axios from "axios";
-import list from "./list.vue";
+import list from "../list.vue";
 export default {
     props: {
         id: {

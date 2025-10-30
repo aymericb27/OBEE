@@ -43,6 +43,7 @@
                             <option value="AAV">
                                 acquis d'apprentissages visés
                             </option>
+                            <option value="PRO">programme</option>
                         </select>
                         <select class="mr-2 w-25 form-control d-inline-block">
                             <option disabled value="" selected>
@@ -102,6 +103,15 @@
                 linkDetailed="aav-detail"
                 typeList="AAV"
                 :listColonne="['code', 'name']"
+            />
+        </div>
+        <div class="mt-3 container" v-if="listToDisplay === 'PRO'">
+            <list
+                :isBorder="true"
+                routeGET="/pro/get"
+                linkDetailed="pro-detail"
+                typeList="PRO"
+                :listColonne="['code', 'name','ects']"
             />
         </div>
     </div>

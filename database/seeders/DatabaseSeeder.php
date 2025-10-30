@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             AcquisApprentissageViseSeeder::class,
             UniteEnseignementSeeder::class,
             AAVUESeeder::class,
+            ProgrammeSeeder::class,
+            UEProgrammeSeeder::class,
         ]);
     }
 }
