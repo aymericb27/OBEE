@@ -9,6 +9,7 @@ import AddForm from "./components/addForm.vue";
 import sheduleError from "./components/sheduleError.vue";
 import FormUE from "./components/form/formUE.vue";
 import PRODetailed from "./components/detailed/PRODetailed.vue";
+import ProgramError from "./components/programError.vue";
 const routes = [
     {
         path: "/",
@@ -72,6 +73,11 @@ const routes = [
         name: "sheduleError",
         component: sheduleError,
     },
+    {
+        path: "/programmeError",
+        name: "programmeError",
+        component: ProgramError,
+    }
 ];
 
 const router = createRouter({

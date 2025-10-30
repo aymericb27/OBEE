@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class ProgrammeController extends Controller
 {
-    public function get(Request $request)
+    public function get(Request $request = null)
     {
         $programmes = Programme::select('code', 'id', 'ects', 'name')->get();
         return $programmes;

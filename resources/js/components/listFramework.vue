@@ -9,17 +9,31 @@
             </div>
             <div class="col-md-11">
                 Une erreur est survenue dans le chargement du programme.
-                <div v-if="errors.errorsHoraire">
-                    Conflit horaire :
-                    <span> {{ errors.errorsHoraire.length }}</span> conflits
-                    <router-link
-                        :to="{
-                            name: 'sheduleError',
-                        }"
-                    >
-                        voir plus
-                    </router-link>
-                </div>
+                <ul>
+                    <li v-if="errors.errorsHoraire">
+                        Conflit horaire entre des unités d'enseignement :
+                        <span> {{ errors.errorsHoraire.length }}</span> conflits
+                        <router-link
+                            :to="{
+                                name: 'sheduleError',
+                            }"
+                        >
+                            voir plus
+                        </router-link>
+                    </li>
+                    <li v-if="errors.errorECTS">
+                        Pas assez ou trop de crédits attribué :
+                        <span> {{ errors.errorECTS.length }}</span> programmes
+                        concernés
+                        <router-link
+                            :to="{
+                                name: 'programmeError',
+                            }"
+                        >
+                            voir plus
+                        </router-link>
+                    </li>
+                </ul>
             </div>
         </div>
         <div class="p-3 border m-3 rounded bg-light">
@@ -111,7 +125,7 @@
                 routeGET="/pro/get"
                 linkDetailed="pro-detail"
                 typeList="PRO"
-                :listColonne="['code', 'name','ects']"
+                :listColonne="['code', 'name', 'ects']"
             />
         </div>
     </div>

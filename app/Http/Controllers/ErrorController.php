@@ -12,7 +12,7 @@ class ErrorController extends Controller
 {
     public function getUES()
     {
-        $ues = UE::select("id", 'date_begin', 'code', 'name', 'date_end')->get();
+        $ues = UE::select("id", 'date_begin', 'ects', 'code', 'name', 'date_end')->get();
 
         foreach ($ues as $ue) {
             $ue->prerequis = AAV::select('acquis_apprentissage_vise.id', 'code')
@@ -74,6 +74,23 @@ class ErrorController extends Controller
         ]);
     }
 
+    public function getErrorProEctsNumber()
+    {
+        $progController = new ProgrammeController();
+        $progs = $progController->get();
+
+        foreach ($progs as $prog) {
+            $prog->UEECts =(int) UE::join('ue_programme', 'ue_programme.fk_ue', '=', 'unite_enseignement.id')
+                ->where('ue_programme.fk_programme', $prog->id)
+                ->sum('unite_enseignement.ects');
+            if ($prog->UEECts !== $prog->ects) {
+                $prog->ues = $prog->load('ues');
+                $errorsECTS[] = $prog;
+            }
+        }
+        return response()->json($errorsECTS);
+    }
+
 
     public function getErrorUES($ues, $returnList = False)
     {
@@ -81,6 +98,19 @@ class ErrorController extends Controller
 
         $isError = False;
         $errorsHoraire = [];
+        $errorsECTS = [];
+        $progController = new ProgrammeController();
+        $progs = $progController->get();
+
+        foreach ($progs as $prog) {
+            $prog->UEECts = UE::join('ue_programme', 'ue_programme.fk_ue', '=', 'unite_enseignement.id')
+                ->where('ue_programme.fk_programme', $prog->id)
+                ->sum('unite_enseignement.ects');
+            if ($prog->UEECts !== $prog->ects) {
+                $isError = true;
+                $errorsECTS[] = ['id' => $prog->id, 'UEECts' => $prog->UEECts];
+            }
+        }
         foreach ($ues as $ueA) {
             foreach ($ues as $ueB) {
                 // On évite de comparer la même UE
@@ -101,6 +131,8 @@ class ErrorController extends Controller
                     }
                 }
             }
+            // on récupère les crédits selon le programme
+
         }
         if ($returnList) {
             return $ues;
@@ -110,6 +142,7 @@ class ErrorController extends Controller
                 'status' => empty($errors) ? 'ok' : 'error',
                 'isError' => $isError,
                 'errorsHoraire' => $errorsHoraire,
+                'errorECTS' => $errorsECTS,
             ]);
         }
     }
