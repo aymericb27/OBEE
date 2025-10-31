@@ -14,14 +14,14 @@
     <!-- Feuilles de style CSS -->
 
     @vite('resources/js/app.js')
-    @vite('resources/css/app.css')
 
     @vite('resources/css/bootstrap_extend.css')
     <!-- Polices, icônes ou autres ressources -->
     <script src="https://kit.fontawesome.com/32b77cab3e.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css"
-        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+        integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+    @vite('resources/css/app.css')
 
 </head>
 

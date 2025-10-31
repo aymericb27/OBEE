@@ -37,60 +37,15 @@
             </div>
         </div>
         <div class="p-3 border m-3 rounded bg-light">
-            <div id="filter">
-                <form @submit.prevent="submitFormFilter">
-                    <div class="mb-2">
-                        <i class="fa-solid fa-filter mr-2"></i>
-                        <select
-                            v-model="formFilter.displayElement"
-                            class="mr-2 w-30 form-control d-inline-block"
-                        >
-                            <option disabled value="" selected>
-                                -- Affichage par --
-                            </option>
-                            <option value="UE" selected>
-                                Unité d'enseignement
-                            </option>
-                            <option value="AAT">
-                                acquis d'apprentissages terminaux
-                            </option>
-                            <option value="AAV">
-                                acquis d'apprentissages visés
-                            </option>
-                            <option value="PRO">programme</option>
-                        </select>
-                        <select class="mr-2 w-25 form-control d-inline-block">
-                            <option disabled value="" selected>
-                                -- Choisir le semestre --
-                            </option>
-                            <option value="UE" selected>1er semestre</option>
-                            <option value="EC">2ème semestre</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-2 pl-2" style="margin-left: 20px">
-                        <div
-                            class="form-check d-inline-block align-middle mr-3"
-                        >
-                            <input
-                                type="checkbox"
-                                id="filterError"
-                                class="form-check-input"
-                                v-model="formFilter.onlyErrors"
-                            />
-                            <label for="filterError" class="form-check-label">
-                                uniquement les éléments avec une erreur
-                            </label>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="align-bottom btn btn-primary">
-                        rechercher
-                    </button>
-                </form>
-            </div>
+            <FormFilter
+                @submit="submitFormFilter"
+                @isModalExportVisible="handleExportModal"
+            />
         </div>
-        <div id="listUniteEnseignement" v-if="listToDisplay === 'UE'">
+        <div
+            id="listUniteEnseignement"
+            v-if="formFilter.displayElement === 'UE'"
+        >
             <list
                 :isBorder="true"
                 routeGET="/ues/get"
@@ -101,45 +56,55 @@
                 :listColonne="['code', 'name', 'ects', 'semestre']"
             />
         </div>
-        <div class="mt-3 container" v-if="listToDisplay === 'AAT'">
+        <div class="mt-3 container" v-if="formFilter.displayElement === 'AAT'">
             <list
                 :isBorder="true"
                 routeGET="/aats/get"
                 linkDetailed="aat-detail"
                 typeList="AAT"
+                :key="reloadKey"
                 :listColonne="['code', 'name']"
             />
         </div>
-        <div class="mt-3 container" v-if="listToDisplay === 'AAV'">
+        <div class="mt-3 container" v-if="formFilter.displayElement === 'AAV'">
             <list
                 :isBorder="true"
                 routeGET="/aavs/get"
                 linkDetailed="aav-detail"
                 typeList="AAV"
+                :key="reloadKey"
                 :listColonne="['code', 'name']"
             />
         </div>
-        <div class="mt-3 container" v-if="listToDisplay === 'PRO'">
+        <div class="mt-3 container" v-if="formFilter.displayElement === 'PRO'">
             <list
                 :isBorder="true"
                 routeGET="/pro/get"
                 linkDetailed="pro-detail"
                 typeList="PRO"
+                :key="reloadKey"
                 :listColonne="['code', 'name', 'ects']"
             />
         </div>
     </div>
+    <modal-export
+        :visible="isModalExportVisible"
+        @close="isModalExportVisible = false"
+    />
 </template>
 
 <script>
 import axios from "axios";
 import list from "./list.vue";
+import FormFilter from "./form/formFilter.vue";
+import modalExport from "./modalExport.vue";
 export default {
     data() {
         return {
             errorsInProgram: false,
+            isModalExportVisible: false,
+
             errors: {},
-            listToDisplay: "UE",
             formFilter: {
                 displayElement: "UE",
             },
@@ -148,13 +113,20 @@ export default {
     },
     components: {
         list,
+        FormFilter,
+        modalExport,
     },
     methods: {
-        submitFormFilter() {
-            // ✅ Rafraîchit la liste (recrée le composant list)
-            this.listToDisplay = this.formFilter.displayElement;
-            this.reloadKey++;
+        handleExportModal(value) {
+            this.isModalExportVisible = value;
+            console.log("Valeur reçue :", value);
         },
+        submitFormFilter(filters) {
+            Object.assign(this.formFilter, filters); // ✅ mise à jour réactive
+            console.log(this.formFilter);
+            this.reloadKey++; // force la liste à se recharger
+        },
+
         async loadErrorInProgram() {
             try {
                 const response = await axios.get("/Error/UES");
@@ -169,6 +141,7 @@ export default {
             }
         },
     },
+
     mounted() {
         this.loadErrorInProgram();
     },

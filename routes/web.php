@@ -58,6 +58,9 @@ Route::get('/aav/UEPrerequis/get', [AcquisApprentissageVise::class, 'getUEprereq
 Route::get('/Error/UES', [ErrorController::class, 'getErrorUES']);
 Route::get('/Error/UES/shedule', [ErrorController::class, 'getErrorUESShedule']);
 Route::get('/Error/pro/ects/number', [ErrorController::class, 'getErrorProEctsNumber']);
+
+Route::get('export/get',[ ProgrammeController::class, 'export']);
+
 Route::get('/{any}', function () {
     return view('welcome');
 })->where('any', '.*');

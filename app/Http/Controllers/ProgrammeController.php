@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ProgExport;
 use App\Models\Programme;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProgrammeController extends Controller
 {
@@ -18,9 +20,14 @@ class ProgrammeController extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
-        $response = Programme::select('code', 'id', 'name','ects')
+        $response = Programme::select('code', 'id', 'name', 'ects')
             ->where('id', $validated['id'])
             ->first();
         return $response;
+    }
+    public function export()
+    {
+        return Excel::download(new ProgExport, 'programmes.xlsx');
+        //return Excel::download(new Programme(), 'users.csv', \Maatwebsite\Excel\Excel::CSV);
     }
 }

@@ -10,6 +10,7 @@ import sheduleError from "./components/sheduleError.vue";
 import FormUE from "./components/form/formUE.vue";
 import PRODetailed from "./components/detailed/PRODetailed.vue";
 import ProgramError from "./components/programError.vue";
+import ExportPanel from "./components/exportPanel.vue";
 const routes = [
     {
         path: "/",
@@ -34,9 +35,6 @@ const routes = [
         path: "/list",
         name: "list",
         component: ListFramework,
-        props: {
-            csrfform: "{{ csrf_token() }}",
-        },
     },
     {
         path: "/ue/:id",
@@ -67,6 +65,11 @@ const routes = [
         name: "modifyUE",
         component: FormUE,
         props: true, // transmet automatiquement tous les params comme props
+    },
+    {
+        path: '/exportPanel',
+        name: "exportPanel",
+        component: ExportPanel,
     },
     {
         path: "/scheduleError",

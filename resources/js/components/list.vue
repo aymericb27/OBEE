@@ -95,7 +95,6 @@ export default {
     },
 
     mounted() {
-        console.log("paramsRouteGET =", this.paramsRouteGET);
         this.loadItems();
     },
 };
