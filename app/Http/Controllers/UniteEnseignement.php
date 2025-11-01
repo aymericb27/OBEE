@@ -116,11 +116,20 @@ class UniteEnseignement extends Controller
         $validated = $request->validate([
             'onlyErrors' => 'nullable|boolean',
             'semestre' => 'nullable|integer|in:1,2',
+            'program' => "sometimes|nullable|exists:programme,id"
         ]);
+        if ($validated['program']) {
+            $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects', 'date_begin', 'date_end')
+                ->with(['prerequis', 'vise'])
+                ->join('ue_programme','fk_unite_enseignement','=','unite_enseignement.id')
+                ->where('fk_programme',$validated['program'])
+                ->get();
+        } else {
+            $ues = UE::select('id', 'code', 'name', 'ects', 'date_begin', 'date_end')
+                ->with(['prerequis', 'vise'])
+                ->get();
+        }
 
-        $ues = UE::select('id', 'code', 'name', 'ects', 'date_begin', 'date_end')
-            ->with(['prerequis', 'vise'])
-            ->get();
         $EC = new ErrorController;
         $result = $EC->getErrorUES($ues, true);
 

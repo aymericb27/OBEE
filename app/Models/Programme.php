@@ -20,7 +20,7 @@ class Programme extends Model
             UniteEnseignement::class,
             'ue_programme',       // table pivot
             'fk_programme',       // clé étrangère du programme
-            'fk_ue'               // clé étrangère de l'UE
+            'fk_unite_enseignement'               // clé étrangère de l'UE
         );
     }
 }

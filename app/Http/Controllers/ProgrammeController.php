@@ -25,9 +25,4 @@ class ProgrammeController extends Controller
             ->first();
         return $response;
     }
-    public function export()
-    {
-        return Excel::download(new ProgExport, 'programmes.xlsx');
-        //return Excel::download(new Programme(), 'users.csv', \Maatwebsite\Excel\Excel::CSV);
-    }
 }

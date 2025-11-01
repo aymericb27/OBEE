@@ -205,7 +205,6 @@ a {
     color: #42429d !important;
 }
 
-.form-check-input:checked {
-  background-color: #28a745; /* vert Bootstrap success */
-  border-color: #28a745;
+.form-check-input {
+  accent-color: #42429d;
 }

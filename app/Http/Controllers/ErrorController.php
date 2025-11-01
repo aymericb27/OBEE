@@ -80,7 +80,7 @@ class ErrorController extends Controller
         $progs = $progController->get();
 
         foreach ($progs as $prog) {
-            $prog->UEECts =(int) UE::join('ue_programme', 'ue_programme.fk_ue', '=', 'unite_enseignement.id')
+            $prog->UEECts =(int) UE::join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'unite_enseignement.id')
                 ->where('ue_programme.fk_programme', $prog->id)
                 ->sum('unite_enseignement.ects');
             if ($prog->UEECts !== $prog->ects) {
@@ -103,7 +103,7 @@ class ErrorController extends Controller
         $progs = $progController->get();
 
         foreach ($progs as $prog) {
-            $prog->UEECts = UE::join('ue_programme', 'ue_programme.fk_ue', '=', 'unite_enseignement.id')
+            $prog->UEECts = UE::join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'unite_enseignement.id')
                 ->where('ue_programme.fk_programme', $prog->id)
                 ->sum('unite_enseignement.ects');
             if ($prog->UEECts !== $prog->ects) {

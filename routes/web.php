@@ -5,6 +5,7 @@ use App\Http\Controllers\AcquisApprentissageVise;
 use App\Http\Controllers\Calendar;
 use App\Http\Controllers\CalendarLesson;
 use App\Http\Controllers\ErrorController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ProgrammeController;
 use App\Http\Controllers\treeController;
 use App\Http\Controllers\UniteEnseignement;
@@ -30,8 +31,8 @@ Route::post('/UEStore', [UniteEnseignement::class, 'store'])->name('UE.store');
 Route::get('/ues/get', [UniteEnseignement::class, 'get'])->name('UE.get');
 Route::get('/UEGet/detailed', [UniteEnseignement::class, 'getDetailed'])->name('UE.get.detailed');
 Route::get('/ue/ecs/get', [UniteEnseignement::class, 'getECs'])->name('ue.get.ecs');
-Route::get('/ue/aavvise/get',[UniteEnseignement::class, 'getAAVvise'])->name('ue.get.aavvise');
-Route::get('/ue/aavprerequis/get',[UniteEnseignement::class, 'getAAVprerequis'])->name('ue.get.aavprerequis');
+Route::get('/ue/aavvise/get', [UniteEnseignement::class, 'getAAVvise'])->name('ue.get.aavvise');
+Route::get('/ue/aavprerequis/get', [UniteEnseignement::class, 'getAAVprerequis'])->name('ue.get.aavprerequis');
 Route::put('/ue/update', [UniteEnseignement::class, 'update'])->name('ue.update');
 
 //** Programme **//
@@ -55,11 +56,13 @@ Route::get('/aavs/get', [AcquisApprentissageVise::class, 'get']);
 Route::get('/aav/UEvise/get', [AcquisApprentissageVise::class, 'getUEvise']);
 Route::get('/aav/UEPrerequis/get', [AcquisApprentissageVise::class, 'getUEprerequis']);
 
+//** Gestion des erreurs **//
 Route::get('/Error/UES', [ErrorController::class, 'getErrorUES']);
 Route::get('/Error/UES/shedule', [ErrorController::class, 'getErrorUESShedule']);
 Route::get('/Error/pro/ects/number', [ErrorController::class, 'getErrorProEctsNumber']);
 
-Route::get('export/get',[ ProgrammeController::class, 'export']);
+//** Exportation **//
+Route::get('/export/get/{type}', [ExportController::class, 'export']);
 
 Route::get('/{any}', function () {
     return view('welcome');
