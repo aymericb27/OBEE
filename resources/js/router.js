@@ -67,7 +67,13 @@ const routes = [
         props: true, // transmet automatiquement tous les params comme props
     },
     {
-        path: '/exportPanel',
+        path: "/createUE",
+        name: "createUE",
+        component: FormUE,
+        props: true, // transmet automatiquement tous les params comme props
+    },
+    {
+        path: "/exportPanel",
         name: "exportPanel",
         component: ExportPanel,
     },
@@ -80,7 +86,7 @@ const routes = [
         path: "/programmeError",
         name: "programmeError",
         component: ProgramError,
-    }
+    },
 ];
 
 const router = createRouter({

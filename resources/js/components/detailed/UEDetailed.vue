@@ -25,8 +25,8 @@
                                 params: { id: prog.id },
                             }"
                             >{{ prog.code }}</router-link
-                        >
-                    </span>({{ prog.name }})
+                        > </span
+                    >({{ prog.name }})
                     <span v-if="prog.ects < prog.UEECts"
                         >qui a trop de crédits attribués.</span
                     >
@@ -55,7 +55,7 @@
                         <router-link
                             :to="{
                                 name: 'modifyUE',
-                                params: { id: ue.id },
+                                params: { isCreate: true },
                             }"
                         >
                             <button class="btn btn-primary">modifier</button>
@@ -69,9 +69,13 @@
                         <span class="primary_color">date de début :</span>
                         {{ ue.date_begin }}
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <span class="primary_color">date de fin :</span>
                         {{ ue.date_end }}
+                    </div>
+                    <div class="col-md-4">
+                        <span class="primary_color">semestre :</span>
+                        {{ ue.semestre }}
                     </div>
                 </div>
                 <div class="listComponent mb-4">
@@ -131,6 +135,7 @@ export default {
                 name: "",
                 description: "",
                 code: "",
+                semestre: "",
                 aavs: {},
                 ecs: {},
             },
@@ -152,7 +157,7 @@ export default {
                 this.ue = response.data;
                 this.ue.date_begin = formatDate(this.ue.date_begin);
                 this.ue.date_end = formatDate(this.ue.date_end);
-
+				this.ue.semestre = (this.ue.semestre === 1) ? "1er" : "2ème"
                 const responseError = await axios.get("/Error/UE", {
                     params: {
                         id: this.id,

@@ -20,14 +20,6 @@ header {
 textarea {
     height: 150px !important;
 }
-
-.menu {
-    text-align: center;
-    position: fixed;
-    left: 0;
-    width: 20%;
-}
-
 button {
     border: 1px solid #42429d;
     background-color: #ffffff;
@@ -110,10 +102,6 @@ a {
 
 .linkedbtn {
     padding: 1em;
-}
-
-.menu .btn {
-    width: 80%;
 }
 
 .fc-event {

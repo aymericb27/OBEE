@@ -1,30 +1,36 @@
 <template>
-    <div>
-        <div class="p-3 menu">
-            <button @click="toggleForm('AAT')" class="btn btn-primary mb-3">
-                Créer acquis d'apprentissage terminaux
-            </button>
-            <button @click="toggleForm('UE')" class="btn btn-primary mb-3">
-                Créer unité d'enseignement
-            </button>
-            <button
-                @click="
-                    toggleForm('EC');
-                    loadUEs();
-                "
-                class="btn btn-primary mb-3"
-            >
-                Créer élément constitutif
-            </button>
-            <button @click="toggleForm('AAV')" class="btn btn-primary mb-3">
-                Créer acquis d'apprentissage visé
-            </button>
-            <button @click="toggleForm('PR')" class="btn btn-primary mb-3">
-                Créer prérequis
-            </button>
+    <div class="row h-75">
+        <div class="p-4 col-md-3 border h-100" style="border-top: 0">
+            <div class="p-2">
+                <router-link> Créer un programme </router-link>
+            </div>
+            <div class="p-2">
+                <router-link>
+                    Créer un acquis d'apprentissage terminal
+                </router-link>
+            </div>
+            <div class="p-2">
+                <router-link
+                    :to="{
+                        name: 'createUE',
+                        params: { id: null },
+                    }"
+                >
+                    Créer une unité d'enseignement
+                </router-link>
+            </div>
+            <div class="p-2">
+                <router-link>Créer un aquis d'apprentissage</router-link>
+            </div>
+            <div class="p-2">
+                <router-link>Importer</router-link>
+            </div>
         </div>
-        <div class="container border mt-3 p-3 rounded bg-light">
-            <div v-if="activeForm === null">
+        <div class="col-md-9 container">
+            <div
+                class="border mt-3 p-3 rounded bg-light"
+                v-if="activeForm === null"
+            >
                 Veuillez choisir un élément à créer
             </div>
             <div v-if="activeForm === 'Success'">
@@ -32,68 +38,8 @@
                 Élément rajouté avec succès
             </div>
             <div v-if="activeForm === 'UE'">
-                <form
-                    @submit.prevent="submitFormUniteEnseignement"
-                    v-if="activeForm === 'UE'"
-                    class="w-75 m-auto"
-                >
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <input
-                                type="text"
-                                class="form-control"
-                                placeholder="Nom de l'unité d'enseignement"
-                                v-model="formUE.name"
-                                id="nom"
-                                required
-                            />
-                        </div>
-                        <div class="col-md-3">
-                            <input
-                                type="text"
-                                class="form-control"
-                                placeholder="code"
-                                v-model="formUE.code"
-                                id="code"
-                                required
-                            />
-                        </div>
-                        <div class="col-md-3">
-                            <input
-                                type="number"
-                                class="form-control"
-                                placeholder="ects"
-                                v-model="formUE.ects"
-                                id="ects"
-                                required
-                            />
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <textarea
-                            class="form-control"
-                            v-model="formUE.description"
-                            placeholder="description"
-                            id="description"
-                            required
-                        >
-                        </textarea>
-                    </div>
-                    <div class="flex justify-end mt-4 space-x-2">
-                        <button type="submit" class="btn btn-primary">
-                            Ajouter l'unité d'enseignement
-                        </button>
-                        <button
-                            type="button"
-                            @click="hideForm"
-                            class="ml-2 btn btn-primary"
-                        >
-                            Annuler
-                        </button>
-                    </div>
-                </form>
             </div>
-<!--             <div v-if="activeForm === 'AAT'">
+            <!--             <div v-if="activeForm === 'AAT'">
                 <form @submit.prevent="submitFormAAT" class="w-75">
                     <div class="row mb-3">
                         <div class="col-md-6">

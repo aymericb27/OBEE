@@ -9,7 +9,7 @@
             <div v-if="formErrors" class="alert alert-danger mt-3">
                 <i
                     class="fa-solid fa-triangle-exclamation mr-2"
-                    style="color: crimson; font-size: 24px;"
+                    style="color: crimson; font-size: 24px"
                 ></i>
                 <span> {{ formErrors }} </span>
             </div>
@@ -19,21 +19,32 @@
                         <h3
                             class="box_code UE pl-2 d-inline-block pr-2 mr-2 mb-0"
                         >
-                            {{ ue.code }}
+                            <input
+                                type="text"
+                                class="form form-control"
+                                v-model="ue.code"
+                                placeholder="code"
+                                required
+                            />
                         </h3>
                         <span class="d-inline-block w-75 flex-grow-1">
                             <input
                                 type="text"
                                 class="form form-control"
+                                placeholder="titre"
                                 v-model="ue.name"
+                                required
                             />
                         </span>
                     </div>
                     <p class="mb-4">
                         <quill-editor
                             v-model:content="ue.description"
+                            placeholder="description"
                             content-type="html"
                             theme="snow"
+                            style="height: 175px"
+                            required
                         ></quill-editor>
                     </p>
                     <div class="row mb-4 align-items-center">
@@ -44,6 +55,7 @@
                             type="number"
                             v-model="ue.ects"
                             class="col-md-2 form form-control"
+                            required
                         />
                     </div>
                     <div class="row mb-4">
@@ -53,6 +65,7 @@
                                 type="date"
                                 class="form form-control mt-2"
                                 v-model="ue.date_begin"
+                                required
                             />
                         </div>
                         <div class="col-md-4">
@@ -61,7 +74,15 @@
                                 type="date"
                                 class="form form-control mt-2"
                                 v-model="ue.date_end"
+                                required
                             />
+                        </div>
+                        <div class="col-md-4">
+                            <span class="primary_color">semestre :</span>
+                            <select v-model="ue.semestre" class="form form-control mt-2">
+                                <option value="1">1er semestre</option>
+                                <option value="2">2eme semestre</option>
+                            </select>
                         </div>
                     </div>
                     <div class="listComponent mb-4">
@@ -141,8 +162,15 @@
                     >
                         Annuler
                     </button>
-                    <button type="submit" class="btn btn-primary">
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                        v-if="this.id"
+                    >
                         Modifier l'unité d'enseignement
+                    </button>
+                    <button type="submit" class="btn btn-primary" v-else>
+                        Créer l'unité d'enseignement
                     </button>
                 </div>
             </form>
@@ -170,7 +198,10 @@ export default {
         csrfform: String,
         id: {
             type: [String, Number],
-            required: true,
+        },
+        isCreate: {
+            type: Boolean,
+            default: false,
         },
     },
     components: { modalList },
@@ -188,6 +219,7 @@ export default {
                 aavprerequis: [],
                 name: "",
                 description: "",
+                semestre: 1,
                 code: "",
                 ects: "",
                 aavs: {},
@@ -217,25 +249,51 @@ export default {
         },
         async submitFormElementConstitutif() {
             try {
-                const response = await axios.put("/ue/update", {
-                    id: this.ue.id,
-                    name: this.ue.name,
-                    ects: this.ue.ects,
-                    description: this.ue.description,
-                    date_begin: this.ue.date_begin,
-                    date_end: this.ue.date_end,
-                    aavprerequis: this.ue.aavprerequis,
-                    aavvise: this.ue.aavvise,
-                });
-
-                // ✅ Si tout s’est bien passé
-                if (response.data.success) {
-                    // ✅ Redirection avec message (query param)
-                    this.$router.push({
-                        name: "ue-detail",
-                        params: { id: this.ue.id },
-                        query: { message: "Élément bien modifié" },
+                if (this.id) {
+                    const response = await axios.put("/ue/update", {
+                        id: this.ue.id,
+                        code: this.ue.code,
+                        name: this.ue.name,
+                        ects: this.ue.ects,
+                        description: this.ue.description,
+                        date_begin: this.ue.date_begin,
+                        date_end: this.ue.date_end,
+                        aavprerequis: this.ue.aavprerequis,
+                        aavvise: this.ue.aavvise,
+                        semestre: this.ue.semestre,
                     });
+
+                    // ✅ Si tout s’est bien passé
+                    if (response.data.success) {
+                        // ✅ Redirection avec message (query param)
+                        this.$router.push({
+                            name: "ue-detail",
+                            params: { id: this.ue.id },
+                            query: { message: "Élément bien modifié" },
+                        });
+                    }
+                } else {
+                    const response = await axios.post("/ue/store", {
+                        name: this.ue.name,
+                        code: this.ue.code,
+                        ects: this.ue.ects,
+                        description: this.ue.description,
+                        date_begin: this.ue.date_begin,
+                        date_end: this.ue.date_end,
+                        aavprerequis: this.ue.aavprerequis,
+                        aavvise: this.ue.aavvise,
+                        semestre: this.ue.semestre,
+                    });
+                    console.log(response.data);
+                    // ✅ Si tout s’est bien passé
+                    if (response.data.success) {
+                        // ✅ Redirection avec message (query param)
+                        this.$router.push({
+                            name: "ue-detail",
+                            params: { id: response.data.id },
+                            query: { message: response.data.message },
+                        });
+                    }
                 }
             } catch (error) {
                 // ⚠️ Gestion des erreurs
@@ -301,7 +359,9 @@ export default {
     },
 
     mounted() {
-        this.loadUE();
+        if (this.id) {
+            this.loadUE();
+        }
     },
 };
 </script>

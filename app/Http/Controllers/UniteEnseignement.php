@@ -11,19 +11,42 @@ class UniteEnseignement extends Controller
 {
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'ects' => 'required|integer|max:200',
             'code' => 'required|string|max:10',
             'description' => 'required|string|max:2024',
+            'semestre' => 'required|integer|max:2',
+            'date_begin' => ['required', 'date'],
+            'date_end' => ['required', 'date', 'after:date_begin'],
+            'aavprerequis' => ['array'],
+            'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
+            'aavvise' => ['array'],
+            'aavvise.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
         ]);
-        UE::create([
-            'name' => $request->name,
-            'ects' => $request->ects,
-            'code' => $request->code,
-            'description' => $request->description,
+        $ue = UE::create([
+            'name' => $validated['name'],
+            'ects' => $validated['ects'],
+            'code' => $validated['code'],
+            'semestre' => $validated['semestre'],
+            'description' => $validated['description'],
+            'date_begin' => $validated['date_begin'],
+            'date_end' => $validated['date_end'],
         ]);
-        return UE::get();
+
+        // ✅ Mise à jour des relations (si tu as des tables pivots)
+        if (isset($validated['aavvise'])) {
+            $ue->aavvise()->sync(array_column($validated['aavvise'], 'id'));
+        }
+
+        if (isset($validated['aavprerequis'])) {
+            $ue->aavprerequis()->sync(array_column($validated['aavprerequis'], 'id'));
+        }
+        return response()->json([
+            'success' => true,
+            'id' => $ue->id,
+            'message' => "Unité d'enseignement créé avec succès.",
+        ]);
     }
 
     public function update(Request $request)
@@ -33,6 +56,7 @@ class UniteEnseignement extends Controller
             'id' => ['required', 'integer', 'exists:unite_enseignement,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'semestre' => 'required|integer|max:2',
             'ects' => ['required', 'integer'],
             'date_begin' => ['required', 'date'],
             'date_end' => ['required', 'date', 'after:date_begin'],
@@ -50,6 +74,7 @@ class UniteEnseignement extends Controller
             'name' => $validated['name'],
             'description' => $validated['description'] ?? '',
             'ects' => $validated['ects'],
+            'semestre' => $validated['semestre'],
             'date_begin' => $validated['date_begin'],
             'date_end' => $validated['date_end'],
         ]);
@@ -101,8 +126,7 @@ class UniteEnseignement extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
-        $response = UE::select('code', 'id', 'name', 'description', 'ects', 'date_begin', "date_end")
-            ->where('unite_enseignement.id', $validated['id'])
+        $response = UE::where('unite_enseignement.id', $validated['id'])
             ->first();
         return $response;
     }
@@ -118,17 +142,16 @@ class UniteEnseignement extends Controller
             'semestre' => 'nullable|integer|in:1,2',
             'program' => "sometimes|nullable|exists:programme,id"
         ]);
+        $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects', 'date_begin', 'date_end','semestre')
+                ->with(['prerequis', 'vise']);
         if ($validated['program']) {
-            $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects', 'date_begin', 'date_end')
-                ->with(['prerequis', 'vise'])
-                ->join('ue_programme','fk_unite_enseignement','=','unite_enseignement.id')
-                ->where('fk_programme',$validated['program'])
-                ->get();
-        } else {
-            $ues = UE::select('id', 'code', 'name', 'ects', 'date_begin', 'date_end')
-                ->with(['prerequis', 'vise'])
-                ->get();
+            $ues->join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
+                ->where('fk_programme', $validated['program']);
+        } 
+        if ($validated['semestre']){
+            $ues->where('semestre', $validated['semestre']);
         }
+        $ues = $ues->get();
 
         $EC = new ErrorController;
         $result = $EC->getErrorUES($ues, true);

@@ -98,7 +98,8 @@ class ErrorController extends Controller
             'id' => 'required|integer',
         ]);
         $errorsHoraire = [];
-
+        $errorsECTS = [];
+        $isError = false;
         $ueA = UE::where('id', $validated['id'])->first();
         $ues = !empty($ues) ? $ues : $this->getUES();
         $progs = Programme::join('ue_programme', 'programme.id', '=', 'ue_programme.fk_programme')

@@ -66,10 +66,10 @@
 
                         <select
                             class="mr-2 form-control d-inline-block"
-                            v-model="formFilter.semester"
+                            v-model="formFilter.semestre"
                         >
                             <option value="" selected>
-                                -- Choisir le semestre --
+                                -- Tout les semestres --
                             </option>
                             <option value="1">1er semestre</option>
                             <option value="2">2ème semestre</option>
@@ -191,7 +191,7 @@ export default {
             formFilter: {
                 displayElement: "UE",
                 program: "",
-                semester: "",
+                semestre: "",
             },
 
             reloadKey: 0, // ✅ Clé réactive pour forcer le rechargement
