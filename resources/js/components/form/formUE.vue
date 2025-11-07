@@ -79,11 +79,49 @@
                         </div>
                         <div class="col-md-4">
                             <span class="primary_color">semestre :</span>
-                            <select v-model="ue.semestre" class="form form-control mt-2">
+                            <select
+                                v-model="ue.semestre"
+                                class="form form-control mt-2"
+                            >
                                 <option value="1">1er semestre</option>
                                 <option value="2">2eme semestre</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="listComponent mb-4">
+                        <div class="mb-2">
+                            <h5 class="d-inline-block primary_color">
+                                Liste des programmes liés
+                            </h5>
+                        </div>
+                        <div class="row border-bottom">
+                            <div class="col-md-1"></div>
+                            <div class="col-md-1 p-2">Code</div>
+                            <div class="col-md-9 p-2">Nom</div>
+                        </div>
+
+                        <div
+                            v-for="(pro, index) in ue.pro"
+                            class="row"
+                            :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
+                        >
+                            <div class="col-md-1 text-right p-2">
+                                <i
+                                    @click="removePRO(pro.id)"
+                                    class="text-danger fa fa-close pr-0"
+                                    style="cursor: pointer"
+                                ></i>
+                            </div>
+                            <div class="col-md-1 p-2 PRO">{{ pro.code }}</div>
+                            <div class="col-md-10 p-2">{{ pro.name }}</div>
+                        </div>
+                        <button
+                            type="button"
+                            class="btn btn-primary mt-2"
+                            @click="openModalPro()"
+                        >
+                            ajouter un programme
+                        </button>
                     </div>
                     <div class="listComponent mb-4">
                         <div class="mb-2">
@@ -186,6 +224,16 @@
         @close="showModal = false"
         @selected="handleSelected"
     />
+    <modalList
+        v-if="showModalPro"
+        :visible="showModalPro"
+        :routeGET="modalRoute"
+        :title="modalTitle"
+        :listToExclude="proToExclude"
+        type="PRO"
+        @close="showModalPro = false"
+        @selected="handleSelected"
+    />
 </template>
 
 <script>
@@ -210,13 +258,16 @@ export default {
         return {
             activeForm: null,
             showModal: false,
+            showModalPro: false,
             modalRoute: "",
             modalTitle: "",
+            proToExclude: [],
             aavToExclude: [],
             modalTarget: "", // 'aavvise' ou 'aavprerequis'
             ue: {
                 aavvise: [],
                 aavprerequis: [],
+                pro: [],
                 name: "",
                 description: "",
                 semestre: 1,
@@ -240,11 +291,20 @@ export default {
                 type === "aavvise" ? this.ue.aavvise : this.ue.aavprerequis;
             this.showModal = true;
         },
+        openModalPro() {
+            this.modalTarget = "pro";
+            this.modalRoute = "/pro/get";
+            this.modalTitle = "Ajouter des programmes";
+            this.proToExclude = this.ue.pro;
+            this.showModalPro = true;
+        },
         handleSelected(selectedItems) {
             if (this.modalTarget === "aavvise") {
                 this.ue.aavvise.push(...selectedItems);
             } else if (this.modalTarget === "aavprerequis") {
                 this.ue.aavprerequis.push(...selectedItems);
+            } else if (this.modalTarget === "pro") {
+                this.ue.pro.push(...selectedItems);
             }
         },
         async submitFormElementConstitutif() {
@@ -260,6 +320,7 @@ export default {
                         date_end: this.ue.date_end,
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
+                        pro: this.ue.pro,
                         semestre: this.ue.semestre,
                     });
 
@@ -282,6 +343,7 @@ export default {
                         date_end: this.ue.date_end,
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
+                        pro: this.ue.pro,
                         semestre: this.ue.semestre,
                     });
                     console.log(response.data);
@@ -322,6 +384,12 @@ export default {
                     },
                 });
                 this.ue = responseUE.data;
+                const responsePro = await axios.get("/ue/pro/get", {
+                    params: {
+                        id: this.id,
+                    },
+                });
+                this.ue.pro = responsePro.data;
                 const responseAAVvise = await axios.get("/ue/aavvise/get", {
                     params: {
                         id: this.id,
@@ -337,10 +405,16 @@ export default {
                     }
                 );
                 this.ue.aavprerequis = responseAAVprerequis.data;
-                console.log(responseAAVprerequis);
             } catch (error) {
                 console.log(error);
             }
+        },
+        removePRO(proId) {
+            if (!this.ue || !Array.isArray(this.ue.aavvise)) return;
+
+            // Option 1: mutation (préserve la même référence d'array)
+            const i = this.ue.pro.findIndex((a) => a.id === proId);
+            if (i !== -1) this.ue.pro.splice(i, 1);
         },
         removeAAVise(aavId) {
             if (!this.ue || !Array.isArray(this.ue.aavvise)) return;

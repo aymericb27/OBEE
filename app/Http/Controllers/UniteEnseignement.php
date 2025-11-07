@@ -6,6 +6,7 @@ use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ErrorController;
+use App\Models\Programme;
 
 class UniteEnseignement extends Controller
 {
@@ -23,6 +24,8 @@ class UniteEnseignement extends Controller
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'aavvise' => ['array'],
             'aavvise.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
+            'pro' => ['array'],
+            'pro.*.id' => ['integer', 'exists:programme,id'],
         ]);
         $ue = UE::create([
             'name' => $validated['name'],
@@ -41,6 +44,9 @@ class UniteEnseignement extends Controller
 
         if (isset($validated['aavprerequis'])) {
             $ue->aavprerequis()->sync(array_column($validated['aavprerequis'], 'id'));
+        }
+        if (isset($validated['pro'])) {
+            $ue->pro()->sync(array_column($validated['pro'], 'id'));
         }
         return response()->json([
             'success' => true,
@@ -64,6 +70,8 @@ class UniteEnseignement extends Controller
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'aavvise' => ['array'],
             'aavvise.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
+            'pro' => ['array'],
+            'pro.*.id' => ['integer', 'exists:programme,id'],
         ]);
 
         // ✅ Récupération de l’UE
@@ -87,12 +95,27 @@ class UniteEnseignement extends Controller
         if (isset($validated['aavprerequis'])) {
             $ue->aavprerequis()->sync(array_column($validated['aavprerequis'], 'id'));
         }
-
+        if (isset($validated['pro'])) {
+            $ue->pro()->sync(array_column($validated['pro'], 'id'));
+        }
         return response()->json([
             'success' => true,
             'message' => "Unité d'enseignement mise à jour avec succès.",
             'ue' => $ue->load('aavvise', 'aavprerequis'),
         ]);
+    }
+
+    public function getPro(Request $request)
+    {
+
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+        $response = Programme::select('programme.id', 'name', 'code')
+            ->join('ue_programme', 'fk_programme', '=', 'programme.id')
+            ->where('fk_unite_enseignement', $validated['id'])->get();
+
+        return $response;
     }
 
     public function getAAVvise(Request $request)
@@ -142,13 +165,13 @@ class UniteEnseignement extends Controller
             'semestre' => 'nullable|integer|in:1,2',
             'program' => "sometimes|nullable|exists:programme,id"
         ]);
-        $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects', 'date_begin', 'date_end','semestre')
-                ->with(['prerequis', 'vise']);
+        $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects', 'date_begin', 'date_end', 'semestre')
+            ->with(['prerequis', 'vise']);
         if ($validated['program']) {
             $ues->join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
                 ->where('fk_programme', $validated['program']);
-        } 
-        if ($validated['semestre']){
+        }
+        if ($validated['semestre']) {
             $ues->where('semestre', $validated['semestre']);
         }
         $ues = $ues->get();

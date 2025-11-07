@@ -81,6 +81,21 @@
                 <div class="listComponent mb-4">
                     <div class="mb-2">
                         <h5 class="d-inline-block primary_color">
+													Faisant partie du/des programme(s)
+                        </h5>
+                    </div>
+                    <list
+                        v-if="ue.id"
+                        routeGET="/ue/pro/get"
+                        :paramsRouteGET="{ id: ue.id }"
+                        linkDetailed="pro-detail"
+                        typeList="PRO"
+                        :listColonne="['code', 'name']"
+                    />
+                </div>
+                <div class="listComponent mb-4">
+                    <div class="mb-2">
+                        <h5 class="d-inline-block primary_color">
                             Liste des acquis d'apprentissages visé
                         </h5>
                     </div>
@@ -157,7 +172,7 @@ export default {
                 this.ue = response.data;
                 this.ue.date_begin = formatDate(this.ue.date_begin);
                 this.ue.date_end = formatDate(this.ue.date_end);
-				this.ue.semestre = (this.ue.semestre === 1) ? "1er" : "2ème"
+                this.ue.semestre = this.ue.semestre === 1 ? "1er" : "2ème";
                 const responseError = await axios.get("/Error/UE", {
                     params: {
                         id: this.id,

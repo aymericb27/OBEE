@@ -21,6 +21,11 @@ class UniteEnseignement extends Model
         'semestre',
     ];
 
+    public function pro()
+    {
+        return $this->belongsToMany(Programme::class, 'ue_programme', 'fk_unite_enseignement', 'fk_programme');
+    }
+
     public function aavvise()
     {
         return $this->belongsToMany(AcquisApprentissageVise::class, 'aavue_vise', 'fk_unite_enseignement', 'fk_acquis_apprentissage_vise');
