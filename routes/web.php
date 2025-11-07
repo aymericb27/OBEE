@@ -57,6 +57,7 @@ Route::get('/aav/UEvise/get', [AcquisApprentissageVise::class, 'getUEvise']);
 Route::get('/aav/UEPrerequis/get', [AcquisApprentissageVise::class, 'getUEprerequis']);
 
 //** Gestion des erreurs **//
+Route::get('/Error/UE', [ErrorController::class, 'getErrorUE']);
 Route::get('/Error/UES', [ErrorController::class, 'getErrorUES']);
 Route::get('/Error/UES/shedule', [ErrorController::class, 'getErrorUESShedule']);
 Route::get('/Error/pro/ects/number', [ErrorController::class, 'getErrorProEctsNumber']);

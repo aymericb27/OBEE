@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcquisApprentissageVise as AAV;
+use App\Models\Programme;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
 
@@ -80,7 +81,7 @@ class ErrorController extends Controller
         $progs = $progController->get();
 
         foreach ($progs as $prog) {
-            $prog->UEECts =(int) UE::join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'unite_enseignement.id')
+            $prog->UEECts = (int) UE::join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'unite_enseignement.id')
                 ->where('ue_programme.fk_programme', $prog->id)
                 ->sum('unite_enseignement.ects');
             if ($prog->UEECts !== $prog->ects) {
@@ -89,6 +90,57 @@ class ErrorController extends Controller
             }
         }
         return response()->json($errorsECTS);
+    }
+
+    public function getErrorUE(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+        $errorsHoraire = [];
+
+        $ueA = UE::where('id', $validated['id'])->first();
+        $ues = !empty($ues) ? $ues : $this->getUES();
+        $progs = Programme::join('ue_programme', 'programme.id', '=', 'ue_programme.fk_programme')
+            ->where('ue_programme.fk_unite_enseignement', $ueA->id)
+            ->get();
+        foreach ($progs as $prog) {
+            $prog->UEECts = UE::join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'unite_enseignement.id')
+                ->where('ue_programme.fk_programme', $prog->id)
+                ->sum('unite_enseignement.ects');
+            if ($prog->UEECts !== $prog->ects) {
+                $isError = true;
+                $errorsECTS[] = $prog;
+            }
+        }
+        foreach ($ues as $ueB) {
+            // On évite de comparer la même UE
+            if ($ueA->id === $ueB->id) continue;
+
+            // On récupère les IDs des AAV visés par B et prérequis de A
+            $aavVisesB = $ueB->vise->pluck('id')->toArray();
+            $aavPrerequisA = $ueA->prerequis->pluck('id')->toArray();
+            // On cherche l’intersection entre les deux listes
+            $intersection = array_intersect($aavVisesB, $aavPrerequisA);
+            if (!empty($intersection)) {
+                $error  = $this->getSheduleError($intersection, $ueA, $ueB);
+                if ($error !== null) {
+                    $ueA->error = true;
+                    $ueB->error = true;
+                    $error['aav'] = AAV::select('code', 'id', 'name')->whereIn('id', $error['aav_conflits'])
+                        ->get();
+                    $isError = true;
+                    $errorsHoraire[] = $error;
+                }
+            }
+        }
+        // Retourne la liste des conflits détectés
+        return response()->json([
+            'status' => empty($errors) ? 'ok' : 'error',
+            'isError' => $isError,
+            'errorsShedule' => $errorsHoraire,
+            'errorsECTS' => $errorsECTS,
+        ]);
     }
 
 

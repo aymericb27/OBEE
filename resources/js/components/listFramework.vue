@@ -75,7 +75,7 @@
                             <option value="2">2ème semestre</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4" v-if="formFilter.displayElement === 'UE'">
                         <label> Faisant partie du programme</label>
 
                         <select

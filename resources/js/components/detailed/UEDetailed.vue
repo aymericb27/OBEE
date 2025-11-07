@@ -6,6 +6,34 @@
             </a>
         </div>
         <div class="container">
+            <div class="mt-3">
+                <div
+                    v-for="(prog, index) in errors.errorsECTS"
+                    :key="index"
+                    class="alert alert-danger mb-2"
+                >
+                    <i
+                        class="fa-solid fa-triangle-exclamation"
+                        style="color: #f3aa24; font-size: 24px"
+                    ></i>
+                    <span class="p-2">
+                        <strong>Erreur : </strong>L'unité d'enseignement fait
+                        partie du programme
+                        <router-link
+                            :to="{
+                                name: 'pro-detail',
+                                params: { id: prog.id },
+                            }"
+                            >{{ prog.code }}</router-link
+                        >
+                    </span>({{ prog.name }})
+                    <span v-if="prog.ects < prog.UEECts"
+                        >qui a trop de crédits attribués.</span
+                    >
+                    <span v-else>qui n'a pas assez de crédits attribués.</span>
+                </div>
+                <errorShedule :id="this.id" />
+            </div>
             <div v-if="$route.query.message" class="alert alert-success mt-3">
                 <i
                     class="fa-solid fa-check green mr-2"
@@ -85,6 +113,7 @@
 import axios from "axios";
 import list from "../list.vue";
 import dayjs from "dayjs";
+import errorShedule from "../error/ErrUEShedule.vue";
 
 const formatDate = (dateStr) => dayjs(dateStr).format("DD/MM/YYYY");
 export default {
@@ -94,7 +123,7 @@ export default {
             required: true,
         },
     },
-    components: { list },
+    components: { list, errorShedule },
     data() {
         return {
             selectedEC: false,
@@ -104,6 +133,11 @@ export default {
                 code: "",
                 aavs: {},
                 ecs: {},
+            },
+            errors: {
+                errorsECTS: [],
+                errorsShedule: [],
+                isError: false,
             },
         };
     },
@@ -118,6 +152,14 @@ export default {
                 this.ue = response.data;
                 this.ue.date_begin = formatDate(this.ue.date_begin);
                 this.ue.date_end = formatDate(this.ue.date_end);
+
+                const responseError = await axios.get("/Error/UE", {
+                    params: {
+                        id: this.id,
+                    },
+                });
+                this.errors = responseError.data;
+                console.log(responseError);
             } catch (error) {
                 console.log(error);
             }
