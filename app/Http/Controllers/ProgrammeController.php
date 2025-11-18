@@ -51,11 +51,30 @@ class ProgrammeController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Programme created successfully',
-            'programme' => $programme
+            'message' => 'Le programme a été crée correctement',
+            'id' => $programme->id
         ]);
     }
+    public function addSemestre(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:programme,id',
+        ]);
 
+        // Récupération du programme
+        $programme = Programme::findOrFail($validated['id']);
+
+        // Incrémentation du nombre de semestres
+        $programme->semestre = $programme->semestre + 1;
+        $programme->save();
+
+        // Retourne le programme mis à jour avec la nouvelle structure de semestres
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Le semestre a été crée correctement',
+            'id' => $programme->id
+        ]);    }
     /**
      * Update an existing programme
      */
@@ -109,7 +128,7 @@ class ProgrammeController extends Controller
 
     public function getUEBySemester($id, $semestre)
     {
-        $ue = UniteEnseignement::join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
+        $ue = UniteEnseignement::select('name', 'unite_enseignement.id as id', 'ects')->join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
             ->where('fk_programme', $id)
             ->where('semestre', $semestre)->get();
         return $ue;

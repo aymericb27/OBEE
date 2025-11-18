@@ -1,4 +1,9 @@
 <template>
+    <div class="back_btn">
+        <a href="#" @click="$router.back()">
+            <i class="fa-solid fa-circle-arrow-left"></i> Retour
+        </a>
+    </div>
     <div class="container">
         <form
             @submit.prevent="saveProgram"
@@ -75,8 +80,13 @@ export default {
                 ? "/programme/update"
                 : "/programme/create";
 
-            await axios.post(url, this.form);
-            alert("Programme saved!");
+            const response = await axios.post(url, this.form);
+            // ✅ Redirection avec message (query param)
+            this.$router.push({
+                name: "tree",
+                params: { id: response.data.id },
+                query: { message: response.data.message },
+            });
         },
     },
 };

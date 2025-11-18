@@ -11,7 +11,7 @@ main {
 header {
     padding: 0.5%;
     text-align: center;
-    color: #42429d;
+    color: #2a71cde3;
 }
 
 #app {
@@ -24,16 +24,16 @@ header {
 textarea {
     height: 150px !important;
 }
-button {
-    border: 1px solid #42429d;
-    background-color: #ffffff;
-    color: #42429d;
+.btn_fa {
+    border-color: #2a71cde3;
+    color: white;
+    background-color: #2a71cde3;
 }
 
-
 .btn_fa:hover {
-    border-color: #42429da2;
-    color: #42429da2;
+    color: #2a71cde3;
+        background-color: whitesmoke;
+
 }
 
 .primary_color {
@@ -78,7 +78,7 @@ button {
 .box_checkbox {
     display: flex;
     align-items: center;
-    accent-color: #42429d;
+    accent-color: #2a71cde3;
 }
 
 .listChildUE {
@@ -87,7 +87,7 @@ button {
 }
 
 a {
-    color: #42429d !important;
+    color: #2a71cde3 !important;
 }
 
 .linkedbtn {
@@ -175,31 +175,16 @@ a {
 .page-item.active .page-link {
     z-index: 3;
     color: #fff !important;
-    background-color: #42429d !important;
-    border-color: #42429d !important;
+    background-color: #2a71cde3 !important;
+    border-color: #2a71cde3 !important;
 }
 
 .page-link {
-    color: #42429d !important;
+    color: #2a71cde3 !important;
 }
 
 .form-check-input {
-    accent-color: #42429d;
-}
-
-.tag_ects {
-    border-radius: 20px;
-    border: 1px solid #cfcfcf;
-    padding: 0.1em 0.5em;
-    color: #494949;
-}
-
-.btn_tree {
-    padding: 0.3em 0.5em;
-    color: #333333;
-    border-color: #d9d9d9;
-    border-radius: 10px;
-    background-color: #f9f9f9;
+    accent-color: #2a71cde3;
 }
 
 .secondary_color {
@@ -263,8 +248,8 @@ a {
     border-color: #e7e7e7;
 }
 
-.btn-outline-primary{
-    color : #2a71cde3;
+.btn-outline-primary {
+    color: #2a71cde3;
     border-color: #2a71cde3;
 }
 
@@ -277,7 +262,6 @@ a {
 .btn-primary {
     background-color: #2a71cde3 !important;
     border-color: #2a71cde3 !important;
-    padding: 5px 10px;
 }
 
 .btn-primary:hover {

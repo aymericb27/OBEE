@@ -1,4 +1,8 @@
 <template>
+    <div v-if="$route.query.message" class="alert alert-success mt-3 mr-5 ml-5">
+        <i class="fa-solid fa-check green mr-2" style="color: darkgreen"></i>
+        <span> {{ $route.query.message }} </span>
+    </div>
     <div class="row">
         <div class="col-md-3">
             <div class="border p-3 bg-white rounded">
@@ -29,6 +33,9 @@
                             + ajout programme
                         </button>
                     </router-link>
+                    <button class="btn btn-lg btn-outline-secondary ml-auto mb-2">
+                        importation de donnée
+                    </button>
                 </div>
             </div>
         </div>
@@ -37,7 +44,10 @@
                 <h2 class="secondary_color mb-1 d-inline-block">
                     {{ prog.name }}
                 </h2>
-                <button class="btn btn-lg btn-primary float-right ml-auto mb-2">
+                <button
+                    class="btn btn-lg btn-primary float-right ml-auto mb-2"
+                    @click="openSemesterModal"
+                >
                     + ajout semestre
                 </button>
                 <p class="text-muted mb-3">
@@ -46,48 +56,86 @@
                 </p>
             </span>
             <span v-for="semestre in prog.listSemestre">
-                <SemesterBlock :semester="semestre" :number="semestre.number" />
+                <SemesterBlock
+                    :semester="semestre"
+                    :number="semestre.number"
+                    @open-ue-modal="openModalUE"
+                />
             </span>
-
-            <SemesterBlock
-                v-if="prog.secondSemestre"
-                :semester="prog.secondSemestre"
-                title="Semester 2"
-            />
         </div>
     </div>
+    <!-- Modal ajout semestre -->
+    <div v-if="showSemesterModal" class="modal-backdrop-custom">
+        <div class="modal-custom">
+            <h4 class="mb-3">Confirmation</h4>
+
+            <p>Voulez-vous vraiment rajouter un semestre ?</p>
+
+            <div class="text-right mt-4">
+                <button
+                    class="btn btn-secondary mr-2"
+                    @click="showSemesterModal = false"
+                >
+                    Non
+                </button>
+
+                <button class="btn btn-primary" @click="confirmAddSemester">
+                    Oui, ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+    <modalList
+        v-if="showModalUE"
+        :visible="showModalUE"
+        :routeGET="modalRoute"
+        :title="modalTitle"
+        :btnAddElement="true"
+        btnAddElementRoute="/ue/create"
+        btnAddElementMessage="Ajouter une unité d'enseignement"
+        type="UE"
+        :listToExclude="UEsToExclude"
+        @close="showModalUE = false"
+        @selected="handleSelected"
+    />
 </template>
 <script>
 import axios from "axios";
 import list from "./list.vue";
-import modalExport from "./modalExport.vue";
 import SemesterBlock from "./SemesterBlock.vue";
+import modalList from "./modalList.vue";
 
 export default {
     data() {
         return {
+            UEsToExclude: [],
+            showModalUE: false,
+            showSemesterModal: false,
             selectedProgramId: null, // 👈 programme sélectionné
             prog: {
                 name: "",
-                firstSemestre: {
-                    ectsCount: 30,
-                },
             },
             progs: [],
         };
     },
     components: {
         list,
-        modalExport,
+        modalList,
         SemesterBlock,
     },
 
     methods: {
+        openModalUE(listToExclude) {
+            console.log(listToExclude);
+            this.UEsToExclude = listToExclude;
+            this.modalTarget = "ue";
+            this.modalRoute = "/ues/get";
+            this.modalTitle = "Ajouter des unités d'enseignements";
+            this.showModalUE = true;
+        },
         async loadPrograms() {
             const response = await axios.get("pro/get");
             this.progs = response.data;
-
-            // Sélection du premier programme par défaut
             this.selectProgram(this.progs[0].id);
         },
 
@@ -101,10 +149,26 @@ export default {
                 params: { id },
             });
             this.prog = response.data;
-            console.log(this.prog);
+        },
+        openSemesterModal() {
+            this.showSemesterModal = true;
+        },
+
+        async confirmAddSemester() {
+            this.showSemesterModal = false;
+
+            const response = await axios.post("/programme/add-semester", {
+                id: this.selectedProgramId,
+            });
+
+            this.loadProgramDetailed(this.selectedProgramId);
+            this.$router.replace({
+                query: {
+                    message: "Semestre rajouté avec succès",
+                },
+            });
         },
     },
-
     mounted() {
         this.loadPrograms();
     },
@@ -123,5 +187,25 @@ export default {
 .program-item.active {
     background: rgba(42, 113, 205, 0.89);
     color: white;
+}
+.modal-backdrop-custom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-custom {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    width: 350px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.25);
 }
 </style>

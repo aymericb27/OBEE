@@ -156,36 +156,47 @@ class UniteEnseignement extends Controller
 
     public function get(Request $request)
     {
-        $request->merge([
-            'onlyErrors' => filter_var($request->onlyErrors, FILTER_VALIDATE_BOOLEAN),
-        ]);
+        // Convertir onlyErrors en bool si présent
+        if ($request->has('onlyErrors')) {
+            $request->merge([
+                'onlyErrors' => filter_var($request->onlyErrors, FILTER_VALIDATE_BOOLEAN),
+            ]);
+        }
 
         $validated = $request->validate([
             'onlyErrors' => 'nullable|boolean',
-            'semestre' => 'nullable|integer|in:1,2',
-            'program' => "sometimes|nullable|exists:programme,id"
+            'semestre'   => 'nullable|integer|in:1,2',
+            'program'    => 'nullable|integer|exists:programme,id',
         ]);
+
         $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects', 'date_begin', 'date_end', 'semestre')
             ->with(['prerequis', 'vise']);
-        if ($validated['program']) {
+
+        // ✔ programme filtré seulement si fourni
+        if (!empty($validated['program'])) {
             $ues->join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
                 ->where('fk_programme', $validated['program']);
         }
-        if ($validated['semestre']) {
+
+        // ✔ semestre filtré seulement si fourni
+        if (!empty($validated['semestre'])) {
             $ues->where('semestre', $validated['semestre']);
         }
+
         $ues = $ues->get();
 
+        // Analyse d'erreurs
         $EC = new ErrorController;
         $result = $EC->getErrorUES($ues, true);
 
-        // ✅ Si l’utilisateur veut seulement les UE avec erreurs
+        // ✔ onlyErrors appliqué uniquement si provided et true
         if (!empty($validated['onlyErrors'])) {
-            $ues = collect($result)->filter(function ($ue) {
-                return isset($ue->error) && $ue->error === true;
-            })->values();
-            $result = $ues;
+
+            $result = collect($result)
+                ->filter(fn($ue) => isset($ue->error) && $ue->error === true)
+                ->values();
         }
+
         return $result;
     }
 }

@@ -25,7 +25,7 @@
                             <input
                                 type="text"
                                 class="form-control"
-                                placeholder="Rechercher par code ou nom..."
+                                placeholder="Rechercher par code ou libellé..."
                                 v-model.trim="searchQuery"
                             />
                         </div>
@@ -33,7 +33,7 @@
                         <div class="row border-bottom">
                             <div class="col-md-1"></div>
                             <div class="col-md-1 p-2">Code</div>
-                            <div class="col-md-10 p-2">Nom</div>
+                            <div class="col-md-10 p-2">Libellé</div>
                         </div>
 
                         <div
@@ -53,7 +53,9 @@
                             <div class="col-md-1 p-2" :class="type">
                                 {{ item.code }}
                             </div>
-                            <div class="col-md-10 p-2">{{ item.name }}</div>
+                            <h6 class="col-md-10 p-2 color_gray">
+                                {{ item.name }}
+                            </h6>
                         </div>
 
                         <!-- Pagination -->
@@ -109,10 +111,21 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" @click="close">
+                    <router-link
+                        v-if="btnAddElement"
+                        :to="{
+                            name: 'createUE',
+                            params: { id: null },
+                        }"
+                    >
+                        <button class="btn btn-lg btn-primary mr-auto">
+                            {{ btnAddElementMessage }}
+                        </button>
+                    </router-link>
+                    <button class="btn btn-lg btn-secondary" @click="close">
                         Annuler
                     </button>
-                    <button class="btn btn-primary" @click="confirmSelection">
+                    <button class="btn btn-lg btn-primary" @click="confirmSelection">
                         Ajouter
                     </button>
                 </div>
@@ -130,6 +143,10 @@ import axios from "axios";
 export default {
     name: "ModalList",
     props: {
+        btnAddElement: { type: Boolean, default: false },
+        btnAddElementRoute: { type: String, default: "" },
+        btnAddElementMessage: { type: String, default: "" },
+
         routeGET: { type: String, required: true },
         title: { type: String, default: "Sélectionner des éléments" },
         visible: { type: Boolean, default: false },
@@ -175,6 +192,8 @@ export default {
                 const response = await axios.get(this.routeGET);
 
                 const excludeIds = this.listToExclude.map((item) => item.id);
+                console.log(this.listToExclude);
+                console.log(response.data);
                 this.list = response.data.filter(
                     (item) => !excludeIds.includes(item.id)
                 );
