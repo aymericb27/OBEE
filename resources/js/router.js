@@ -12,7 +12,8 @@ import FormUE from "./components/form/formUE.vue";
 import PRODetailed from "./components/detailed/PRODetailed.vue";
 import ProgramError from "./components/programError.vue";
 import ExportPanel from "./components/exportPanel.vue";
-
+import levels from "./components/levels.vue";
+import FormProgram from "./components/form/formProgram.vue";
 const routes = [
     {
         path: "/",
@@ -37,6 +38,11 @@ const routes = [
         path: "/tree",
         name: "tree",
         component: tree,
+    },
+    {
+        path: '/levels',
+        name: 'levels',
+        component: levels,
     },
     {
         path: "/list",
@@ -78,6 +84,12 @@ const routes = [
         name: "createUE",
         component: FormUE,
         props: true, // transmet automatiquement tous les params comme props
+    },
+    {
+        path: "/createProgram",
+        name: "createProgram",
+        component: FormProgram,
+        props: true,
     },
     {
         path: "/exportPanel",

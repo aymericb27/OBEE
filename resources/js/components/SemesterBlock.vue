@@ -12,15 +12,16 @@
 
             <h5 class="d-inline-block primary_color m-0 ml-2">
                 <i class="fa-solid fa-book-open mr-1"></i>
-                {{ title }}
+				Semestre 
+                {{ number }}
             </h5>
 
             <span class="badge bg-light text-dark ml-2 border">
                 {{ semester?.countECTS ?? '—' }} ECTS
             </span>
 
-            <button class="btn btn-outline-primary ml-auto">
-                + Add UE
+            <button class="btn btn-lg btn-outline-primary ml-auto">
+                + ajout UE
             </button>
         </div>
 
@@ -33,7 +34,7 @@
 
                     <i
                         class="fa-solid"
-                        :class="UE.show ? 'fa-chevron-down' : 'fa-chevron-right'"
+                        :class="!UE.show ? 'fa-chevron-down' : 'fa-chevron-right'"
                         style="cursor: pointer; font-size: 0.9rem"
                         @click="UE.show = !UE.show"
                     ></i>
@@ -42,8 +43,8 @@
 
                     <span class="badge badge-success ml-2">{{ UE.ects }} ECTS</span>
 
-                    <button class="btn btn-outline-secondary ml-auto">
-                        + Add EC
+                    <button class="btn btn-lg btn-outline-secondary ml-auto">
+                        + ajout EC
                     </button>
                 </div>
 
@@ -77,7 +78,7 @@
 export default {
     props: {
         semester: { type: Object, required: true },
-        title: { type: String, required: true },
+        number: { type: Number, required: true },
     },
     data() {
         return {

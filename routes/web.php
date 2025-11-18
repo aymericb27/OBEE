@@ -39,7 +39,9 @@ Route::post('/ue/store', [UniteEnseignement::class, 'store'])->name('ue.update')
 //** Programme **//
 Route::get('/pro/get', [ProgrammeController::class, 'get'])->name('pro.get');
 Route::get('/pro/get/detailed', [ProgrammeController::class, 'getDetailed'])->name('pro.get.detailed');
-Route::get('/pro/get/tree', [ProgrammeController::class, 'getTree'])->name('pro.get.tree');
+Route::get('/programme/get/tree', [ProgrammeController::class, 'getTree'])->name('pro.get.tree');
+Route::post('/programme/create', [ProgrammeController::class, 'store'])->name('pro.store');
+Route::put('/programme/{id}', [ProgrammeController::class, 'update']);
 
 Route::post('/calendarStore', [CalendarLesson::class, 'store'])->name('calendar.store');
 Route::get('/calendarLesson/index', [CalendarLesson::class, 'index'])->name('calendar.index');

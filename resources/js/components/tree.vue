@@ -6,32 +6,48 @@
                     <i class="fa-solid fa-graduation-cap primary_color"></i>
                     Programme
                 </h2>
-                    <ul class="secondary_color">
-                        <li
-                            class="p-2 program-item"
-                            :class="{ active: selectedProgramId === prog.id }"
-                            style="list-style-type: none; cursor: pointer"
-                            v-for="prog in progs"
-                            :key="prog.id"
-                            @click="selectProgram(prog.id)"
-                        >
-                            <h5 class="m-0">{{ prog.name }}</h5>
-                        </li>
-                    </ul>
+                <ul class="secondary_color">
+                    <li
+                        class="p-2 program-item"
+                        :class="{ active: selectedProgramId === prog.id }"
+                        style="list-style-type: none; cursor: pointer"
+                        v-for="prog in progs"
+                        :key="prog.id"
+                        @click="selectProgram(prog.id)"
+                    >
+                        <h5 class="m-0">{{ prog.name }}</h5>
+                    </li>
+                </ul>
+                <div class="text-right">
+                    <router-link
+                        :to="{
+                            name: 'createProgram',
+                            params: { id: null },
+                        }"
+                    >
+                        <button class="btn btn-lg btn-primary ml-auto mb-2">
+                            + ajout programme
+                        </button>
+                    </router-link>
+                </div>
             </div>
         </div>
-        <div class="border bg-white rounded p-3 secondary_color col-md-9">
-            <h2 class="secondary_color mb-1">{{ prog.name }}</h2>
-            <p class="text-muted mb-3">
-                Program structure with semesters, teaching units, and
-                constituent elements
-            </p>
-
-            <SemesterBlock
-                v-if="prog.firstSemestre"
-                :semester="prog.firstSemestre"
-                title="Semester 1"
-            />
+        <div class="border bg-white rounded p-3 secondary_color col-md-6">
+            <span>
+                <h2 class="secondary_color mb-1 d-inline-block">
+                    {{ prog.name }}
+                </h2>
+                <button class="btn btn-lg btn-primary float-right ml-auto mb-2">
+                    + ajout semestre
+                </button>
+                <p class="text-muted mb-3">
+                    Programme structuré avec les semestres, unité
+                    d'enseignements et les éléments constitutifs
+                </p>
+            </span>
+            <span v-for="semestre in prog.listSemestre">
+                <SemesterBlock :semester="semestre" :number="semestre.number" />
+            </span>
 
             <SemesterBlock
                 v-if="prog.secondSemestre"
@@ -81,18 +97,11 @@ export default {
         },
 
         async loadProgramDetailed(id) {
-            const response = await axios.get("/pro/get/tree", {
+            const response = await axios.get("/programme/get/tree", {
                 params: { id },
             });
             this.prog = response.data;
-
-            // Facultatif : garder toutes les UE ouvertes
-            if (this.prog.firstSemestre?.UES) {
-                this.prog.firstSemestre.UES.forEach((ue) => (ue.show = true));
-            }
-            if (this.prog.secondSemestre?.UES) {
-                this.prog.secondSemestre.UES.forEach((ue) => (ue.show = true));
-            }
+            console.log(this.prog);
         },
     },
 
@@ -112,7 +121,7 @@ export default {
 }
 
 .program-item.active {
-    background: #0d6efd;
+    background: rgba(42, 113, 205, 0.89);
     color: white;
 }
 </style>

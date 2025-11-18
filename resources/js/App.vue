@@ -11,6 +11,12 @@
                     <i class="fa-solid fa-tree"></i>
                 </button>
             </router-link>
+            <router-link to="/levels">
+                <button class="ml-1 btn_fa">
+                    <i class="fa-solid fa-layer-group"></i>
+                </button>
+            </router-link>
+
             <router-link to="/form">
                 <button class="ml-1 btn_fa">
                     <i class="fa-solid fa-plus"></i>

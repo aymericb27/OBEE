@@ -12,3 +12,7 @@
 .h-85{
     height: 85%;
 }
+.btn-group-lg>.btn, .btn-lg {
+    font-size: 1.15rem;
+
+}

@@ -30,16 +30,6 @@ button {
     color: #42429d;
 }
 
-.btn-primary {
-    background-color: #42429d !important;
-    border-color: #42429d !important;
-    padding: 5px 10px;
-}
-
-.btn-primary:hover {
-    background-color: #ffffff !important;
-    color: #42429d !important;
-}
 
 .btn_fa:hover {
     border-color: #42429da2;
@@ -240,4 +230,57 @@ a {
     background-color: #28a745;
     border-radius: 50%;
     display: inline-block;
+}
+.medium_mapping,
+.weak_mapping,
+.strong_mapping {
+    border-radius: 100px;
+    padding: 6px 12px;
+    font-weight: 700;
+}
+
+.strong_mapping {
+    color: green;
+    border: 2px solid green;
+    background-color: #e0ffe7;
+}
+
+.medium_mapping {
+    color: orange;
+    border: 2px solid orange;
+    background-color: rgb(255, 232, 189);
+}
+
+.weak_mapping {
+    color: #5a5a5a;
+    border: 2px solid #5a5a5a;
+    background-color: #e7e7e7;
+}
+
+.btn-outline-secondary {
+    color: #080808;
+    background-color: #f7f7f7;
+    border-color: #e7e7e7;
+}
+
+.btn-outline-primary{
+    color : #2a71cde3;
+    border-color: #2a71cde3;
+}
+
+.btn-outline-primary:hover {
+    color: #fff;
+    background-color: #2a71cde3;
+    border-color: #2a71cde3;
+}
+
+.btn-primary {
+    background-color: #2a71cde3 !important;
+    border-color: #2a71cde3 !important;
+    padding: 5px 10px;
+}
+
+.btn-primary:hover {
+    background-color: #ffffff !important;
+    color: #2a71cde3 !important;
 }
