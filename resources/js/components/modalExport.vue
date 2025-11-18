@@ -278,6 +278,7 @@ export default {
             searchQuery: "",
             loading: false,
             program: {},
+			filename : '',
             select: {
                 prog: {
                     all: true,
@@ -318,6 +319,9 @@ export default {
         },
     },
     methods: {
+        close() {
+            this.$emit("close");
+        },
         async load() {
             try {
                 this.loading = true;
@@ -336,19 +340,26 @@ export default {
             }
         },
         async confirmSelection() {
-
             const response = await axios
                 .get(`/export/get/${this.filter.displayElement}`, {
                     responseType: "blob",
-                    params: {select : this.select, filter: this.filter},
+                    params: { select: this.select, filter: this.filter },
                 })
                 .then((response) => {
+                    console.log(response);
+
                     const url = window.URL.createObjectURL(
                         new Blob([response.data])
                     );
                     const link = document.createElement("a");
                     link.href = url;
-                    link.setAttribute("download", `${this.filter.displayElement}.xlsx`);
+					if(this.filter.displayElement ==="UE"){
+						this.filename = "unité d'enseignements"
+					}
+                    link.setAttribute(
+                        "download",
+                        `${this.filename}.xlsx`
+                    );
                     document.body.appendChild(link);
                     link.click();
                 });

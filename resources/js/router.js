@@ -1,6 +1,7 @@
 // resources/js/router.js
 import { createRouter, createWebHistory } from "vue-router";
 import ListFramework from "./components/listFramework.vue";
+import tree from "./components/tree.vue";
 import UEDetailed from "./components/detailed/UEDetailed.vue";
 import AATDetailed from "./components/detailed/AATDetailed.vue";
 import AAVDetailed from "./components/detailed/AAVDetailed.vue";
@@ -11,6 +12,7 @@ import FormUE from "./components/form/formUE.vue";
 import PRODetailed from "./components/detailed/PRODetailed.vue";
 import ProgramError from "./components/programError.vue";
 import ExportPanel from "./components/exportPanel.vue";
+
 const routes = [
     {
         path: "/",
@@ -30,6 +32,11 @@ const routes = [
         path: "/form",
         name: "form",
         component: AddForm,
+    },
+    {
+        path: "/tree",
+        name: "tree",
+        component: tree,
     },
     {
         path: "/list",
