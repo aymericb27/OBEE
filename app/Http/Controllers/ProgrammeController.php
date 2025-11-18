@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\ProgExport;
 use App\Models\Programme;
+use App\Models\UEPRO;
 use App\Models\UniteEnseignement;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -74,7 +75,8 @@ class ProgrammeController extends Controller
             'success' => true,
             'message' => 'Le semestre a été crée correctement',
             'id' => $programme->id
-        ]);    }
+        ]);
+    }
     /**
      * Update an existing programme
      */
@@ -103,6 +105,26 @@ class ProgrammeController extends Controller
         ]);
     }
 
+    public function addUEs(Request $request)
+    {
+        $validated = $request->validate([
+            'list' => 'required|array',
+            'id' => 'required|integer',
+            'semester' => 'required|integer',
+        ]);
+        foreach ($validated['list'] as $ue) {
+            UEPRO::create([
+                "fk_unite_enseignement" => $ue['id'],
+                "fk_programme" => $validated['id'],
+                "semester" => $validated['semester'],
+            ]);
+        }
+        return response()->json([
+            'success' => true,
+            'message' => "Unité(s) d'enseignement(s) rajoutée(s) avec succès",
+        ]);
+    }
+
     public function getTree(Request $request)
     {
         $validated = $request->validate([
@@ -118,7 +140,7 @@ class ProgrammeController extends Controller
             $listSemestre[$i]->UES = $this->getUEBySemester($validated['id'], $i);
             $listSemestre[$i]->countECTS =  UniteEnseignement::join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
                 ->where('fk_programme', $validated['id'])
-                ->where('semestre', $i)->sum('ects');
+                ->where('semester', $i)->sum('ects');
             $listSemestre[$i]->number = $i;
         }
         $programme->listSemestre = $listSemestre;
@@ -128,9 +150,9 @@ class ProgrammeController extends Controller
 
     public function getUEBySemester($id, $semestre)
     {
-        $ue = UniteEnseignement::select('name', 'unite_enseignement.id as id', 'ects')->join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
+        $ue = UniteEnseignement::select('code','name', 'unite_enseignement.id as id', 'ects')->join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
             ->where('fk_programme', $id)
-            ->where('semestre', $semestre)->get();
+            ->where('semester', $semestre)->get();
         return $ue;
     }
 

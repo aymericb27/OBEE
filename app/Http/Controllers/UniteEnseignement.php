@@ -18,8 +18,6 @@ class UniteEnseignement extends Controller
             'code' => 'required|string|max:10',
             'description' => 'required|string|max:2024',
             'semestre' => 'required|integer|max:2',
-            'date_begin' => ['required', 'date'],
-            'date_end' => ['required', 'date', 'after:date_begin'],
             'aavprerequis' => ['array'],
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'aavvise' => ['array'],
@@ -33,8 +31,6 @@ class UniteEnseignement extends Controller
             'code' => $validated['code'],
             'semestre' => $validated['semestre'],
             'description' => $validated['description'],
-            'date_begin' => $validated['date_begin'],
-            'date_end' => $validated['date_end'],
         ]);
 
         // ✅ Mise à jour des relations (si tu as des tables pivots)
@@ -64,8 +60,6 @@ class UniteEnseignement extends Controller
             'description' => ['nullable', 'string'],
             'semestre' => 'required|integer|max:2',
             'ects' => ['required', 'integer'],
-            'date_begin' => ['required', 'date'],
-            'date_end' => ['required', 'date', 'after:date_begin'],
             'aavprerequis' => ['array'],
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'aavvise' => ['array'],
@@ -82,9 +76,6 @@ class UniteEnseignement extends Controller
             'name' => $validated['name'],
             'description' => $validated['description'] ?? '',
             'ects' => $validated['ects'],
-            'semestre' => $validated['semestre'],
-            'date_begin' => $validated['date_begin'],
-            'date_end' => $validated['date_end'],
         ]);
 
         // ✅ Mise à jour des relations (si tu as des tables pivots)
@@ -169,7 +160,7 @@ class UniteEnseignement extends Controller
             'program'    => 'nullable|integer|exists:programme,id',
         ]);
 
-        $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects', 'date_begin', 'date_end', 'semestre')
+        $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects')
             ->with(['prerequis', 'vise']);
 
         // ✔ programme filtré seulement si fourni

@@ -16,8 +16,6 @@ class UniteEnseignement extends Model
         'description',
         'code',
         'ects',
-        'date_begin',
-        'date_end',
         'semestre',
     ];
 

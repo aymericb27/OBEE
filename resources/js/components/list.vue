@@ -18,21 +18,25 @@
             class="row m-auto"
         >
             <div
-                class="col-md-1 p-2"
+                class="col-md-1 p-3"
                 :class="typeList"
                 v-if="listColonne.includes('code')"
             >
-                {{ item.code }}
+                <h5>
+                    {{ item.code }}
+                </h5>
             </div>
-            <div class="col-md-9 p-2" v-if="listColonne.includes('name')">
-                <p class="primary_color mb-0">
+            <div class="col-md-9 p-3" v-if="listColonne.includes('name')">
+                <h5 class="mb-0">
                     <router-link
                         :to="{
                             name: linkDetailed,
                             params: { id: item.id },
                         }"
                     >
-                        {{ item.name }}
+                        <span class="secondary_color">
+                            {{ item.name }}
+                        </span>
                     </router-link>
                     <span v-if="item.error" class="h-100 p-2">
                         <i
@@ -40,9 +44,11 @@
                             style="color: #f3aa24"
                         ></i>
                     </span>
-                </p>
+                </h5>
             </div>
-            <div class="col-md-1 p-2" v-if="listColonne.includes('semestre')">{{ item.semestre }}</div>
+            <div class="col-md-1 p-2" v-if="listColonne.includes('semestre')">
+                {{ item.semestre }}
+            </div>
             <div class="col-md-1 p-2" v-if="listColonne.includes('ects')">
                 {{ item.ects }}
             </div>

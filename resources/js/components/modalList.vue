@@ -115,7 +115,7 @@
                         v-if="btnAddElement"
                         :to="{
                             name: 'createUE',
-                            params: { id: null },
+                            query: btnAddElementParam,
                         }"
                     >
                         <button class="btn btn-lg btn-primary mr-auto">
@@ -125,7 +125,10 @@
                     <button class="btn btn-lg btn-secondary" @click="close">
                         Annuler
                     </button>
-                    <button class="btn btn-lg btn-primary" @click="confirmSelection">
+                    <button
+                        class="btn btn-lg btn-primary"
+                        @click="confirmSelection"
+                    >
                         Ajouter
                     </button>
                 </div>
@@ -146,7 +149,7 @@ export default {
         btnAddElement: { type: Boolean, default: false },
         btnAddElementRoute: { type: String, default: "" },
         btnAddElementMessage: { type: String, default: "" },
-
+        btnAddElementParam: { type: Object, default: {} },
         routeGET: { type: String, required: true },
         title: { type: String, default: "Sélectionner des éléments" },
         visible: { type: Boolean, default: false },

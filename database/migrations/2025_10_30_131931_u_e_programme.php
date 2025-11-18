@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreign('fk_unite_enseignement')->references('id')->on('unite_enseignement');
             $table->integer('fk_programme')->unsigned()->nullable();
             $table->foreign('fk_programme')->references('id')->on('programme');
+            $table->integer('semester');
             $table->timestamps();
         });
     }

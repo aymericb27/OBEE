@@ -33,8 +33,10 @@
                             + ajout programme
                         </button>
                     </router-link>
-                    <button class="btn btn-lg btn-outline-secondary ml-auto mb-2">
-                        importation de donnée
+                    <button
+                        class="btn btn-lg btn-outline-secondary ml-auto mb-2"
+                    >
+                        + importation de donnée
                     </button>
                 </div>
             </div>
@@ -92,11 +94,12 @@
         :title="modalTitle"
         :btnAddElement="true"
         btnAddElementRoute="/ue/create"
-        btnAddElementMessage="Ajouter une unité d'enseignement"
+        :btnAddElementParam="{'semesterID': semesterSelected, 'programID': selectedProgramId}"
+        btnAddElementMessage="Créer une unité d'enseignement"
         type="UE"
         :listToExclude="UEsToExclude"
         @close="showModalUE = false"
-        @selected="handleSelected"
+        @selected="handleSelectedUE"
     />
 </template>
 <script>
@@ -111,6 +114,7 @@ export default {
             UEsToExclude: [],
             showModalUE: false,
             showSemesterModal: false,
+            semesterSelected: "",
             selectedProgramId: null, // 👈 programme sélectionné
             prog: {
                 name: "",
@@ -125,13 +129,30 @@ export default {
     },
 
     methods: {
-        openModalUE(listToExclude) {
-            console.log(listToExclude);
-            this.UEsToExclude = listToExclude;
+        openModalUE(semester) {
+            this.UEsToExclude = semester.UES;
             this.modalTarget = "ue";
+            this.semesterSelected = semester.number;
             this.modalRoute = "/ues/get";
             this.modalTitle = "Ajouter des unités d'enseignements";
             this.showModalUE = true;
+        },
+        async handleSelectedUE(UES) {
+            try {
+                const response = await axios.post("programme/ues/add", {
+                    list: UES,
+                    id: this.selectedProgramId,
+                    semester: this.semesterSelected,
+                });
+                this.$router.replace({
+                    query: {
+                        message: response.data.message,
+                    },
+                });
+                this.loadProgramDetailed(this.selectedProgramId);
+            } catch (error) {
+                console.log(error);
+            }
         },
         async loadPrograms() {
             const response = await axios.get("pro/get");

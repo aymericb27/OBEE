@@ -21,7 +21,7 @@
 
             <button
                 @click="openModalUE()"
-                class="btn btn-lg btn-outline-primary ml-auto"
+                class="btn btn-lg btn-primary ml-auto"
             >
                 + ajout UE
             </button>
@@ -41,13 +41,25 @@
                         @click="UE.show = !UE.show"
                     ></i>
 
-                    <h5 class="d-inline-block ml-2 m-0">{{ UE.name }}</h5>
+                    <h5 class="d-inline-block ml-2 m-0"><span class="UE">{{ UE.code }}</span> {{ UE.name }}</h5>
 
                     <span class="badge badge-success ml-2"
                         >{{ UE.ects }} ECTS</span
                     >
+                    <span class="ml-auto">
+                            <i
+                                style="font-size: 24px; color: #e70c0c"
+                                class="fa-regular fa-trash-can mr-3"
+                            ></i>
+                        <router-link>
+                            <i
+                                style="font-size: 24px"
+                                class="fa-regular fa-pen-to-square"
+                            ></i>
+                        </router-link>
+                    </span>
 
-                    <button class="btn btn-lg btn-outline-secondary ml-auto">
+                    <button class="btn btn-lg btn-outline-secondary ml-3">
                         + ajout EC
                     </button>
                 </div>
@@ -96,8 +108,8 @@ export default {
     },
     methods: {
         openModalUE() {
-			console.log(this.semester.UES);
-            this.$emit("open-ue-modal", this.semester.UES);
+            console.log(this.semester.UES);
+            this.$emit("open-ue-modal", this.semester);
         },
     },
 };

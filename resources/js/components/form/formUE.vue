@@ -16,22 +16,22 @@
             <form @submit.prevent="submitFormElementConstitutif">
                 <div class="p-4 border rounded bg-light mt-3">
                     <div class="mb-4 d-flex align-items-center">
-                        <h3
-                            class="box_code UE pl-2 d-inline-block pr-2 mr-2 mb-0"
+                        <span
+                            class="pr-2 mr-2 mb-0"
                         >
                             <input
                                 type="text"
                                 class="form form-control"
-                                v-model="ue.code"
-                                placeholder="code"
+                                v-model="ue.ects"
+                                placeholder="Nombre d'ects"
                                 required
                             />
-                        </h3>
-                        <span class="d-inline-block w-75 flex-grow-1">
+                        </span>
+                        <span class="w-75 flex-grow-1">
                             <input
                                 type="text"
                                 class="form form-control"
-                                placeholder="titre"
+                                placeholder="libellé"
                                 v-model="ue.name"
                                 required
                             />
@@ -47,47 +47,6 @@
                             required
                         ></quill-editor>
                     </p>
-                    <div class="row mb-4 align-items-center">
-                        <label class="col-md-2 mb-0 primary_color"
-                            >Nombre d'ects :
-                        </label>
-                        <input
-                            type="number"
-                            v-model="ue.ects"
-                            class="col-md-2 form form-control"
-                            required
-                        />
-                    </div>
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <span class="primary_color">date de début :</span>
-                            <input
-                                type="date"
-                                class="form form-control mt-2"
-                                v-model="ue.date_begin"
-                                required
-                            />
-                        </div>
-                        <div class="col-md-4">
-                            <span class="primary_color">date de fin :</span>
-                            <input
-                                type="date"
-                                class="form form-control mt-2"
-                                v-model="ue.date_end"
-                                required
-                            />
-                        </div>
-                        <div class="col-md-4">
-                            <span class="primary_color">semestre :</span>
-                            <select
-                                v-model="ue.semestre"
-                                class="form form-control mt-2"
-                            >
-                                <option value="1">1er semestre</option>
-                                <option value="2">2eme semestre</option>
-                            </select>
-                        </div>
-                    </div>
                     <div class="listComponent mb-4">
                         <div class="mb-2">
                             <h5 class="d-inline-block primary_color">
@@ -95,9 +54,10 @@
                             </h5>
                         </div>
                         <div class="row border-bottom">
-                            <div class="col-md-1"></div>
+                            <div class="col-md-1 p-2"></div>
                             <div class="col-md-1 p-2">Code</div>
-                            <div class="col-md-9 p-2">Nom</div>
+                            <div class="col-md-8 p-2">Libellé</div>
+                            <div class="col-md-2 p-2">Semestre</div>
                         </div>
 
                         <div
@@ -113,7 +73,8 @@
                                 ></i>
                             </div>
                             <div class="col-md-1 p-2 PRO">{{ pro.code }}</div>
-                            <div class="col-md-10 p-2">{{ pro.name }}</div>
+                            <div class="col-md-8 p-2">{{ pro.name }}</div>
+                            <div class="col-md-2 p-2"><input type="number" class="form form-control"></input></div>
                         </div>
                         <button
                             type="button"
@@ -251,6 +212,8 @@ export default {
             type: Boolean,
             default: false,
         },
+		SemesterID : {type: Number},
+		ProgramID: {type: Number},
     },
     components: { modalList },
 
@@ -316,8 +279,6 @@ export default {
                         name: this.ue.name,
                         ects: this.ue.ects,
                         description: this.ue.description,
-                        date_begin: this.ue.date_begin,
-                        date_end: this.ue.date_end,
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
                         pro: this.ue.pro,
@@ -339,8 +300,6 @@ export default {
                         code: this.ue.code,
                         ects: this.ue.ects,
                         description: this.ue.description,
-                        date_begin: this.ue.date_begin,
-                        date_end: this.ue.date_end,
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
                         pro: this.ue.pro,
@@ -433,6 +392,8 @@ export default {
     },
 
     mounted() {
+		    console.log("Semestre :", this.$route.query.semesterID);
+    console.log("Programme :", this.$route.query.programID);
         if (this.id) {
             this.loadUE();
         }
