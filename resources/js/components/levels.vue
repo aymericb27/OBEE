@@ -1,6 +1,6 @@
 <template>
     <div class="shadow-sm m-3 border p-4 bg-white rounded">
-        <h5 class="d-inline-block">Mapping strength :</h5>
+        <h5 class="d-inline-block">Contribution :</h5>
         <span><span class="strong_mapping ml-2 mr-1">3</span>forte </span>
         <span><span class="medium_mapping ml-2 mr-1">2</span>moyenne </span>
         <span><span class="weak_mapping ml-2 mr-1">1</span>faible </span>

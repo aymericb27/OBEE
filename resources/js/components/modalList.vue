@@ -35,7 +35,12 @@
                             <div class="col-md-1 p-2">Code</div>
                             <div class="col-md-10 p-2">Libellé</div>
                         </div>
-
+                        <div
+                            v-if="!paginatedList.length"
+                            class="text-center p-2"
+                        >
+                            <h6>aucune donnée à afficher</h6>
+                        </div>
                         <div
                             v-for="(item, index) in paginatedList"
                             :key="item.id"
@@ -53,9 +58,9 @@
                             <div class="col-md-1 p-2" :class="type">
                                 {{ item.code }}
                             </div>
-                            <h6 class="col-md-10 p-2 color_gray">
+                            <p class="col-md-10 mb-0 p-2">
                                 {{ item.name }}
-                            </h6>
+                            </p>
                         </div>
 
                         <!-- Pagination -->
@@ -118,17 +123,14 @@
                             query: btnAddElementParam,
                         }"
                     >
-                        <button class="btn btn-lg btn-primary mr-auto">
+                        <button class="btn btn-primary mr-auto">
                             {{ btnAddElementMessage }}
                         </button>
                     </router-link>
-                    <button class="btn btn-lg btn-secondary" @click="close">
+                    <button class="btn btn-secondary" @click="close">
                         Annuler
                     </button>
-                    <button
-                        class="btn btn-lg btn-primary"
-                        @click="confirmSelection"
-                    >
+                    <button class="btn btn-primary" @click="confirmSelection">
                         Ajouter
                     </button>
                 </div>
@@ -247,6 +249,7 @@ export default {
     pointer-events: none;
     opacity: 0.6;
 }
+
 .page-item.active .page-link {
     background-color: var(--bs-primary);
     border-color: var(--bs-primary);

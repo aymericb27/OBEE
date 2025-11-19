@@ -7,6 +7,7 @@ use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ErrorController;
 use App\Models\Programme;
+use App\Models\UEPRO;
 
 class UniteEnseignement extends Controller
 {
@@ -15,21 +16,39 @@ class UniteEnseignement extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'ects' => 'required|integer|max:200',
-            'code' => 'required|string|max:10',
             'description' => 'required|string|max:2024',
-            'semestre' => 'required|integer|max:2',
             'aavprerequis' => ['array'],
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'aavvise' => ['array'],
             'aavvise.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'pro' => ['array'],
-            'pro.*.id' => ['integer', 'exists:programme,id'],
+            'pro.*.id' => ['nullable', 'integer', 'exists:programme,id'],
+            'pro.*.semester' => ['nullable', 'integer', 'min:1', 'max:10'],
         ]);
+
+        // ----- Génération du code UExxx -----
+        // Récupère le dernier code existant
+        $lastUE = UE::where('code', 'LIKE', 'UE%')
+            ->orderBy('code', 'desc')
+            ->first();
+
+        if ($lastUE) {
+            // extrait le numéro : PRO012 → 12
+            $lastNumber = intval(substr($lastUE->code, 3));
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1; // premier code
+        }
+
+        // format UE001 / UE024 / UE300…
+        $newCode = 'UE' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+
+        // Ajout du code au tableau validé
+        $validated['code'] = $newCode;
         $ue = UE::create([
             'name' => $validated['name'],
             'ects' => $validated['ects'],
             'code' => $validated['code'],
-            'semestre' => $validated['semestre'],
             'description' => $validated['description'],
         ]);
 
@@ -41,8 +60,16 @@ class UniteEnseignement extends Controller
         if (isset($validated['aavprerequis'])) {
             $ue->aavprerequis()->sync(array_column($validated['aavprerequis'], 'id'));
         }
-        if (isset($validated['pro'])) {
-            $ue->pro()->sync(array_column($validated['pro'], 'id'));
+        if (!empty($validated['pro'])) {
+
+            $pivotData = [];
+
+            foreach ($validated['pro'] as $item) {
+                $pivotData[$item['id']] = ['semester' => $item['semester']];
+            }
+
+            // ajoute tous les liens pivot d'un coup
+            $ue->pro()->attach($pivotData);
         }
         return response()->json([
             'success' => true,

@@ -36,11 +36,11 @@
                 </ul>
             </div>
         </div>
-        <div class="p-3 border m-3 rounded bg-light">
+        <div class="p-3 border m-3 rounded bg-white">
             <form class="row" @submit.prevent="submitFormFilter">
                 <div class="row mb-2 col-md-12">
                     <div class="col-md-4">
-                        <label> Liste à afficher</label>
+                        <label><h5>Liste à afficher</h5> </label>
                         <select
                             v-model="formFilter.displayElement"
                             class="mr-2 form-control d-inline-block"
@@ -62,8 +62,7 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label> Le semestre</label>
-
+                        <label><h5>Pour le semestre</h5> </label>
                         <select
                             class="mr-2 form-control d-inline-block"
                             v-model="formFilter.semestre"
@@ -75,8 +74,11 @@
                             <option value="2">2ème semestre</option>
                         </select>
                     </div>
-                    <div class="col-md-4" v-if="formFilter.displayElement === 'UE'">
-                        <label> Faisant partie du programme</label>
+                    <div
+                        class="col-md-4"
+                        v-if="formFilter.displayElement === 'UE'"
+                    >
+                        <label><h5>Faisant partie du programme</h5> </label>
 
                         <select
                             class="mr-2 form-control d-inline-block"
@@ -109,7 +111,7 @@
                         <button
                             type="button"
                             @click="isModalExportVisible = true"
-                            class="align-bottom btn btn-success"
+                            class="align-bottom btn btn-lg btn-success"
                         >
                             exporter sous .csv
                         </button>
@@ -117,7 +119,7 @@
                     <div class="col-md-6 text-right">
                         <button
                             type="submit"
-                            class="align-bottom btn btn-primary"
+                            class="align-bottom btn btn-lg btn-primary"
                         >
                             rechercher
                         </button>
@@ -152,7 +154,7 @@
         <div class="mt-3 container" v-if="formFilter.displayElement === 'AAV'">
             <list
                 :isBorder="true"
-                routeGET="/aavs/get"
+                routeGET="/aav/get"
                 linkDetailed="aav-detail"
                 typeList="AAV"
                 :key="reloadKey"
@@ -186,7 +188,7 @@ export default {
         return {
             errorsInProgram: false,
             isModalExportVisible: false,
-			progs : [],
+            progs: [],
             errors: {},
             formFilter: {
                 displayElement: "UE",

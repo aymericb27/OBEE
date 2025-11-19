@@ -21,7 +21,9 @@ class UniteEnseignement extends Model
 
     public function pro()
     {
-        return $this->belongsToMany(Programme::class, 'ue_programme', 'fk_unite_enseignement', 'fk_programme');
+        return $this->belongsToMany(Programme::class, 'ue_programme', 'fk_unite_enseignement', 'fk_programme')
+            ->withPivot('semester')
+            ->withTimestamps();
     }
 
     public function aavvise()

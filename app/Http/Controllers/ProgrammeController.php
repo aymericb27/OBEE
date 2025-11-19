@@ -15,7 +15,7 @@ class ProgrammeController extends Controller
 {
     public function get(Request $request = null)
     {
-        $programmes = Programme::select('code', 'id', 'ects', 'name')->get();
+        $programmes = Programme::select('code', 'id', 'ects', 'name', 'semestre as nbrSemester')->get();
         return $programmes;
     }
 
@@ -161,7 +161,7 @@ class ProgrammeController extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
-        $response = Programme::select('code', 'id', 'name', 'ects')
+        $response = Programme::select('code', 'id', 'name', 'ects', 'semestre as nbrSemester')
             ->where('id', $validated['id'])
             ->first();
         return $response;

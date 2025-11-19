@@ -94,7 +94,7 @@
         :title="modalTitle"
         :btnAddElement="true"
         btnAddElementRoute="/ue/create"
-        :btnAddElementParam="{'semesterID': semesterSelected, 'programID': selectedProgramId}"
+        :btnAddElementParam="{'semesterNumber': semesterSelected, 'programID': selectedProgramId}"
         btnAddElementMessage="Créer une unité d'enseignement"
         type="UE"
         :listToExclude="UEsToExclude"

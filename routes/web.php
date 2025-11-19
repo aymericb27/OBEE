@@ -58,7 +58,8 @@ Route::get('/aat/aavs/get', [AcquisApprentissageTerminaux::class, 'getAAVs']);
 //** Acquis d'apprentissage visé **//
 Route::get('/aav/get/detailed', [AcquisApprentissageVise::class, 'getDetailed']);
 Route::get('/aav/aats/get', [AcquisApprentissageVise::class, 'getAATs']);
-Route::get('/aavs/get', [AcquisApprentissageVise::class, 'get']);
+Route::get('/aav/get', [AcquisApprentissageVise::class, 'get']);
+Route::get('/aav/prerequis/get', [AcquisApprentissageVise::class, 'getOnlyPrerequis']);
 Route::get('/aav/UEvise/get', [AcquisApprentissageVise::class, 'getUEvise']);
 Route::get('/aav/UEPrerequis/get', [AcquisApprentissageVise::class, 'getUEprerequis']);
 

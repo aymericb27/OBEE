@@ -51,7 +51,12 @@
                                 style="font-size: 24px; color: #e70c0c"
                                 class="fa-regular fa-trash-can mr-3"
                             ></i>
-                        <router-link>
+                        <router-link
+                            :to="{
+                                name: 'modifyUE',
+                                params: { id: UE.id },
+                            }"
+                        >
                             <i
                                 style="font-size: 24px"
                                 class="fa-regular fa-pen-to-square"

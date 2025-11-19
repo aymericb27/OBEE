@@ -64,20 +64,6 @@
                 </div>
                 <span> </span>
                 <div class="mb-4" v-html="ue.description"></div>
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <span class="primary_color">date de début :</span>
-                        {{ ue.date_begin }}
-                    </div>
-                    <div class="col-md-4">
-                        <span class="primary_color">date de fin :</span>
-                        {{ ue.date_end }}
-                    </div>
-                    <div class="col-md-4">
-                        <span class="primary_color">semestre :</span>
-                        {{ ue.semestre }}
-                    </div>
-                </div>
                 <div class="listComponent mb-4">
                     <div class="mb-2">
                         <h5 class="d-inline-block primary_color">

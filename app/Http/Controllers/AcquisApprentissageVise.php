@@ -63,4 +63,23 @@ class AcquisApprentissageVise extends Controller
             ->get();
         return $result;
     }
+
+    public function getOnlyPrerequis()
+    {
+        $response = AAV::select(
+            'acquis_apprentissage_vise.id',
+            'acquis_apprentissage_vise.code',
+            'acquis_apprentissage_vise.name'
+        )
+            ->join(
+                'aavue_vise',
+                'aavue_vise.fk_acquis_apprentissage_vise',
+                '=',
+                'acquis_apprentissage_vise.id'
+            )
+            ->distinct()
+            ->get();
+
+        return $response;
+    }
 }

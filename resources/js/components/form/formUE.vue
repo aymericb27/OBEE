@@ -14,13 +14,11 @@
                 <span> {{ formErrors }} </span>
             </div>
             <form @submit.prevent="submitFormElementConstitutif">
-                <div class="p-4 border rounded bg-light mt-3">
+                <div class="p-4 border rounded bg-white mt-3">
                     <div class="mb-4 d-flex align-items-center">
-                        <span
-                            class="pr-2 mr-2 mb-0"
-                        >
+                        <span class="pr-2 mr-2 mb-0">
                             <input
-                                type="text"
+                                type="number"
                                 class="form form-control"
                                 v-model="ue.ects"
                                 placeholder="Nombre d'ects"
@@ -59,6 +57,9 @@
                             <div class="col-md-8 p-2">Libellé</div>
                             <div class="col-md-2 p-2">Semestre</div>
                         </div>
+                        <div v-if="!ue.pro.length" class="p-2 text-center">
+                            aucune donnée à afficher
+                        </div>
 
                         <div
                             v-for="(pro, index) in ue.pro"
@@ -74,7 +75,16 @@
                             </div>
                             <div class="col-md-1 p-2 PRO">{{ pro.code }}</div>
                             <div class="col-md-8 p-2">{{ pro.name }}</div>
-                            <div class="col-md-2 p-2"><input type="number" class="form form-control"></input></div>
+                            <div class="col-md-2 p-1">
+                                <input
+                                    required
+                                    type="number"
+                                    min="1"
+                                    v-model.number="pro.semester"
+                                    :max="pro.nbrSemester"
+                                    class="form form-control"
+                                />
+                            </div>
                         </div>
                         <button
                             type="button"
@@ -95,6 +105,9 @@
                             <div class="col-md-1 p-2">Code</div>
                             <div class="col-md-9 p-2">Nom</div>
                         </div>
+                        <div v-if="!ue.aavvise.length" class="p-2 text-center">
+                            aucune donnée à afficher
+                        </div>
 
                         <div
                             v-for="(aav, index) in ue.aavvise"
@@ -114,7 +127,7 @@
                         <button
                             type="button"
                             class="btn btn-primary mt-2"
-                            @click="openModal('aavvise')"
+                            @click="openModalVise()"
                         >
                             ajouter un acquis d'apprentissage visé
                         </button>
@@ -130,8 +143,14 @@
                             <div class="col-md-1 p-2">Code</div>
                             <div class="col-md-9 p-2">Nom</div>
                         </div>
-
                         <div
+                            v-if="!ue.aavprerequis.length"
+                            class="p-2 text-center"
+                        >
+                            aucune donnée à afficher
+                        </div>
+                        <div
+                            v-else
                             v-for="(aav, index) in ue.aavprerequis"
                             class="row"
                             :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
@@ -149,7 +168,7 @@
                         <button
                             type="button"
                             class="btn btn-primary mt-2"
-                            @click="openModal('aavprerequis')"
+                            @click="openModalPrerequis()"
                         >
                             ajouter un prérequis
                         </button>
@@ -176,13 +195,23 @@
         </div>
     </div>
     <modalList
-        v-if="showModal"
-        :visible="showModal"
+        v-if="showModalVise"
+        :visible="showModalVise"
         :routeGET="modalRoute"
         :title="modalTitle"
-        :listToExclude="aavToExclude"
+        :listToExclude="aavViseToExclude"
         type="AAV"
-        @close="showModal = false"
+        @close="showModalVise = false"
+        @selected="handleSelected"
+    />
+    <modalList
+        v-if="showModalPrerequis"
+        :visible="showModalPrerequis"
+        :routeGET="modalRoute"
+        :title="modalTitle"
+        :listToExclude="aavPrerequisToExclude"
+        type="AAV"
+        @close="showModalPrerequis = false"
         @selected="handleSelected"
     />
     <modalList
@@ -212,20 +241,22 @@ export default {
             type: Boolean,
             default: false,
         },
-		SemesterID : {type: Number},
-		ProgramID: {type: Number},
+        SemesterID: { type: Number },
+        ProgramID: { type: Number },
     },
     components: { modalList },
 
     data() {
         return {
             activeForm: null,
-            showModal: false,
+            showModalVise: false,
+            showModalPrerequis: false,
             showModalPro: false,
             modalRoute: "",
             modalTitle: "",
             proToExclude: [],
-            aavToExclude: [],
+            aavViseToExclude: [],
+            aavPrerequisToExclude: [],
             modalTarget: "", // 'aavvise' ou 'aavprerequis'
             ue: {
                 aavvise: [],
@@ -233,7 +264,6 @@ export default {
                 pro: [],
                 name: "",
                 description: "",
-                semestre: 1,
                 code: "",
                 ects: "",
                 aavs: {},
@@ -243,16 +273,25 @@ export default {
         };
     },
     methods: {
-        openModal(type) {
-            this.modalTarget = type;
-            this.modalTitle =
-                type === "aavvise"
-                    ? "Ajouter des acquis d’apprentissage visés"
-                    : "Ajouter des prérequis";
-            this.modalRoute = "/aavs/get";
-            this.aavToExclude =
-                type === "aavvise" ? this.ue.aavvise : this.ue.aavprerequis;
-            this.showModal = true;
+        openModalVise() {
+            this.modalTarget = "aavvise";
+            this.modalRoute = "/aav/get";
+            this.modalTitle = "Ajouter des acquis d’apprentissage visés";
+            this.aavViseToExclude = [
+                ...this.ue.aavvise,
+                ...this.ue.aavprerequis,
+            ];
+            this.showModalVise = true;
+        },
+        openModalPrerequis() {
+            this.modalTarget = "aavprerequis";
+            this.modalRoute = "/aav/prerequis/get";
+            this.modalTitle = "Ajouter des prérequis";
+            this.aavPrerequisToExclude = [
+                ...this.ue.aavvise,
+                ...this.ue.aavprerequis,
+            ];
+            this.showModalPrerequis = true;
         },
         openModalPro() {
             this.modalTarget = "pro";
@@ -262,6 +301,7 @@ export default {
             this.showModalPro = true;
         },
         handleSelected(selectedItems) {
+            console.log(this.modalTarget);
             if (this.modalTarget === "aavvise") {
                 this.ue.aavvise.push(...selectedItems);
             } else if (this.modalTarget === "aavprerequis") {
@@ -272,10 +312,10 @@ export default {
         },
         async submitFormElementConstitutif() {
             try {
+                console.log(this.ue.pro);
                 if (this.id) {
                     const response = await axios.put("/ue/update", {
                         id: this.ue.id,
-                        code: this.ue.code,
                         name: this.ue.name,
                         ects: this.ue.ects,
                         description: this.ue.description,
@@ -295,9 +335,9 @@ export default {
                         });
                     }
                 } else {
+					console.log(this.ue.pro);
                     const response = await axios.post("/ue/store", {
                         name: this.ue.name,
-                        code: this.ue.code,
                         ects: this.ue.ects,
                         description: this.ue.description,
                         aavprerequis: this.ue.aavprerequis,
@@ -333,6 +373,35 @@ export default {
                     this.formErrors = "Une erreur inconnue est survenue.";
                 }
                 console.error(error);
+            }
+        },
+        async loadProgram() {
+            try {
+                const programId = this.$route.query.programID;
+                const semesterNumber = this.$route.query.semesterNumber;
+
+                if (!programId) {
+                    return;
+                }
+
+                const response = await axios.get("/pro/get/detailed", {
+                    params: { id: programId },
+                });
+
+                if (response.data) {
+                    const alreadyLinked = this.ue.pro.some(
+                        (pro) => pro.id === response.data.id
+                    );
+                    const responseProgram = response.data;
+                    responseProgram.semester = parseInt(semesterNumber, 10);
+                    if (!alreadyLinked) {
+                        this.ue.pro.push(responseProgram);
+                    }
+                }
+            } catch (error) {
+                console.log(error);
+                this.formErrors =
+                    "Impossible de charger le programme sélectionné.";
             }
         },
         async loadUE() {
@@ -392,8 +461,9 @@ export default {
     },
 
     mounted() {
-		    console.log("Semestre :", this.$route.query.semesterID);
-    console.log("Programme :", this.$route.query.programID);
+        if (this.$route.query.programID && this.$route.query.semesterNumber) {
+            this.loadProgram();
+        }
         if (this.id) {
             this.loadUE();
         }
