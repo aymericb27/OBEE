@@ -5,12 +5,10 @@ import tree from "./components/tree.vue";
 import UEDetailed from "./components/detailed/UEDetailed.vue";
 import AATDetailed from "./components/detailed/AATDetailed.vue";
 import AAVDetailed from "./components/detailed/AAVDetailed.vue";
-import Calendar from "./components/calendar.vue";
-import AddForm from "./components/addForm.vue";
-import sheduleError from "./components/sheduleError.vue";
 import FormUE from "./components/form/formUE.vue";
 import PRODetailed from "./components/detailed/PRODetailed.vue";
-import ProgramError from "./components/programError.vue";
+import sheduleError from "./components/error/sheduleError.vue";
+import ProgramError from "./components/error/programError.vue";
 import ExportPanel from "./components/exportPanel.vue";
 import levels from "./components/levels.vue";
 import FormProgram from "./components/form/formProgram.vue";
@@ -21,27 +19,13 @@ const routes = [
         component: ListFramework,
     },
     {
-        path: "/calendar",
-        name: "calendar",
-        component: Calendar,
-        props: {
-            csrfform: "{{ csrf_token() }}",
-            routeCalendar: "{{ route('calendar.store') }}",
-        },
-    },
-    {
-        path: "/form",
-        name: "form",
-        component: AddForm,
-    },
-    {
         path: "/tree",
         name: "tree",
         component: tree,
     },
     {
-        path: '/levels',
-        name: 'levels',
+        path: "/levels",
+        name: "levels",
         component: levels,
     },
     {

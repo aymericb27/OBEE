@@ -23,7 +23,10 @@ class UniteEnseignement extends Controller
             'aavvise.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'pro' => ['array'],
             'pro.*.id' => ['nullable', 'integer', 'exists:programme,id'],
-            'pro.*.semester' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'pro.*.semester' => ['nullable', 'integer', 'min:1'],
+            'aat' => ['array'],
+            'aat.*.id' => ['nullable', 'integer', 'exists:acquis_apprentissage_terminaux,id'],
+            'aat.*.contribution' => ['nullable', 'integer', 'min:1', 'max:3'],
         ]);
 
         // ----- Génération du code UExxx -----
@@ -59,6 +62,17 @@ class UniteEnseignement extends Controller
 
         if (isset($validated['aavprerequis'])) {
             $ue->aavprerequis()->sync(array_column($validated['aavprerequis'], 'id'));
+        }
+
+        if (!empty($validated['aat'])) {
+
+            $pivotData = [];
+            foreach ($validated['aat'] as $item) {
+                $pivotData[$item['id']] = ['contribution' => $item['contribution']];
+            }
+
+            // ajoute tous les liens pivot d'un coup
+            $ue->aat()->attach($pivotData);
         }
         if (!empty($validated['pro'])) {
 

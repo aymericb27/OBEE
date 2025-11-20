@@ -50,7 +50,7 @@ Route::get('/calendarLesson/index', [CalendarLesson::class, 'index'])->name('cal
 Route::get('/CalendarLesson/get/detailed', [CalendarLesson::class, 'getDetailed'])->name('calendar.get.detailed');
 
 //** Acquis d'apprentissage terminaux **//
-Route::get('/aats/get', [AcquisApprentissageTerminaux::class, 'get']);
+Route::get('/aat/get', [AcquisApprentissageTerminaux::class, 'get']);
 Route::get('/AATGetChildren', [treeController::class, 'getChildren']);
 Route::get('/aat/get/detailed', [AcquisApprentissageTerminaux::class, 'getDetailed']);
 Route::get('/aat/aavs/get', [AcquisApprentissageTerminaux::class, 'getAAVs']);
@@ -59,6 +59,7 @@ Route::get('/aat/aavs/get', [AcquisApprentissageTerminaux::class, 'getAAVs']);
 Route::get('/aav/get/detailed', [AcquisApprentissageVise::class, 'getDetailed']);
 Route::get('/aav/aats/get', [AcquisApprentissageVise::class, 'getAATs']);
 Route::get('/aav/get', [AcquisApprentissageVise::class, 'get']);
+Route::post('/aav/store', [AcquisApprentissageVise::class, 'store']);
 Route::get('/aav/prerequis/get', [AcquisApprentissageVise::class, 'getOnlyPrerequis']);
 Route::get('/aav/UEvise/get', [AcquisApprentissageVise::class, 'getUEvise']);
 Route::get('/aav/UEPrerequis/get', [AcquisApprentissageVise::class, 'getUEprerequis']);

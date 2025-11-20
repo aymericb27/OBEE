@@ -25,6 +25,12 @@ class UniteEnseignement extends Model
             ->withPivot('semester')
             ->withTimestamps();
     }
+    public function aat()
+    {
+        return $this->belongsToMany(Programme::class, 'ue_aat', 'fk_ue', 'fk_aat')
+            ->withPivot('contribution')
+            ->withTimestamps();
+    }
 
     public function aavvise()
     {

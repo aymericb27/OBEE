@@ -5,7 +5,7 @@
                 <i class="fa-solid fa-circle-arrow-left"></i> Retour
             </a>
         </div>
-        <div class="container">
+        <div class="container p-4">
             <div v-if="formErrors" class="alert alert-danger mt-3">
                 <i
                     class="fa-solid fa-triangle-exclamation mr-2"
@@ -15,6 +15,10 @@
             </div>
             <form @submit.prevent="submitFormElementConstitutif">
                 <div class="p-4 border rounded bg-white mt-3">
+                    <h3 class="mb-4 primary_color">
+                        Création d'une unité d'enseignement
+                    </h3>
+
                     <div class="mb-4 d-flex align-items-center">
                         <span class="pr-2 mr-2 mb-0">
                             <input
@@ -45,11 +49,67 @@
                             required
                         ></quill-editor>
                     </p>
-                    <div class="listComponent mb-4">
+                    <div class="listComponent mb-5">
                         <div class="mb-2">
-                            <h5 class="d-inline-block primary_color">
+                            <h4 class="d-inline-block primary_color">
+                                Liste des acquis d'apprentissages terminaux
+                                <button
+                                    type="button"
+                                    class="btn btn-primary ml-2 mb-2"
+                                    @click="openModalTerminal()"
+                                >
+                                    ajouter un acquis d'apprentissage terminal
+                                </button>
+                            </h4>
+                        </div>
+                        <div class="row border-bottom">
+                            <div class="col-md-1"></div>
+                            <div class="col-md-1 p-2">Code</div>
+                            <div class="col-md-8 p-2">Nom</div>
+                            <div class="col-md-2 p-2">Contribution</div>
+                        </div>
+                        <div v-if="!ue.aat.length" class="p-2 text-center">
+                            aucune donnée à afficher
+                        </div>
+
+                        <div
+                            v-for="(aat, index) in ue.aat"
+                            class="row"
+                            :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
+                        >
+                            <div class="col-md-1 text-right p-2">
+                                <i
+                                    @click="removeElement('aat', aat.id)"
+                                    class="text-danger fa fa-close pr-0"
+                                    style="cursor: pointer"
+                                ></i>
+                            </div>
+                            <div class="col-md-1 p-2 AAT">{{ aat.code }}</div>
+                            <div class="col-md-8 p-2">{{ aat.name }}</div>
+                            <div class="col-md-2 p-2">
+                                <select
+                                    class="form form-control"
+                                    v-model="aat.contribution"
+                                >
+                                    <option value="1" selected>faible</option>
+                                    <option value="2">modéré</option>
+                                    <option value="3">forte</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="listComponent mb-5">
+                        <div class="mb-2">
+                            <h4 class="d-inline-block mb-0 primary_color">
                                 Liste des programmes liés
-                            </h5>
+                                <button
+                                    type="button"
+                                    class="btn btn-primary ml-2 mb-2"
+                                    @click="openModalPro()"
+                                >
+                                    ajouter un programme
+                                </button>
+                            </h4>
                         </div>
                         <div class="row border-bottom">
                             <div class="col-md-1 p-2"></div>
@@ -68,7 +128,7 @@
                         >
                             <div class="col-md-1 text-right p-2">
                                 <i
-                                    @click="removePRO(pro.id)"
+                                    @click="removeElement('pro', pro.id)"
                                     class="text-danger fa fa-close pr-0"
                                     style="cursor: pointer"
                                 ></i>
@@ -86,19 +146,19 @@
                                 />
                             </div>
                         </div>
-                        <button
-                            type="button"
-                            class="btn btn-primary mt-2"
-                            @click="openModalPro()"
-                        >
-                            ajouter un programme
-                        </button>
                     </div>
-                    <div class="listComponent mb-4">
+                    <div class="listComponent mb-5">
                         <div class="mb-2">
-                            <h5 class="d-inline-block primary_color">
+                            <h4 class="d-inline-block primary_color">
                                 Liste des acquis d'apprentissages visé
-                            </h5>
+                                <button
+                                    type="button"
+                                    class="btn btn-primary ml-2 mb-2"
+                                    @click="openModalVise()"
+                                >
+                                    ajouter un acquis d'apprentissage visé
+                                </button>
+                            </h4>
                         </div>
                         <div class="row border-bottom">
                             <div class="col-md-1"></div>
@@ -116,7 +176,7 @@
                         >
                             <div class="col-md-1 text-right p-2">
                                 <i
-                                    @click="removeAAVise(aav.id)"
+                                    @click="removeElement('aavvise', aav.id)"
                                     class="text-danger fa fa-close pr-0"
                                     style="cursor: pointer"
                                 ></i>
@@ -124,19 +184,19 @@
                             <div class="col-md-1 p-2 AAV">{{ aav.code }}</div>
                             <div class="col-md-10 p-2">{{ aav.name }}</div>
                         </div>
-                        <button
-                            type="button"
-                            class="btn btn-primary mt-2"
-                            @click="openModalVise()"
-                        >
-                            ajouter un acquis d'apprentissage visé
-                        </button>
                     </div>
-                    <div class="listComponent mb-4">
+                    <div class="listComponent mb-5">
                         <div class="mb-2">
-                            <h5 class="d-inline-block primary_color">
+                            <h4 class="d-inline-block primary_color">
                                 Liste des prérequis
-                            </h5>
+                            </h4>
+                            <button
+                                type="button"
+                                class="btn btn-primary ml-2 mb-2"
+                                @click="openModalPrerequis()"
+                            >
+                                ajouter un prérequis
+                            </button>
                         </div>
                         <div class="row border-bottom">
                             <div class="col-md-1"></div>
@@ -157,7 +217,9 @@
                         >
                             <div class="col-md-1 text-right p-2">
                                 <i
-                                    @click="removeAAVprerequis(aav.id)"
+                                    @click="
+                                        removeElement('aavprerequis', aav.id)
+                                    "
                                     class="text-danger fa fa-close pr-0"
                                     style="cursor: pointer"
                                 ></i>
@@ -165,35 +227,110 @@
                             <div class="col-md-1 p-2 AAV">{{ aav.code }}</div>
                             <div class="col-md-10 p-2">{{ aav.name }}</div>
                         </div>
-                        <button
-                            type="button"
-                            class="btn btn-primary mt-2"
-                            @click="openModalPrerequis()"
-                        >
-                            ajouter un prérequis
-                        </button>
                     </div>
                     <button
                         type="button"
                         @click="$router.back()"
-                        class="mr-2 btn btn-secondary"
+                        class="mr-2 btn btn-lg btn-secondary"
                     >
                         Annuler
                     </button>
                     <button
                         type="submit"
-                        class="btn btn-primary"
+                        class="btn btn-lg btn-primary"
                         v-if="this.id"
                     >
                         Modifier l'unité d'enseignement
                     </button>
-                    <button type="submit" class="btn btn-primary" v-else>
+                    <button type="submit" class="btn btn-lg btn-primary" v-else>
                         Créer l'unité d'enseignement
                     </button>
                 </div>
             </form>
         </div>
     </div>
+    <!-- MODAL — Création AAV -->
+    <!-- MODAL CRÉATION AAV -->
+    <div
+        v-if="showModalCreateAAV"
+        class="modal fade show d-block"
+        tabindex="-1"
+        role="dialog"
+    >
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <!-- HEADER -->
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        Créer un acquis d'apprentissage visé
+                    </h5>
+                    <button
+                        type="button"
+                        class="close btn"
+                        @click="closeModalAAV"
+                    >
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label>Libellé</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            required
+                            v-model="aavForm.name"
+                        />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>Description</label>
+                        <textarea
+                            class="form-control"
+                            rows="3"
+                            v-model="aavForm.description"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>Acquis d'apprentissage Terminal</label>
+                        <select
+                            class="form-control"
+                            required
+                            v-model="aavForm.fk_AAT"
+                        >
+                            <option value="" disabled>
+                                — Sélectionner un type —
+                            </option>
+                            <option
+                                v-for="aat in listAAT"
+                                :key="aat.id"
+                                :value="aat.id"
+                            >
+                                {{ aat.name }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @click="closeModalAAV">
+                        Annuler
+                    </button>
+                    <button class="btn btn-primary" @click="submitAAV">
+                        Créer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BACKDROP -->
+        <div class="modal-backdrop fade show"></div>
+    </div>
+
     <modalList
         v-if="showModalVise"
         :visible="showModalVise"
@@ -201,6 +338,9 @@
         :title="modalTitle"
         :listToExclude="aavViseToExclude"
         type="AAV"
+        :btnAddModal="true"
+        @btnAddElementModal="handleNewAAV"
+        btnAddElementMessage="Créer un acquis d'aprentissage"
         @close="showModalVise = false"
         @selected="handleSelected"
     />
@@ -212,6 +352,16 @@
         :listToExclude="aavPrerequisToExclude"
         type="AAV"
         @close="showModalPrerequis = false"
+        @selected="handleSelected"
+    />
+    <modalList
+        v-if="showModalAAT"
+        :visible="showModalAAT"
+        :routeGET="modalRoute"
+        :title="modalTitle"
+        :listToExclude="aatPrerequisToExclude"
+        type="AAT"
+        @close="showModalAAT = false"
         @selected="handleSelected"
     />
     <modalList
@@ -251,17 +401,27 @@ export default {
             activeForm: null,
             showModalVise: false,
             showModalPrerequis: false,
+            showModalCreateAAV: false,
+            showModalAAT: false,
             showModalPro: false,
             modalRoute: "",
             modalTitle: "",
+            aatPrerequisToExclude: [],
             proToExclude: [],
             aavViseToExclude: [],
             aavPrerequisToExclude: [],
             modalTarget: "", // 'aavvise' ou 'aavprerequis'
+            listAAT: [],
+            aavForm: {
+                name: "",
+                description: "",
+                fk_AAT: "",
+            },
             ue: {
                 aavvise: [],
                 aavprerequis: [],
                 pro: [],
+                aat: [],
                 name: "",
                 description: "",
                 code: "",
@@ -273,6 +433,31 @@ export default {
         };
     },
     methods: {
+        handleNewAAV() {
+            this.loadAAT();
+            this.showModalCreateAAV = true;
+        },
+
+        closeModalAAV() {
+            this.showModalCreateAAV = false;
+            this.resetForm();
+        },
+
+        resetForm() {
+            this.aavForm = {
+                code: "",
+                name: "",
+                description: "",
+                fk_AAT: "",
+            };
+        },
+        openModalTerminal() {
+            this.modalTarget = "aat";
+            this.modalRoute = "/aat/get";
+            this.modalTitle = "Ajouter des acquis d’apprentissage terminaux";
+            this.aatPrerequisToExclude = this.ue.aat;
+            this.showModalAAT = true;
+        },
         openModalVise() {
             this.modalTarget = "aavvise";
             this.modalRoute = "/aav/get";
@@ -301,18 +486,22 @@ export default {
             this.showModalPro = true;
         },
         handleSelected(selectedItems) {
-            console.log(this.modalTarget);
             if (this.modalTarget === "aavvise") {
                 this.ue.aavvise.push(...selectedItems);
             } else if (this.modalTarget === "aavprerequis") {
                 this.ue.aavprerequis.push(...selectedItems);
             } else if (this.modalTarget === "pro") {
                 this.ue.pro.push(...selectedItems);
+            } else if (this.modalTarget === "aat") {
+                const itemsWithContribution = selectedItems.map((item) => ({
+                    ...item,
+                    contribution: 1,
+                }));
+                this.ue.aat.push(...itemsWithContribution);
             }
         },
         async submitFormElementConstitutif() {
             try {
-                console.log(this.ue.pro);
                 if (this.id) {
                     const response = await axios.put("/ue/update", {
                         id: this.ue.id,
@@ -335,7 +524,6 @@ export default {
                         });
                     }
                 } else {
-					console.log(this.ue.pro);
                     const response = await axios.post("/ue/store", {
                         name: this.ue.name,
                         ects: this.ue.ects,
@@ -343,9 +531,8 @@ export default {
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
                         pro: this.ue.pro,
-                        semestre: this.ue.semestre,
+						aat: this.ue.aat,
                     });
-                    console.log(response.data);
                     // ✅ Si tout s’est bien passé
                     if (response.data.success) {
                         // ✅ Redirection avec message (query param)
@@ -373,6 +560,29 @@ export default {
                     this.formErrors = "Une erreur inconnue est survenue.";
                 }
                 console.error(error);
+            }
+        },
+        async loadAAT() {
+            const response = await axios.get("/aat/get");
+            console.log(response.data);
+            this.listAAT = response.data;
+        },
+        async submitAAV() {
+            try {
+                const response = await axios.post("/aav/store", this.aavForm);
+                const createdAAV = response.data.aav;
+
+                // Ajout dans la bonne liste
+                if (this.modalTarget === "aavvise") {
+                    this.ue.aavvise.push(createdAAV);
+                } else if (this.modalTarget === "aavprerequis") {
+                    this.ue.aavprerequis.push(createdAAV);
+                }
+
+                this.closeModalAAV();
+            } catch (error) {
+                console.error(error);
+                alert("Erreur lors de la création.");
             }
         },
         async loadProgram() {
@@ -437,26 +647,16 @@ export default {
                 console.log(error);
             }
         },
-        removePRO(proId) {
-            if (!this.ue || !Array.isArray(this.ue.aavvise)) return;
+        removeElement(type, id) {
+            console.log(id);
+            if (!this.ue || !this.ue[type] || !Array.isArray(this.ue[type]))
+                return;
 
-            // Option 1: mutation (préserve la même référence d'array)
-            const i = this.ue.pro.findIndex((a) => a.id === proId);
-            if (i !== -1) this.ue.pro.splice(i, 1);
-        },
-        removeAAVise(aavId) {
-            if (!this.ue || !Array.isArray(this.ue.aavvise)) return;
+            const index = this.ue[type].findIndex((item) => item.id === id);
 
-            // Option 1: mutation (préserve la même référence d'array)
-            const i = this.ue.aavvise.findIndex((a) => a.id === aavId);
-            if (i !== -1) this.ue.aavvise.splice(i, 1);
-        },
-        removeAAVprerequis(aavId) {
-            if (!this.ue || !Array.isArray(this.ue.aavvise)) return;
-
-            // Option 1: mutation (préserve la même référence d'array)
-            const i = this.ue.aavprerequis.findIndex((a) => a.id === aavId);
-            if (i !== -1) this.ue.aavprerequis.splice(i, 1);
+            if (index !== -1) {
+                this.ue[type].splice(index, 1);
+            }
         },
     },
 
@@ -470,3 +670,16 @@ export default {
     },
 };
 </script>
+<style>
+.modal-backdrop {
+    z-index: 1040;
+}
+
+.modal-dialog {
+    z-index: 1050;
+}
+
+.modal.fade.show.d-block {
+    background: rgba(0, 0, 0, 0.45);
+}
+</style>

@@ -127,6 +127,14 @@
                             {{ btnAddElementMessage }}
                         </button>
                     </router-link>
+
+                    <button
+                        v-if="btnAddModal"
+                        class="btn btn-primary mr-auto"
+                        @click="emitBtnModal()"
+                    >
+                        {{ btnAddElementMessage }}
+                    </button>
                     <button class="btn btn-secondary" @click="close">
                         Annuler
                     </button>
@@ -148,6 +156,7 @@ import axios from "axios";
 export default {
     name: "ModalList",
     props: {
+        btnAddModal: { type: Boolean, default: false },
         btnAddElement: { type: Boolean, default: false },
         btnAddElementRoute: { type: String, default: "" },
         btnAddElementMessage: { type: String, default: "" },
@@ -197,8 +206,6 @@ export default {
                 const response = await axios.get(this.routeGET);
 
                 const excludeIds = this.listToExclude.map((item) => item.id);
-                console.log(this.listToExclude);
-                console.log(response.data);
                 this.list = response.data.filter(
                     (item) => !excludeIds.includes(item.id)
                 );
@@ -230,6 +237,11 @@ export default {
             );
             this.$emit("selected", selectedItems);
             this.close();
+        },
+        emitBtnModal() {
+            this.$emit("close");
+
+            this.$emit("btnAddElementModal");
         },
     },
     mounted() {

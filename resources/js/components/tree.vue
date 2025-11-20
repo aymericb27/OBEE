@@ -3,7 +3,7 @@
         <i class="fa-solid fa-check green mr-2" style="color: darkgreen"></i>
         <span> {{ $route.query.message }} </span>
     </div>
-    <div class="row">
+    <div class="row mt-3">
         <div class="col-md-3">
             <div class="border p-3 bg-white rounded">
                 <h2 class="secondary_color">
