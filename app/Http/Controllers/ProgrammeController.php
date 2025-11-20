@@ -150,10 +150,16 @@ class ProgrammeController extends Controller
 
     public function getUEBySemester($id, $semestre)
     {
-        $ue = UniteEnseignement::select('code','name', 'unite_enseignement.id as id', 'ects')->join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
+        $ues = UniteEnseignement::select('code', 'name', 'unite_enseignement.id', 'ects')
+            ->join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
             ->where('fk_programme', $id)
-            ->where('semester', $semestre)->get();
-        return $ue;
+            ->where('semester', $semestre)
+            ->whereNotIn('unite_enseignement.id', function ($query) {
+                $query->select('fk_ue_child')->from('element_constitutif');
+            })
+            ->with('children')   // <-- chargement des enfants via pivot
+            ->get();
+        return $ues;
     }
 
     public function getDetailed(Request $request)

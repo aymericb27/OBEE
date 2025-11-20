@@ -20,7 +20,7 @@
             </span>
 
             <button
-                @click="openModalUE()"
+                @click="openModalUE('UE', null)"
                 class="btn btn-lg btn-primary ml-auto"
             >
                 + ajout UE
@@ -33,24 +33,27 @@
                 <!-- UE HEADER -->
                 <div class="d-flex align-items-center mb-1">
                     <i
+												v-if="UE.children.length"
                         class="fa-solid"
                         :class="
-                            !UE.show ? 'fa-chevron-down' : 'fa-chevron-right'
+                            UE.show ? 'fa-chevron-down' : 'fa-chevron-right'
                         "
                         style="cursor: pointer; font-size: 0.9rem"
                         @click="UE.show = !UE.show"
                     ></i>
 
-                    <h5 class="d-inline-block ml-2 m-0"><span class="UE">{{ UE.code }}</span> {{ UE.name }}</h5>
+                    <h5 class="d-inline-block ml-2 m-0">
+                        <span class="UE">{{ UE.code }}</span> {{ UE.name }}
+                    </h5>
 
                     <span class="badge badge-success ml-2"
                         >{{ UE.ects }} ECTS</span
                     >
                     <span class="ml-auto">
-                            <i
-                                style="font-size: 24px; color: #e70c0c"
-                                class="fa-regular fa-trash-can mr-3"
-                            ></i>
+                        <i
+                            style="font-size: 24px; color: #e70c0c"
+                            class="fa-regular fa-trash-can mr-3"
+                        ></i>
                         <router-link
                             :to="{
                                 name: 'modifyUE',
@@ -64,7 +67,10 @@
                         </router-link>
                     </span>
 
-                    <button class="btn btn-lg btn-outline-secondary ml-3">
+                    <button
+                        class="btn btn-lg btn-outline-secondary ml-3"
+                        @click="openModalUE('EC', UE)"
+                    >
                         + ajout EC
                     </button>
                 </div>
@@ -72,27 +78,33 @@
                 <!-- ECs -->
                 <div v-if="UE.show" class="ml-4">
                     <div
-                        v-for="EC in UE.EC"
-                        class="p-2 border rounded mb-2 d-flex align-items-center ec-card"
+                        v-for="EC in UE.children"
+                        class="p-3 border rounded mb-2 d-flex align-items-center ec-card"
                     >
-                        <span class="dot-green mr-2"></span>
-
-                        <span class="flex-grow-1">
+                        <h5 class="d-inline-block ml-2 m-0">
                             {{ EC.code }} - {{ EC.name }}
-                        </span>
+                        </h5>
 
-                        <span class="badge bg-light text-dark border">
-                            {{ EC.ects }} ECTS
+                        <span class="badge badge-success ml-2"
+                            >{{ EC.ects }} ECTS</span
+                        >
+                        <span class="ml-auto">
+                            <i
+                                style="font-size: 24px; color: #e70c0c"
+                                class="fa-regular fa-trash-can mr-3"
+                            ></i>
+                            <router-link
+                                :to="{
+                                    name: 'modifyUE',
+                                    params: { id: UE.id },
+                                }"
+                            >
+                                <i
+                                    style="font-size: 24px"
+                                    class="fa-regular fa-pen-to-square"
+                                ></i>
+                            </router-link>
                         </span>
-
-                        <i
-                            class="fa-regular fa-pen-to-square ml-3"
-                            style="cursor: pointer"
-                        ></i>
-                        <i
-                            class="fa-solid fa-trash ml-3 text-danger"
-                            style="cursor: pointer"
-                        ></i>
                     </div>
                 </div>
             </div>
@@ -112,9 +124,12 @@ export default {
         };
     },
     methods: {
-        openModalUE() {
-            console.log(this.semester.UES);
-            this.$emit("open-ue-modal", this.semester);
+        openModalUE(type, UE) {
+            this.$emit("open-ue-modal", {
+                semester: this.semester,
+                type: type,
+                UE: UE,
+            });
         },
     },
 };

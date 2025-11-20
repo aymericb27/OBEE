@@ -6,6 +6,7 @@ use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ErrorController;
+use App\Models\ElementConstitutif;
 use App\Models\Programme;
 use App\Models\UEPRO;
 
@@ -27,6 +28,8 @@ class UniteEnseignement extends Controller
             'aat' => ['array'],
             'aat.*.id' => ['nullable', 'integer', 'exists:acquis_apprentissage_terminaux,id'],
             'aat.*.contribution' => ['nullable', 'integer', 'min:1', 'max:3'],
+            'ueParentID' => ["nullable",'integer', 'exists:unite_enseignement,id'],
+            'ueParentContribution' => ["nullable", 'integer','min:1','max:3']
         ]);
 
         // ----- Génération du code UExxx -----
@@ -37,7 +40,7 @@ class UniteEnseignement extends Controller
 
         if ($lastUE) {
             // extrait le numéro : PRO012 → 12
-            $lastNumber = intval(substr($lastUE->code, 3));
+            $lastNumber = intval(substr($lastUE->code, 2));
             $newNumber = $lastNumber + 1;
         } else {
             $newNumber = 1; // premier code
@@ -84,6 +87,13 @@ class UniteEnseignement extends Controller
 
             // ajoute tous les liens pivot d'un coup
             $ue->pro()->attach($pivotData);
+        }
+        if(!empty($validated['ueParentID'])){
+            ElementConstitutif::create([
+                'fk_ue_parent' => $validated['ueParentID'],
+                'fk_ue_child' => $ue->id,
+                'contribution' => $validated['ueParentContribution']
+            ]);
         }
         return response()->json([
             'success' => true,

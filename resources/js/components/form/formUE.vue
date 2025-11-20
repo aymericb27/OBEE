@@ -18,23 +18,41 @@
                     <h3 class="mb-4 primary_color">
                         Création d'une unité d'enseignement
                     </h3>
+                    <div class="mb-3" v-if="$route.query.UEParentId">
+                        Cette unité d'enseignement sera l'élément constitutif de
+                        <span class="UE">{{ ueParent.code }}</span>
+                        <span class="ml-1 font-weight-bold secondary_color">{{
+                            ueParent.name
+                        }}</span>
+                        <div class="mt-2 mb-3">
+                            <span>Contribution : </span>
+                            <select
+                                class="form form-control w-25 d-inline-block ml-2"
+                                v-model="ueParent.contribution"
+                            >
+                                <option value="1" selected>faible</option>
+                                <option value="2">modéré</option>
+                                <option value="3">forte</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <div class="mb-4 d-flex align-items-center">
-                        <span class="pr-2 mr-2 mb-0">
-                            <input
-                                type="number"
-                                class="form form-control"
-                                v-model="ue.ects"
-                                placeholder="Nombre d'ects"
-                                required
-                            />
-                        </span>
-                        <span class="w-75 flex-grow-1">
+                        <span class="pr-2 mr-2 mb-0 w-75 flex-grow-1">
                             <input
                                 type="text"
                                 class="form form-control"
                                 placeholder="libellé"
                                 v-model="ue.name"
+                                required
+                            />
+                        </span>
+                        <span class="">
+                            <input
+                                type="number"
+                                class="form form-control"
+                                v-model="ue.ects"
+                                placeholder="Nombre d'ects"
                                 required
                             />
                         </span>
@@ -393,6 +411,7 @@ export default {
         },
         SemesterID: { type: Number },
         ProgramID: { type: Number },
+        UEParentId: { type: Number, default: null },
     },
     components: { modalList },
 
@@ -417,6 +436,9 @@ export default {
                 description: "",
                 fk_AAT: "",
             },
+            ueParent: {
+				contribution : '' ,
+			},
             ue: {
                 aavvise: [],
                 aavprerequis: [],
@@ -512,6 +534,7 @@ export default {
                         aavvise: this.ue.aavvise,
                         pro: this.ue.pro,
                         semestre: this.ue.semestre,
+                        ueParent: this.ueParent,
                     });
 
                     // ✅ Si tout s’est bien passé
@@ -531,7 +554,9 @@ export default {
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
                         pro: this.ue.pro,
-						aat: this.ue.aat,
+                        aat: this.ue.aat,
+                        ueParentID: this.ueParent.id,
+						ueParentContribution: this.ueParent.contribution,
                     });
                     // ✅ Si tout s’est bien passé
                     if (response.data.success) {
@@ -614,6 +639,21 @@ export default {
                     "Impossible de charger le programme sélectionné.";
             }
         },
+
+        async loadUEParent(idParent) {
+            try {
+                const responseUE = await axios.get("/UEGet/detailed", {
+                    params: {
+                        id: idParent,
+                    },
+                });
+                this.ueParent = responseUE.data;
+				this.ueParent.contribution = 1 ;
+                console.log(responseUE.data);
+            } catch (error) {
+                console.log(error);
+            }
+        },
         async loadUE() {
             try {
                 const responseUE = await axios.get("/UEGet/detailed", {
@@ -663,6 +703,9 @@ export default {
     mounted() {
         if (this.$route.query.programID && this.$route.query.semesterNumber) {
             this.loadProgram();
+        }
+        if (this.$route.query.UEParentId) {
+            this.loadUEParent(this.$route.query.UEParentId);
         }
         if (this.id) {
             this.loadUE();

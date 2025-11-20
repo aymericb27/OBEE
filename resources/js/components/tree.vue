@@ -94,7 +94,7 @@
         :title="modalTitle"
         :btnAddElement="true"
         btnAddElementRoute="/ue/create"
-        :btnAddElementParam="{'semesterNumber': semesterSelected, 'programID': selectedProgramId}"
+        :btnAddElementParam="paramUEForm"
         btnAddElementMessage="Créer une unité d'enseignement"
         type="UE"
         :listToExclude="UEsToExclude"
@@ -113,6 +113,8 @@ export default {
         return {
             UEsToExclude: [],
             showModalUE: false,
+            UECreateType: null,
+            paramUEForm: {},
             showSemesterModal: false,
             semesterSelected: "",
             selectedProgramId: null, // 👈 programme sélectionné
@@ -129,10 +131,17 @@ export default {
     },
 
     methods: {
-        openModalUE(semester) {
-            this.UEsToExclude = semester.UES;
+        openModalUE(param) {
+            this.UEsToExclude = param.semester.UES;
             this.modalTarget = "ue";
-            this.semesterSelected = semester.number;
+            this.paramUEForm = {
+                semesterNumber: param.semester.number,
+                programID: this.selectedProgramId,
+            };
+            if (param.type === "EC") {
+                this.paramUEForm.UEParentId = param.UE.id;
+            }
+            console.log(this.paramUEForm);
             this.modalRoute = "/ues/get";
             this.modalTitle = "Ajouter des unités d'enseignements";
             this.showModalUE = true;
@@ -169,6 +178,7 @@ export default {
             const response = await axios.get("/programme/get/tree", {
                 params: { id },
             });
+            console.log(this.prog);
             this.prog = response.data;
         },
         openSemesterModal() {

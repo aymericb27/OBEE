@@ -18,6 +18,25 @@ class UniteEnseignement extends Model
         'ects',
         'semestre',
     ];
+    public function children()
+    {
+        return $this->belongsToMany(
+            UniteEnseignement::class,
+            'element_constitutif',
+            'fk_ue_parent',  
+            'fk_ue_child'     
+        );
+    }
+
+    public function parent()
+    {
+        return $this->belongsToMany(
+            UniteEnseignement::class,
+            'element_constitutif',
+            'fk_ue_child',
+            'fk_ue_parent'
+        );
+    }
 
     public function pro()
     {
