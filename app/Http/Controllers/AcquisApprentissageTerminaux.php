@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AcquisApprentissageTerminaux as AAT;
 use App\Models\AcquisApprentissageVise as AAV;
+use App\Models\UniteEnseignement;
 use Illuminate\Http\Request;
 
 class AcquisApprentissageTerminaux extends Controller
@@ -13,6 +14,40 @@ class AcquisApprentissageTerminaux extends Controller
         $result = AAT::select('id', 'code', 'name', 'description')
             ->get();
         return $result;
+    }
+    public function getTree(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+        $aat = AAT::where('id', $validated['id'])->first();
+        $ues = UniteEnseignement::select(
+            'code',
+            'name',
+            'unite_enseignement.id',
+            'ects',
+            'ue_aat.contribution'
+        )
+            ->join('ue_aat', 'fk_ue', '=', 'unite_enseignement.id')
+            ->where('fk_aat', $validated['id'])
+
+            // exclure les children dans la liste principale
+            ->whereNotIn('unite_enseignement.id', function ($query) {
+                $query->select('fk_ue_child')->from('element_constitutif');
+            })
+
+            // charger les enfants et leur contribution
+            ->with([
+                'children' => function ($q) use ($validated) {
+                    $q->select('unite_enseignement.id', 'code', 'name', 'ects', 'ue_aat.contribution', 'element_constitutif.contribution as ECContribution')
+                        ->join('ue_aat', 'fk_ue', '=', 'unite_enseignement.id')
+                        ->where('fk_aat', $validated['id']);
+                }
+            ])
+
+            ->get();
+        $aat->ues = $ues;
+        return $aat;
     }
     public function getDetailed(Request $request)
     {
@@ -26,7 +61,8 @@ class AcquisApprentissageTerminaux extends Controller
         return $response;
     }
 
-    public function getAAVs(Request $request){
+    public function getAAVs(Request $request)
+    {
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);

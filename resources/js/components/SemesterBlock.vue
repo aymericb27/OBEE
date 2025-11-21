@@ -82,7 +82,7 @@
                         class="p-3 border rounded mb-2 d-flex align-items-center ec-card"
                     >
                         <h5 class="d-inline-block ml-2 m-0">
-                            {{ EC.code }} - {{ EC.name }}
+                            <span class="UE">{{ EC.code }}</span> - {{ EC.name }}
                         </h5>
 
                         <span class="badge badge-success ml-2"

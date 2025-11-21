@@ -45,13 +45,9 @@ Route::put('/programme/{id}', [ProgrammeController::class, 'update']);
 Route::post('/programme/add-semester', [ProgrammeController::class, 'addSemestre']);
 Route::post('/programme/ues/add', [ProgrammeController::class, 'addUEs'])->name('pro.store');
 
-Route::post('/calendarStore', [CalendarLesson::class, 'store'])->name('calendar.store');
-Route::get('/calendarLesson/index', [CalendarLesson::class, 'index'])->name('calendar.index');
-Route::get('/CalendarLesson/get/detailed', [CalendarLesson::class, 'getDetailed'])->name('calendar.get.detailed');
-
 //** Acquis d'apprentissage terminaux **//
 Route::get('/aat/get', [AcquisApprentissageTerminaux::class, 'get']);
-Route::get('/AATGetChildren', [treeController::class, 'getChildren']);
+Route::get('/aat/get/tree', [AcquisApprentissageTerminaux::class, 'getTree']);
 Route::get('/aat/get/detailed', [AcquisApprentissageTerminaux::class, 'getDetailed']);
 Route::get('/aat/aavs/get', [AcquisApprentissageTerminaux::class, 'getAAVs']);
 
