@@ -81,6 +81,12 @@ class AcquisApprentissageVise extends Controller
         return $response;
     }
 
+    public function getPrerequis(){
+        $response = AAV::join('aavue_prerequis','fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise') 
+        ->get();
+        return $response;
+    }
+
     public function getAATs(Request $request)
     {
         $validated = $request->validate([

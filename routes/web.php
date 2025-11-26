@@ -10,6 +10,7 @@ use App\Http\Controllers\ProgrammeController;
 use App\Http\Controllers\treeController;
 use App\Http\Controllers\UniteEnseignement;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,7 @@ Route::get('/', function () {
 Route::get('/ues/get', [UniteEnseignement::class, 'get'])->name('UE.get');
 Route::get('/UEGet/detailed', [UniteEnseignement::class, 'getDetailed'])->name('UE.get.detailed');
 Route::get('/ue/ecs/get', [UniteEnseignement::class, 'getECs'])->name('ue.get.ecs');
+Route::get('/ue/aat/get', [UniteEnseignement::class, 'getAATs'])->name('ue.get.aat');
 Route::get('ue/pro/get', [UniteEnseignement::class, 'getPro'])->name('ue.pro.get');
 Route::get('/ue/aavvise/get', [UniteEnseignement::class, 'getAAVvise'])->name('ue.get.aavvise');
 Route::get('/ue/aavprerequis/get', [UniteEnseignement::class, 'getAAVprerequis'])->name('ue.get.aavprerequis');
@@ -54,6 +56,7 @@ Route::get('/aat/aavs/get', [AcquisApprentissageTerminaux::class, 'getAAVs']);
 //** Acquis d'apprentissage visé **//
 Route::get('/aav/get/detailed', [AcquisApprentissageVise::class, 'getDetailed']);
 Route::get('/aav/aats/get', [AcquisApprentissageVise::class, 'getAATs']);
+Route::get('/aav/pre/get', [AcquisApprentissageVise::class, 'getPrerequis']);
 Route::get('/aav/get', [AcquisApprentissageVise::class, 'get']);
 Route::post('/aav/store', [AcquisApprentissageVise::class, 'store']);
 Route::get('/aav/prerequis/get', [AcquisApprentissageVise::class, 'getOnlyPrerequis']);
@@ -69,6 +72,10 @@ Route::get('/Error/pro/ects/number', [ErrorController::class, 'getErrorProEctsNu
 //** Exportation **//
 Route::get('/export/get/{type}', [ExportController::class, 'export']);
 
+//** importation **//
+Route::get('/download/model_import', function () {
+    return Storage::download('public/files/model_import.xlsx');
+});
 Route::get('/{any}', function () {
     return view('welcome');
 })->where('any', '.*');

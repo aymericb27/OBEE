@@ -62,7 +62,7 @@
                         >
                             <i
                                 style="font-size: 24px"
-                                class="fa-regular fa-pen-to-square"
+                                class="fa-regular fa-pen-to-square primary_color"
                             ></i>
                         </router-link>
                     </span>
@@ -101,7 +101,7 @@
                             >
                                 <i
                                     style="font-size: 24px"
-                                    class="fa-regular fa-pen-to-square"
+                                    class="fa-regular fa-pen-to-square primary_color"
                                 ></i>
                             </router-link>
                         </span>

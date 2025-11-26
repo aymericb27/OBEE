@@ -15,4 +15,6 @@ class AcquisApprentissageVise extends Model
         'code',
         'fk_AAT',
     ];
+
+    
 }

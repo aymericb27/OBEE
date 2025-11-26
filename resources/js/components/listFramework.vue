@@ -1,6 +1,6 @@
 <template>
-    <div class="container">
-        <div v-if="errorsInProgram" class="row alert alert-danger mt-3">
+    <div class="row w-100 mt-3">
+        <!--         <div v-if="errorsInProgram" class="row alert alert-danger mt-3">
             <div class="col-md-1">
                 <i
                     class="fa-solid fa-triangle-exclamation"
@@ -35,63 +35,104 @@
                     </li>
                 </ul>
             </div>
-        </div>
-        <div class="p-3 border m-3 rounded bg-white">
-            <form class="row" @submit.prevent="submitFormFilter">
-                <div class="row mb-2 col-md-12">
-                    <div class="col-md-4">
-                        <label><h5>Liste à afficher</h5> </label>
-                        <select
-                            v-model="formFilter.displayElement"
-                            class="mr-2 form-control d-inline-block"
+        </div> -->
+        <div class="col-md-3">
+            <form
+                class="ml-3 p-3 border rounded bg-white"
+                @submit.prevent="submitFormFilter"
+            >
+                <div>
+                    <label>
+                        <h2 class="secondary_color">
+                            <i
+                                class="fa-solid fa-clipboard-list primary_color"
+                            ></i>
+                            Liste des éléments
+                        </h2>
+                    </label>
+                    <ul class="secondary_color">
+                        <li
+                            class="p-2 program-item"
+                            :class="{
+                                active: formFilter.displayElement === 'UE',
+                            }"
+                            style="list-style-type: none; cursor: pointer"
+                            @click="selectProgram('UE')"
                         >
-                            <option disabled value="" selected>
-                                -- Affichage par --
-                            </option>
-                            <option value="UE" selected>
-                                Unité d'enseignement
-                            </option>
-                            <option value="AAT">
-                                acquis d'apprentissages terminaux
-                            </option>
-                            <option value="AAV">
-                                acquis d'apprentissages visés
-                            </option>
-                            <option value="PRO">programme</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label><h5>Pour le semestre</h5> </label>
-                        <select
-                            class="mr-2 form-control d-inline-block"
-                            v-model="formFilter.semestre"
+                            <h5 class="m-0">Unité d'enseignement</h5>
+                        </li>
+                        <li
+                            class="p-2 program-item"
+                            :class="{
+                                active: formFilter.displayElement === 'AAT',
+                            }"
+                            style="list-style-type: none; cursor: pointer"
+                            @click="selectProgram('AAT')"
                         >
-                            <option value="" selected>
-                                -- Tout les semestres --
-                            </option>
-                            <option value="1">1er semestre</option>
-                            <option value="2">2ème semestre</option>
-                        </select>
-                    </div>
-                    <div
-                        class="col-md-4"
-                        v-if="formFilter.displayElement === 'UE'"
-                    >
-                        <label><h5>Faisant partie du programme</h5> </label>
-
-                        <select
-                            class="mr-2 form-control d-inline-block"
-                            v-model="formFilter.program"
+                            <h5 class="m-0">
+                                Acquis d'apprentissages terminaux
+                            </h5>
+                        </li>
+                        <li
+                            class="p-2 program-item"
+                            :class="{
+                                active: formFilter.displayElement === 'AAV',
+                            }"
+                            style="list-style-type: none; cursor: pointer"
+                            @click="selectProgram('AAV')"
                         >
-                            <option value="">-- Tous les programmes --</option>
-                            <option v-for="prog in this.progs" :value="prog.id">
-                                {{ prog.name }}
-                            </option>
-                        </select>
-                    </div>
+                            <h5 class="m-0">Acquis d'aprentissages visées</h5>
+                        </li>
+                        <li
+                            class="p-2 program-item"
+                            :class="{
+                                active: formFilter.displayElement === 'PRE',
+                            }"
+                            style="list-style-type: none; cursor: pointer"
+                            @click="selectProgram('PRE')"
+                        >
+                            <h5 class="m-0">Prérequis</h5>
+                        </li>
+                        <li
+                            class="p-2 program-item"
+                            :class="{
+                                active: formFilter.displayElement === 'PRO',
+                            }"
+                            style="list-style-type: none; cursor: pointer"
+                            @click="selectProgram('PRO')"
+                        >
+                            <h5 class="m-0">Programme</h5>
+                        </li>
+                    </ul>
                 </div>
-                <div class="col-md-12 mb-3">
+
+                <!--                 <div>
+                    <label><h5>Pour le semestre</h5> </label>
+                    <select
+                        class="mr-2 form-control d-inline-block"
+                        v-model="formFilter.semestre"
+                    >
+                        <option value="" selected>
+                            -- Tout les semestres --
+                        </option>
+                        <option value="1">1er semestre</option>
+                        <option value="2">2ème semestre</option>
+                    </select>
+                </div>
+                <div v-if="formFilter.displayElement === 'UE'">
+                    <label><h5>Faisant partie du programme</h5> </label>
+
+                    <select
+                        class="mr-2 form-control d-inline-block"
+                        v-model="formFilter.program"
+                    >
+                        <option value="">-- Tous les programmes --</option>
+                        <option v-for="prog in this.progs" :value="prog.id">
+                            {{ prog.name }}
+                        </option>
+                    </select>
+                </div> -->
+                <!--                 <div class="col-md-12 mb-3">
                     <div
                         class="form-check d-inline-block align-middle mr-3 ml-3"
                     >
@@ -105,71 +146,39 @@
                             uniquement les éléments avec une erreur
                         </label>
                     </div>
-                </div>
-                <div class="row col-md-12">
-                    <div class="col-md-6">
-                        <button
-                            type="button"
-                            @click="isModalExportVisible = true"
-                            class="align-bottom btn btn-lg btn-success"
-                        >
-                            exporter sous .csv
-                        </button>
-                    </div>
-                    <div class="col-md-6 text-right">
+                </div> -->
+                <div class="text-right">
+                    <button
+                        type="button"
+                        @click="isModalExportVisible = true"
+                        class="align-bottom btn btn-lg btn-success"
+                    >
+                        exporter sous .csv
+                    </button>
+                    <!--                     <diV>
                         <button
                             type="submit"
                             class="align-bottom btn btn-lg btn-primary"
                         >
                             rechercher
                         </button>
-                    </div>
+                    </div> -->
                 </div>
             </form>
         </div>
-        <div
-            id="listUniteEnseignement"
-            v-if="formFilter.displayElement === 'UE'"
-        >
-            <list
-                :isBorder="true"
-                routeGET="/ues/get"
-                linkDetailed="ue-detail"
-                :key="reloadKey"
-                typeList="UE"
-                :paramsRouteGET="formFilter"
-                :listColonne="['code', 'name', 'ects', 'semestre']"
-            />
-        </div>
-        <div class="mt-3 container" v-if="formFilter.displayElement === 'AAT'">
-            <list
-                :isBorder="true"
-                routeGET="/aats/get"
-                linkDetailed="aat-detail"
-                typeList="AAT"
-                :key="reloadKey"
-                :listColonne="['code', 'name']"
-            />
-        </div>
-        <div class="mt-3 container" v-if="formFilter.displayElement === 'AAV'">
-            <list
-                :isBorder="true"
-                routeGET="/aav/get"
-                linkDetailed="aav-detail"
-                typeList="AAV"
-                :key="reloadKey"
-                :listColonne="['code', 'name']"
-            />
-        </div>
-        <div class="mt-3 container" v-if="formFilter.displayElement === 'PRO'">
-            <list
-                :isBorder="true"
-                routeGET="/pro/get"
-                linkDetailed="pro-detail"
-                typeList="PRO"
-                :key="reloadKey"
-                :listColonne="['code', 'name', 'ects']"
-            />
+        <div class="col-md-9">
+            <div class="border rounded bg-white pt-2">
+                <list
+                    :isBorder="true"
+                    :routeGET="routeGET"
+                    :linkDetailed="linkDetailed"
+                    :key="reloadKey"
+                    :typeList="formFilter.displayElement"
+                    :paramsRouteGET="formFilter"
+                    :listColonne="listColonne"
+                    :isResearch="true"
+                />
+            </div>
         </div>
     </div>
     <modal-export
@@ -190,6 +199,9 @@ export default {
             isModalExportVisible: false,
             progs: [],
             errors: {},
+            linkDetailed: "",
+            routeGET: "",
+            listColonne: [],
             formFilter: {
                 displayElement: "UE",
                 program: "",
@@ -204,10 +216,34 @@ export default {
         modalExport,
     },
     methods: {
+        selectProgram(element) {
+            this.listColonne = ["code", "name"];
+
+            this.formFilter.displayElement = element;
+            if (element === "UE") {
+                this.routeGET = "/ues/get";
+                this.linkDetailed = "ue-detail";
+                this.listColonne = ["code", "name", "ects"];
+            } else if (element === "AAT") {
+                this.routeGET = "/aat/get";
+                this.linkDetailed = "aat-detail";
+            } else if (element === "AAV") {
+                this.routeGET = "/aav/get";
+                this.linkDetailed = "aav-detail";
+            } else if (element === "PRO") {
+                this.routeGET = "/pro/get";
+                this.linkDetailed = "pro-detail";
+            } else if (element === "PRE") {
+                this.routeGET = "/aav/pre/get";
+                this.linkDetailed = "aav-detail";
+            } 
+            this.reloadKey++; // force la liste à se recharger
+        },
         handleExportModal(value) {
             this.isModalExportVisible = value;
             console.log("Valeur reçue :", value);
         },
+
         submitFormFilter(filters) {
             Object.assign(this.formFilter, filters); // ✅ mise à jour réactive
             console.log(this.formFilter);
@@ -234,8 +270,9 @@ export default {
     },
 
     mounted() {
-        this.loadErrorInProgram();
+        //this.loadErrorInProgram();
         this.loadProgram();
+        this.selectProgram("UE");
     },
 };
 </script>

@@ -61,33 +61,10 @@ textarea {
     cursor: pointer;
 }
 
-.vuecal__cell--selected {
-    background-color: #42429d3a !important;
-    color: white;
-}
-.modal_calendar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    display: block;
-    width: 100%;
-    z-index: 1000;
-    overflow: hidden;
-    outline: 0;
-}
 .box_checkbox {
     display: flex;
     align-items: center;
     accent-color: #2a71cde3;
-}
-
-.listChildUE {
-    background-color: #f1f1f1;
-    padding: 1.5em;
-}
-
-a {
-    color: #2a71cde3 !important;
 }
 
 .linkedbtn {
@@ -143,15 +120,38 @@ a {
     color: #92429d !important;
 }
 
+.UE:hover{
+    text-decoration-color: #92429d !important;
+    text-decoration: underline;
+}
+
 .AAV {
     color: #156e1c !important;
 }
-
+.AAV:hover{
+    text-decoration-color: #156e1c !important;
+    text-decoration: underline;
+}
 .PRO {
     color: cadetblue !important;
 }
+.PRO:hover{
+    text-decoration-color:cadetblue !important;
+    text-decoration: underline;
+}
 .AAT {
     color: #b80f0f !important;
+}
+.AAT:hover{
+    text-decoration-color: #b80f0f !important;
+    text-decoration: underline;
+}
+.PRE{
+    color: #eba714 !important;
+}
+.PRE:hover{
+    text-decoration-color: #eba714 !important;
+    text-decoration: underline;
 }
 
 .fc-day-today {

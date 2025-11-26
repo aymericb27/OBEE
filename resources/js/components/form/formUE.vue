@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="back_btn">
-            <a href="#" @click="$router.back()">
+            <a href="#" @click="$router.back()" class="primary_color">
                 <i class="fa-solid fa-circle-arrow-left"></i> Retour
             </a>
         </div>
@@ -13,7 +13,7 @@
                 ></i>
                 <span> {{ formErrors }} </span>
             </div>
-            <form @submit.prevent="submitFormElementConstitutif">
+            <form @submit.prevent="submitFormUE">
                 <div class="p-4 border rounded bg-white mt-3">
                     <h3 class="mb-4 primary_color">
                         Création d'une unité d'enseignement
@@ -86,7 +86,10 @@
                             <div class="col-md-8 p-2">Nom</div>
                             <div class="col-md-2 p-2">Contribution</div>
                         </div>
-                        <div v-if="!ue.aat.length" class="p-2 text-center">
+                        <div
+                            v-if="!ue.aat || !ue.aat.length"
+                            class="p-2 text-center"
+                        >
                             aucune donnée à afficher
                         </div>
 
@@ -437,8 +440,8 @@ export default {
                 fk_AAT: "",
             },
             ueParent: {
-				contribution : '' ,
-			},
+                contribution: "",
+            },
             ue: {
                 aavvise: [],
                 aavprerequis: [],
@@ -522,7 +525,7 @@ export default {
                 this.ue.aat.push(...itemsWithContribution);
             }
         },
-        async submitFormElementConstitutif() {
+        async submitFormUE() {
             try {
                 if (this.id) {
                     const response = await axios.put("/ue/update", {
@@ -533,7 +536,8 @@ export default {
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
                         pro: this.ue.pro,
-                        semestre: this.ue.semestre,
+                        aat: this.ue.aat,
+                        ueParentContribution: this.ueParent.contribution,
                         ueParent: this.ueParent,
                     });
 
@@ -556,7 +560,7 @@ export default {
                         pro: this.ue.pro,
                         aat: this.ue.aat,
                         ueParentID: this.ueParent.id,
-						ueParentContribution: this.ueParent.contribution,
+                        ueParentContribution: this.ueParent.contribution,
                     });
                     // ✅ Si tout s’est bien passé
                     if (response.data.success) {
@@ -648,7 +652,7 @@ export default {
                     },
                 });
                 this.ueParent = responseUE.data;
-				this.ueParent.contribution = 1 ;
+                this.ueParent.contribution = 1;
                 console.log(responseUE.data);
             } catch (error) {
                 console.log(error);
@@ -661,7 +665,17 @@ export default {
                         id: this.id,
                     },
                 });
-                this.ue = responseUE.data;
+                // fusionne les données existantes et les données API
+                this.ue = {
+                    ...this.ue,
+                    ...responseUE.data,
+                };
+                const responseAAT = await axios.get("/ue/aat/get", {
+                    params: {
+                        id: this.id,
+                    },
+                });
+                this.ue.aat = responseAAT.data;
                 const responsePro = await axios.get("/ue/pro/get", {
                     params: {
                         id: this.id,
@@ -708,6 +722,7 @@ export default {
             this.loadUEParent(this.$route.query.UEParentId);
         }
         if (this.id) {
+            console.log("ok");
             this.loadUE();
         }
     },

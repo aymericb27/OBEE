@@ -6,6 +6,7 @@ use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ErrorController;
+use App\Models\AcquisApprentissageTerminaux;
 use App\Models\ElementConstitutif;
 use App\Models\Programme;
 use App\Models\UEPRO;
@@ -28,8 +29,8 @@ class UniteEnseignement extends Controller
             'aat' => ['array'],
             'aat.*.id' => ['nullable', 'integer', 'exists:acquis_apprentissage_terminaux,id'],
             'aat.*.contribution' => ['nullable', 'integer', 'min:1', 'max:3'],
-            'ueParentID' => ["nullable",'integer', 'exists:unite_enseignement,id'],
-            'ueParentContribution' => ["nullable", 'integer','min:1','max:3']
+            'ueParentID' => ["nullable", 'integer', 'exists:unite_enseignement,id'],
+            'ueParentContribution' => ["nullable", 'integer', 'min:1', 'max:3']
         ]);
 
         // ----- Génération du code UExxx -----
@@ -88,7 +89,7 @@ class UniteEnseignement extends Controller
             // ajoute tous les liens pivot d'un coup
             $ue->pro()->attach($pivotData);
         }
-        if(!empty($validated['ueParentID'])){
+        if (!empty($validated['ueParentID'])) {
             ElementConstitutif::create([
                 'fk_ue_parent' => $validated['ueParentID'],
                 'fk_ue_child' => $ue->id,
@@ -109,7 +110,6 @@ class UniteEnseignement extends Controller
             'id' => ['required', 'integer', 'exists:unite_enseignement,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'semestre' => 'required|integer|max:2',
             'ects' => ['required', 'integer'],
             'aavprerequis' => ['array'],
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
@@ -117,6 +117,12 @@ class UniteEnseignement extends Controller
             'aavvise.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'pro' => ['array'],
             'pro.*.id' => ['integer', 'exists:programme,id'],
+            'pro.*.semester' => ['nullable', 'integer', 'min:1'],
+            'aat' => ['array'],
+            'aat.*.id' => ['nullable', 'integer', 'exists:acquis_apprentissage_terminaux,id'],
+            'aat.*.contribution' => ['nullable', 'integer', 'min:1', 'max:3'],
+            'ueParentID' => ["nullable", 'integer', 'exists:unite_enseignement,id'],
+            'ueParentContribution' => ["nullable", 'integer', 'min:1', 'max:3']
         ]);
 
         // ✅ Récupération de l’UE
@@ -138,12 +144,26 @@ class UniteEnseignement extends Controller
             $ue->aavprerequis()->sync(array_column($validated['aavprerequis'], 'id'));
         }
         if (isset($validated['pro'])) {
-            $ue->pro()->sync(array_column($validated['pro'], 'id'));
+
+            $pivotData = [];
+            foreach ($validated['pro'] as $item) {
+                $pivotData[$item['id']] = ['semester' => $item['semester']];
+            }
+            $ue->pro()->sync($pivotData);
+        }
+        if (isset($validated['aat'])) {
+
+            $pivotData = [];
+            foreach ($validated['aat'] as $item) {
+                $pivotData[$item['id']] = ['contribution' => $item['contribution']];
+            }
+
+            // ajoute tous les liens pivot d'un coup
+            $ue->aat()->sync($pivotData);
         }
         return response()->json([
             'success' => true,
             'message' => "Unité d'enseignement mise à jour avec succès.",
-            'ue' => $ue->load('aavvise', 'aavprerequis'),
         ]);
     }
 
@@ -153,10 +173,21 @@ class UniteEnseignement extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
-        $response = Programme::select('programme.id', 'name', 'code')
+        $response = Programme::select('programme.id', 'name', 'code', 'semester')
             ->join('ue_programme', 'fk_programme', '=', 'programme.id')
             ->where('fk_unite_enseignement', $validated['id'])->get();
 
+        return $response;
+    }
+
+    public function getAATs(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+        $response = AcquisApprentissageTerminaux::select('acquis_apprentissage_terminaux.id', 'name', 'code', 'contribution')
+            ->join('ue_aat', 'fk_aat', '=', 'acquis_apprentissage_terminaux.id')
+            ->where('fk_ue', $validated['id'])->get();
         return $response;
     }
 

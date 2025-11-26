@@ -184,7 +184,7 @@ export default {
         openSemesterModal() {
             this.showSemesterModal = true;
         },
-
+		
         async confirmAddSemester() {
             this.showSemesterModal = false;
 
