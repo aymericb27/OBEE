@@ -13,7 +13,7 @@ class ErrorController extends Controller
 {
     public function getUES()
     {
-        $ues = UE::select("id", 'date_begin', 'ects', 'code', 'name', 'date_end')->get();
+        $ues = UE::select("id", 'ects', 'code', 'name')->get();
 
         foreach ($ues as $ue) {
             $ue->prerequis = AAV::select('acquis_apprentissage_vise.id', 'code')

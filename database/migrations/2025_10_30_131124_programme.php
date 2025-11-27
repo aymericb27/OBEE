@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('code');
             $table->string('name');
-            $table->integer('ects');
+            $table->integer('ects')->nullable();
             $table->integer('semestre');
             $table->timestamps();
         });

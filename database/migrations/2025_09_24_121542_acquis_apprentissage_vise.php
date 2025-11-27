@@ -15,9 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('code');
             $table->string('name');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->integer('fk_AAT')->unsigned()->nullable();
             $table->foreign('fk_AAT')->references('id')->on('acquis_apprentissage_vise');
+            $table->integer('contribution')->default(1);
             $table->timestamps();
         });
     }

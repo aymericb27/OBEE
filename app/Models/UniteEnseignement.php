@@ -23,8 +23,8 @@ class UniteEnseignement extends Model
         return $this->belongsToMany(
             UniteEnseignement::class,
             'element_constitutif',
-            'fk_ue_parent',  
-            'fk_ue_child'     
+            'fk_ue_parent',
+            'fk_ue_child'
         );
     }
 
@@ -46,14 +46,15 @@ class UniteEnseignement extends Model
     }
     public function aat()
     {
-        return $this->belongsToMany(Programme::class, 'ue_aat', 'fk_ue', 'fk_aat')
+        return $this->belongsToMany(AcquisApprentissageTerminaux::class, 'ue_aat', 'fk_ue', 'fk_aat')
             ->withPivot('contribution')
             ->withTimestamps();
     }
 
     public function aavvise()
     {
-        return $this->belongsToMany(AcquisApprentissageVise::class, 'aavue_vise', 'fk_unite_enseignement', 'fk_acquis_apprentissage_vise');
+        return $this->belongsToMany(AcquisApprentissageVise::class, 'aavue_vise', 'fk_unite_enseignement', 'fk_acquis_apprentissage_vise')
+            ->withTimestamps();
     }
 
     public function aavprerequis()

@@ -2,7 +2,6 @@
 
 namespace App\Imports;
 
-use Illuminate\Container\Attributes\Log;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 
@@ -12,50 +11,123 @@ class UEImport implements ToCollection
 
     public function collection(Collection $rows)
     {
-        // --- UE (valeurs uniques) ---
-        $identifiant = $this->firstValueAfterLabel($this->getRow($rows, 3));
-        $intitule    = $this->firstValueAfterLabel($this->getRow($rows, 4));
-        $description = $this->firstValueAfterLabel($this->getRow($rows, 5));
-        $credits     = $this->firstValueAfterLabel($this->getRow($rows, 6));
+        // -------------------------------
+        // UE (valeurs uniques)
+        // lignes 3 à 6, valeur en colonne C (index 2)
+        // -------------------------------
+        $identifiant = $this->firstValueAfterLabel($this->row($rows, 3));
+        $intitule    = $this->firstValueAfterLabel($this->row($rows, 4));
+        $description = $this->firstValueAfterLabel($this->row($rows, 5));
+        $credits     = $this->firstValueAfterLabel($this->row($rows, 6));
 
-        // --- PROGRAMMES (plusieurs colonnes) ---
-        $programmes = $this->parseHorizontalBlock(
-            $this->getRow($rows, 7),   // identifiants
-            $this->getRow($rows, 8),   // libellés
-            $this->getRow($rows, 9)    // semestres
+        // -------------------------------
+        // AAT de l’UE
+        // ligne 7 : "Acquis d'apprentissage terminal", "identifiant", [données à partir de C]
+        // ligne 8 : "", "niveau de contribution...", [données à partir de C]
+        // => on ignore A (0) ET B (1) → startCol = 2
+        // -------------------------------
+        $ueAATs = $this->parseHorizontal(
+            $this->row($rows, 7),   // identifiants AAT
+            $this->row($rows, 8),  // libellés
+            $this->row($rows, 9),   // niveaux de contribution
+            startCol: 2,
+            thirdKey: 'contribution'
         );
 
-        // --- AAV (plusieurs colonnes) ---
-        $aavs = $this->parseHorizontalBlock(
-            $this->getRow($rows, 10),  // identifiants
-            $this->getRow($rows, 11),  // libellés
-            null                       // pas de semestre
+        // -------------------------------
+        // Programmes
+        // ligne 9  : "programme", "identifiant", [PRO1, PRO2, ... à partir de C]
+        // ligne 10 : "", "libellé",      [libellés à partir de C]
+        // ligne 11 : "", "Semestre...",  [semestres à partir de C]
+        // => on ignore A (0) ET B (1) → startCol = 2
+        // -------------------------------
+        $programmes = $this->parseHorizontal(
+            $this->row($rows, 10),   // identifiants PRO
+            $this->row($rows, 11),  // libellés
+            $this->row($rows, 12),  // semestres (1 seul chiffre)
+            startCol: 2,
+            thirdKey: 'semestre'
         );
 
-        // --- PRÉREQUIS (plusieurs colonnes) ---
-        $prerequis = $this->parseHorizontalBlock(
-            $this->getRow($rows, 12),  // identifiants
-            $this->getRow($rows, 13),  // libellés
-            null                       // pas de semestre
+        // -------------------------------
+        // AAV
+        // ligne 12 : "Acquis d'apprentissage visé", "identifiant", [AAV... à partir de C]
+        // ligne 13 : "", "libellé", [libellés à partir de C]
+        // => données à partir de la colonne C → startCol = 2
+        // -------------------------------
+        $aavs = $this->parseHorizontal(
+            $this->row($rows, 13),  // identifiants AAV
+            $this->row($rows, 14),  // libellés
+            null,
+            startCol: 2
         );
 
+        // -------------------------------
+        // AAT pour chaque AAV
+        // ligne 14 : "", "acquis d'apprentissage terminal", "identifiant", [AAT... à partir de D]
+        //             index 0 = vide, 1 = texte, 2 = "identifiant"
+        //             → données à partir de colonne D → index 3
+        // ligne 15 : "", "", "niveau de contribution...", [niv. à partir de D]
+        // -------------------------------
+        $aavAATs = $this->parseHorizontal(
+            $this->row($rows, 15),  // identifiants AAT liés aux AAV
+            $this->row($rows, 16),  // libellés
+            $this->row($rows, 17),  // niveaux
+            startCol: 3,
+            thirdKey: 'contribution'
+        );
+
+        // -------------------------------
+        // Fusion AAV + AAT (format à plat)
+        // aavs[i] ↔ aavAATs[i] (même colonne)
+        // -------------------------------
+        $mergedAAVs = [];
+        foreach ($aavs as $i => $aav) {
+            $aat = $aavAATs[$i] ?? null;
+
+            $mergedAAVs[] = [
+                'code'    => $aav['code'] ?? null,
+                'name'        => $aav['libelle'] ?? null,
+                'AATCode' => $aat['code'] ?? null,
+                'contribution'   => $aat['contribution'] ?? null,
+                'AATName' => $aat['libelle'] ?? null,
+            ];
+        }
+
+        // -------------------------------
+        // Prérequis
+        // ligne 16 : "Prérequis", "identifiant", [PRE... à partir de C]
+        // ligne 17 : "", "libellé", [libellés à partir de C]
+        // => startCol = 2
+        // -------------------------------
+        $prerequis = $this->parseHorizontal(
+            $this->row($rows, 18),  // identifiants PRE
+            $this->row($rows, 19),  // libellés
+            null,
+            startCol: 2
+        );
+
+        // -------------------------------
+        // Résultat final
+        // -------------------------------
         $this->parsedData = [
-            'ue' => [
-                'identifiant' => $identifiant,
-                'intitule'    => $intitule,
+            'ue'         => [
+                'code' => $identifiant,
+                'name'    => $intitule,
                 'description' => $description,
-                'credits'     => $credits,
+                'ects'     => $credits,
             ],
+            'aats'    => $ueAATs,
             'programmes' => $programmes,
-            'aavs'       => $aavs,
+            'aavs'       => $mergedAAVs,
             'prerequis'  => $prerequis,
         ];
     }
 
     /**
-     * Récupère une ligne du fichier sous forme de tableau (même si elle n'existe pas).
+     * Récupère une ligne sous forme de tableau.
      */
-    private function getRow(Collection $rows, int $index): array
+    private function row(Collection $rows, int $index): array
     {
         if (!isset($rows[$index])) {
             return [];
@@ -63,21 +135,19 @@ class UEImport implements ToCollection
 
         $row = $rows[$index];
 
-        // Si c'est une Collection, on la convertit en array
-        if ($row instanceof Collection) {
-            return $row->toArray();
-        }
-
-        return (array) $row;
+        return $row instanceof Collection
+            ? $row->toArray()
+            : (array) $row;
     }
 
     /**
-     * Récupère la première valeur non vide après la colonne 0 (le label).
+     * Première valeur non vide après la colonne 0 (A).
+     * (UE : valeur en colonne C dans ton modèle, mais comme B est vide, on tombe bien sur C)
      */
     private function firstValueAfterLabel(array $row)
     {
-        foreach ($row as $index => $cell) {
-            if ($index === 0) continue;
+        foreach ($row as $i => $cell) {
+            if ($i === 0) continue;
             if ($cell !== null && $cell !== '') {
                 return $cell;
             }
@@ -86,66 +156,51 @@ class UEImport implements ToCollection
     }
 
     /**
-     * Fonction générique pour lire un "bloc horizontal" :
-     * - $rowId : ligne des identifiants
-     * - $rowLib : ligne des libellés (optionnel)
-     * - $rowSem : ligne des semestres (optionnel)
-     * - $startCol : index de colonne où commencer (2 = après le label + une colonne vide)
+     * Parsing horizontal générique pour les tableaux.
+     *
+     * - $rowId   : ligne des identifiants
+     * - $rowLib  : ligne des libellés (optionnelle)
+     * - $row3    : ligne d’une 3e info (semestre, contribution, niveau...) (optionnelle)
+     * - $startCol: index de la première colonne de données (2 = colonne C, 3 = colonne D)
+     * - $thirdKey: nom de la clé pour la 3e info ("semestre", "contribution", "niveau", ...)
      */
-    private function parseHorizontalBlock(
+    private function parseHorizontal(
         array $rowId,
         ?array $rowLib = null,
-        ?array $rowSem = null,
-        int $startCol = 2
+        ?array $row3 = null,
+        int $startCol = 2,
+        string $thirdKey = 'value'
     ): array {
         $results = [];
 
         $maxCols = max(
             count($rowId),
             $rowLib ? count($rowLib) : 0,
-            $rowSem ? count($rowSem) : 0,
+            $row3 ? count($row3) : 0,
         );
 
         for ($col = $startCol; $col < $maxCols; $col++) {
-
             $id  = $rowId[$col]  ?? null;
             $lib = $rowLib[$col] ?? null;
-            $sem = $rowSem[$col] ?? null;
+            $v3  = $row3[$col]   ?? null;
 
-            // Pas d'identifiant → on ignore la colonne
+            // pas d'identifiant → colonne ignorée
             if ($id === null || $id === '') {
                 continue;
             }
 
             $item = [
-                'identifiant' => $id,
+                'code' => $id,
             ];
 
             if ($rowLib !== null && $lib !== null && $lib !== '') {
                 $item['libelle'] = $lib;
             }
 
-            if ($rowSem !== null && $sem !== null && $sem !== '') {
-
-                // Toujours travailler sur une string
-                $semStr = trim((string) $sem);
-
-                // On coupe sur virgule OU point → "1,2" ou "1.2" → ["1","2"]
-                $parts = preg_split('/[,.]/', $semStr);
-
-                // On enlève les vides éventuels
-                $parts = array_values(array_filter($parts, fn($v) => $v !== ''));
-
-                // On cast en int quand c'est uniquement des chiffres
-                $semArray = array_map(
-                    fn($v) => ctype_digit($v) ? (int) $v : $v,
-                    $parts
-                );
-
-                // Perso je te conseille de toujours garder un tableau, même s'il n'y a qu'un semestre
-                $item['semestres'] = $semArray;
+            if ($row3 !== null && $v3 !== null && $v3 !== '') {
+                $v = trim((string) $v3);
+                $item[$thirdKey] = ctype_digit($v) ? (int) $v : $v;
             }
-
 
             $results[] = $item;
         }
