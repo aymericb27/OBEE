@@ -2,15 +2,14 @@
 
 use App\Http\Controllers\AcquisApprentissageTerminaux;
 use App\Http\Controllers\AcquisApprentissageVise;
-use App\Http\Controllers\Calendar;
-use App\Http\Controllers\CalendarLesson;
 use App\Http\Controllers\ErrorController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\ProgrammeController;
-use App\Http\Controllers\treeController;
 use App\Http\Controllers\UniteEnseignement;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -73,8 +72,12 @@ Route::get('/Error/pro/ects/number', [ErrorController::class, 'getErrorProEctsNu
 Route::get('/export/get/{type}', [ExportController::class, 'export']);
 
 //** importation **//
+Route::post('/import/post', [ImportController::class, 'import']);
+
 Route::get('/download/model_import', function () {
-    return Storage::download('public/files/model_import.xlsx');
+    return response()->download(
+        storage_path('app/public/files/model_import.xlsx')
+    );
 });
 Route::get('/{any}', function () {
     return view('welcome');

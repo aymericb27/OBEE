@@ -33,11 +33,17 @@
                             + ajout programme
                         </button>
                     </router-link>
-                    <button
-                        class="btn btn-lg btn-outline-secondary ml-auto mb-2"
+                    <router-link
+                        :to="{
+                            name: 'formImport',
+                        }"
                     >
-                        + importation de donnée
-                    </button>
+                        <button
+                            class="btn btn-lg btn-outline-secondary ml-auto mb-2"
+                        >
+                            + importation de donnée
+                        </button>
+                    </router-link>
                 </div>
             </div>
         </div>
@@ -184,7 +190,7 @@ export default {
         openSemesterModal() {
             this.showSemesterModal = true;
         },
-		
+
         async confirmAddSemester() {
             this.showSemesterModal = false;
 

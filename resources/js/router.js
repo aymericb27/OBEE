@@ -12,6 +12,7 @@ import ProgramError from "./components/error/programError.vue";
 import ExportPanel from "./components/exportPanel.vue";
 import levels from "./components/levels.vue";
 import FormProgram from "./components/form/formProgram.vue";
+import FormImport from "./components/form/formImport.vue";
 const routes = [
     {
         path: "/",
@@ -67,7 +68,13 @@ const routes = [
         path: "/createUE",
         name: "createUE",
         component: FormUE,
-        props: true, // transmet automatiquement tous les params comme props
+        props: true,
+    },
+    {
+        path: "/formImport",
+        name: "formImport",
+        component: FormImport,
+        props: true,
     },
     {
         path: "/createProgram",
