@@ -11,10 +11,17 @@ use App\Exports\AAVExport;
 
 class ExportController extends Controller
 {
+
+    public function exportUE($ueId)
+    {
+        $export = new \App\Exports\UEExport($ueId);
+        return $export->download();
+    }
+
     public function export(Request $request, string $type)
     {
         // On récupère les filtres envoyés par params
-        $filters =$request->input('filter', []);
+        $filters = $request->input('filter', []);
         $select = $request->input('select', []); // sécurité si jamais non défini
 
         // On choisit quel export exécuter selon le type

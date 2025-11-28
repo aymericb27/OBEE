@@ -251,7 +251,7 @@ export default {
         },
 
         async loadErrorInProgram() {
-            try {
+            /* try {
                 const response = await axios.get("/Error/UES");
                 if (response.data.isError) {
                     this.errorsInProgram = true;
@@ -261,7 +261,7 @@ export default {
                 console.log(response.data);
             } catch (error) {
                 console.log(error);
-            }
+            } */
         },
         async loadProgram() {
             const response = await axios.get("pro/get");

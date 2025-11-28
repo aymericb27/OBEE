@@ -57,10 +57,6 @@ class UniteEnseignement extends Model
             ->withTimestamps();
     }
 
-    public function aavprerequis()
-    {
-        return $this->belongsToMany(AcquisApprentissageVise::class, 'aavue_prerequis', 'fk_unite_enseignement', 'fk_acquis_apprentissage_prerequis');
-    }
     public function prerequis()
     {
         return $this->belongsToMany(
@@ -68,16 +64,6 @@ class UniteEnseignement extends Model
             'aavue_prerequis',
             'fk_unite_enseignement',
             'fk_acquis_apprentissage_prerequis'
-        )->select('acquis_apprentissage_vise.id', 'code');
-    }
-
-    public function vise()
-    {
-        return $this->belongsToMany(
-            AcquisApprentissageVise::class,
-            'aavue_vise',
-            'fk_unite_enseignement',
-            'fk_acquis_apprentissage_vise'
-        )->select('acquis_apprentissage_vise.id', 'code');
+        );
     }
 }

@@ -32,8 +32,7 @@ textarea {
 
 .btn_fa:hover {
     color: #2a71cde3;
-        background-color: whitesmoke;
-
+    background-color: whitesmoke;
 }
 
 .primary_color {
@@ -120,7 +119,7 @@ textarea {
     color: #92429d !important;
 }
 
-.UE:hover{
+.UE:hover {
     text-decoration-color: #92429d !important;
     text-decoration: underline;
 }
@@ -128,28 +127,28 @@ textarea {
 .AAV {
     color: #156e1c !important;
 }
-.AAV:hover{
+.AAV:hover {
     text-decoration-color: #156e1c !important;
     text-decoration: underline;
 }
 .PRO {
     color: cadetblue !important;
 }
-.PRO:hover{
-    text-decoration-color:cadetblue !important;
+.PRO:hover {
+    text-decoration-color: cadetblue !important;
     text-decoration: underline;
 }
 .AAT {
     color: #b80f0f !important;
 }
-.AAT:hover{
+.AAT:hover {
     text-decoration-color: #b80f0f !important;
     text-decoration: underline;
 }
-.PRE{
+.PRE {
     color: #eba714 !important;
 }
-.PRE:hover{
+.PRE:hover {
     text-decoration-color: #eba714 !important;
     text-decoration: underline;
 }
@@ -190,8 +189,11 @@ textarea {
 .secondary_color {
     color: #5a5a5a;
 }
-.green_color{
+.green_color {
     color: rgb(3, 192, 3);
+}
+.cursor_pointer.green_color:hover {
+    color: rgb(121, 216, 121);
 }
 .semester-card {
     background: #fdfdfd;

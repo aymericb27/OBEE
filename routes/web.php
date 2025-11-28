@@ -70,6 +70,7 @@ Route::get('/Error/pro/ects/number', [ErrorController::class, 'getErrorProEctsNu
 
 //** Exportation **//
 Route::get('/export/get/{type}', [ExportController::class, 'export']);
+Route::get('/export/ue/{id}', [ExportController::class, 'exportUE']);
 
 //** importation **//
 Route::post('/import/post', [ImportController::class, 'import']);

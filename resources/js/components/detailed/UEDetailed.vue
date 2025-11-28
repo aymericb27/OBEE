@@ -2,11 +2,12 @@
     <div>
         <div class="back_btn">
             <a href="#" @click="$router.back()">
-                <i class="fa-solid fa-circle-arrow-left primary_color"></i> Retour
+                <i class="fa-solid fa-circle-arrow-left primary_color"></i>
+                Retour
             </a>
         </div>
         <div class="container">
-<!--             <div class="mt-3">
+            <!--             <div class="mt-3">
                 <div
                     v-for="(prog, index) in errors.errorsECTS"
                     :key="index"
@@ -63,19 +64,20 @@
                                 class="fa-regular fa-pen-to-square primary_color"
                             ></i>
                         </router-link>
-                            <i
-                                style="font-size: 28px"
-                                class="fa-solid ml-2 fa-download green_color cursor_pointer"
-                            ></i>
+                        <i
+                            @click="exportUE(ue.id)"
+                            style="font-size: 28px"
+                            class="fa-solid ml-2 fa-download green_color cursor_pointer"
+                        ></i>
                     </span>
                 </div>
                 <span> </span>
                 <div class="mb-4" v-html="ue.description"></div>
                 <div class="listComponent mb-4">
                     <div class="mb-2">
-                        <h5 class="d-inline-block primary_color">
+                        <h4 class="d-inline-block primary_color">
                             Faisant partie du/des programme(s)
-                        </h5>
+                        </h4>
                     </div>
                     <list
                         v-if="ue.id"
@@ -88,9 +90,9 @@
                 </div>
                 <div class="listComponent mb-4">
                     <div class="mb-2">
-                        <h5 class="d-inline-block primary_color">
+                        <h4 class="d-inline-block primary_color">
                             Liste des acquis d'apprentissages visé
-                        </h5>
+                        </h4>
                     </div>
                     <list
                         v-if="ue.id"
@@ -103,9 +105,9 @@
                 </div>
                 <div class="listComponent mb-4">
                     <div class="mb-2">
-                        <h5 class="d-inline-block primary_color">
+                        <h4 class="d-inline-block primary_color">
                             Liste des prérequis
-                        </h5>
+                        </h4>
                     </div>
                     <list
                         v-if="ue.id"
@@ -155,6 +157,31 @@ export default {
         };
     },
     methods: {
+        async exportUE(ueId) {
+            try {
+                const response = await axios.get(`/export/ue/${ueId}`, {
+                    responseType: "blob", // 🔥 OBLIGATOIRE pour télécharger un fichier
+                });
+
+                // Création d'un lien de téléchargement
+                const blob = new Blob([response.data], {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                });
+                const url = window.URL.createObjectURL(blob);
+
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `UE_${this.ue.code}.xlsx`; // nom du fichier téléchargé
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error("Erreur de téléchargement :", error);
+            }
+        },
+
         async loadUE() {
             try {
                 const response = await axios.get("/UEGet/detailed", {

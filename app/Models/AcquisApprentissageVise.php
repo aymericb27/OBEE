@@ -17,5 +17,8 @@ class AcquisApprentissageVise extends Model
         'contribution',
     ];
 
-    
+    public function aat()
+    {
+        return $this->belongsTo(AcquisApprentissageTerminaux::class, 'fk_AAT');
+    }
 }

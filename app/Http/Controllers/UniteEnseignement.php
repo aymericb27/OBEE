@@ -65,7 +65,7 @@ class UniteEnseignement extends Controller
         }
 
         if (isset($validated['aavprerequis'])) {
-            $ue->aavprerequis()->sync(array_column($validated['aavprerequis'], 'id'));
+            $ue->prerequis()->sync(array_column($validated['aavprerequis'], 'id'));
         }
 
         if (!empty($validated['aat'])) {
@@ -141,7 +141,7 @@ class UniteEnseignement extends Controller
         }
 
         if (isset($validated['aavprerequis'])) {
-            $ue->aavprerequis()->sync(array_column($validated['aavprerequis'], 'id'));
+            $ue->prerequis()->sync(array_column($validated['aavprerequis'], 'id'));
         }
         if (isset($validated['pro'])) {
 
@@ -229,7 +229,7 @@ class UniteEnseignement extends Controller
 
     public function get(Request $request)
     {
-        // Convertir onlyErrors en bool si présent
+/*         // Convertir onlyErrors en bool si présent
         if ($request->has('onlyErrors')) {
             $request->merge([
                 'onlyErrors' => filter_var($request->onlyErrors, FILTER_VALIDATE_BOOLEAN),
@@ -237,15 +237,12 @@ class UniteEnseignement extends Controller
         }
 
         $validated = $request->validate([
-            'onlyErrors' => 'nullable|boolean',
-            'semestre'   => 'nullable|integer|in:1,2',
             'program'    => 'nullable|integer|exists:programme,id',
-        ]);
+        ]); */
 
-        $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects')
-            ->with(['prerequis', 'vise']);
+        $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects');
 
-        // ✔ programme filtré seulement si fourni
+/*         // ✔ programme filtré seulement si fourni
         if (!empty($validated['program'])) {
             $ues->join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
                 ->where('fk_programme', $validated['program']);
@@ -254,12 +251,12 @@ class UniteEnseignement extends Controller
         // ✔ semestre filtré seulement si fourni
         if (!empty($validated['semestre'])) {
             $ues->where('semestre', $validated['semestre']);
-        }
+        } */
 
         $ues = $ues->get();
 
         // Analyse d'erreurs
-        $EC = new ErrorController;
+       /*  $EC = new ErrorController;
         $result = $EC->getErrorUES($ues, true);
 
         // ✔ onlyErrors appliqué uniquement si provided et true
@@ -269,7 +266,7 @@ class UniteEnseignement extends Controller
                 ->filter(fn($ue) => isset($ue->error) && $ue->error === true)
                 ->values();
         }
-
-        return $result;
+ */
+        return $ues;
     }
 }

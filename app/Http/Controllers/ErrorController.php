@@ -94,6 +94,7 @@ class ErrorController extends Controller
 
     public function getErrorUE(Request $request)
     {
+        return 1;
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
@@ -119,7 +120,7 @@ class ErrorController extends Controller
             if ($ueA->id === $ueB->id) continue;
 
             // On récupère les IDs des AAV visés par B et prérequis de A
-            $aavVisesB = $ueB->vise->pluck('id')->toArray();
+            $aavVisesB = $ueB->aavvise->pluck('id')->toArray();
             $aavPrerequisA = $ueA->prerequis->pluck('id')->toArray();
             // On cherche l’intersection entre les deux listes
             $intersection = array_intersect($aavVisesB, $aavPrerequisA);
@@ -147,6 +148,7 @@ class ErrorController extends Controller
 
     public function getErrorUES($ues, $returnList = False)
     {
+        return false;
         $ues = !empty($ues) ? $ues : $this->getUES();
 
         $isError = False;
