@@ -190,6 +190,9 @@ textarea {
 .secondary_color {
     color: #5a5a5a;
 }
+.green_color{
+    color: rgb(3, 192, 3);
+}
 .semester-card {
     background: #fdfdfd;
 }

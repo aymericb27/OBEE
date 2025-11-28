@@ -29,11 +29,11 @@
 
         <!-- LISTE DES UEs -->
         <div v-if="isOpen" class="mt-3">
-            <div v-for="UE in semester.UES" class="ue-block mb-3">
+            <div v-if="semester.UES.length !== 0" v-for="UE in semester.UES" class="ue-block mb-3">
                 <!-- UE HEADER -->
                 <div class="d-flex align-items-center mb-1">
                     <i
-												v-if="UE.children.length"
+                        v-if="UE.children.length"
                         class="fa-solid"
                         :class="
                             UE.show ? 'fa-chevron-down' : 'fa-chevron-right'
@@ -43,7 +43,15 @@
                     ></i>
 
                     <h5 class="d-inline-block ml-2 m-0">
-                        <span class="UE">{{ UE.code }}</span> {{ UE.name }}
+                        <router-link
+                            v-if="UE.id"
+                            :to="{
+                                name: 'ue-detail',
+                                params: { id: UE.id },
+                            }"
+                        >
+                            <span class="UE mr-2">{{ UE.code }}</span> </router-link
+                        >{{ UE.name }}
                     </h5>
 
                     <span class="badge badge-success ml-2"
@@ -82,7 +90,16 @@
                         class="p-3 border rounded mb-2 d-flex align-items-center ec-card"
                     >
                         <h5 class="d-inline-block ml-2 m-0">
-                            <span class="UE">{{ EC.code }}</span> - {{ EC.name }}
+							                        <router-link
+                            v-if="UE.id"
+                            :to="{
+                                name: 'ue-detail',
+                                params: { id: EC.id },
+                            }"
+                        >
+                            <span class="UE">{{ EC.code }}</span>
+							</router-link>
+                            {{ EC.name }}
                         </h5>
 
                         <span class="badge badge-success ml-2"
@@ -108,6 +125,7 @@
                     </div>
                 </div>
             </div>
+			<div v-else><p>Aucune unité d'enseignement présent dans ce semestre</p></div>
         </div>
     </div>
 </template>
@@ -120,7 +138,7 @@ export default {
     },
     data() {
         return {
-            isOpen: true,
+            isOpen: false,
         };
     },
     methods: {

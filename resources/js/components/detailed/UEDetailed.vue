@@ -2,11 +2,11 @@
     <div>
         <div class="back_btn">
             <a href="#" @click="$router.back()">
-                <i class="fa-solid fa-circle-arrow-left"></i> Retour
+                <i class="fa-solid fa-circle-arrow-left primary_color"></i> Retour
             </a>
         </div>
         <div class="container">
-            <div class="mt-3">
+<!--             <div class="mt-3">
                 <div
                     v-for="(prog, index) in errors.errorsECTS"
                     :key="index"
@@ -33,7 +33,7 @@
                     <span v-else>qui n'a pas assez de crédits attribués.</span>
                 </div>
                 <errorShedule :id="this.id" />
-            </div>
+            </div> -->
             <div v-if="$route.query.message" class="alert alert-success mt-3">
                 <i
                     class="fa-solid fa-check green mr-2"
@@ -58,8 +58,15 @@
                                 params: { isCreate: true },
                             }"
                         >
-                            <button class="btn btn-primary">modifier</button>
+                            <i
+                                style="font-size: 28px"
+                                class="fa-regular fa-pen-to-square primary_color"
+                            ></i>
                         </router-link>
+                            <i
+                                style="font-size: 28px"
+                                class="fa-solid ml-2 fa-download green_color cursor_pointer"
+                            ></i>
                     </span>
                 </div>
                 <span> </span>
@@ -67,7 +74,7 @@
                 <div class="listComponent mb-4">
                     <div class="mb-2">
                         <h5 class="d-inline-block primary_color">
-													Faisant partie du/des programme(s)
+                            Faisant partie du/des programme(s)
                         </h5>
                     </div>
                     <list

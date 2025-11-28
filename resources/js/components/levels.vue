@@ -29,16 +29,16 @@
         <div class="col-md-9">
             <div class="border m-3 p-4 bg-white rounded secondary_color">
                 <div>
-                    <ul class="p-0 mb-1">
+                    <ul class="p-0 mb-3">
                         <li
-                            class="d-inline-block px-3 py-2 selectList cursor_pointer"
+                            class="d-inline-block p-3 selectList cursor_pointer"
                             :class="{ active: selectedList === 'UE' }"
                             @click="selectedList = 'UE'"
                         >
                             <h5>par unité d'enseignement</h5>
                         </li>
                         <li
-                            class="ml-2 d-inline-block px-3 py-2 selectList cursor_pointer"
+                            class="ml-2 d-inline-block p-3 selectList cursor_pointer"
                             :class="{ active: selectedList === 'AAV' }"
                             @click="selectedList = 'AAV'"
                         >
@@ -164,7 +164,7 @@
                                             child.contribution === 2,
                                         weak_mapping: child.contribution === 1,
                                     }"
-                                    class="float-right ml-2 mt-2 mr-1"
+                                    class="float-right ml-2 mr-1"
                                     >{{ child.contribution }}</span
                                 >
                             </div>

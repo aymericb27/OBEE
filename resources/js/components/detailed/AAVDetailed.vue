@@ -1,7 +1,7 @@
 <template>
     <div class="back_btn">
         <a href="#" @click="$router.back()">
-            <i class="fa-solid fa-circle-arrow-left"></i> Retour
+            <i class="fa-solid fa-circle-arrow-left primary_color"></i> Retour
         </a>
     </div>
     <div class="container">

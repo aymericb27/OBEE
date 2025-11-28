@@ -14,6 +14,7 @@ class AcquisApprentissageVise extends Model
         'name',
         'code',
         'fk_AAT',
+        'contribution',
     ];
 
     

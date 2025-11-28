@@ -282,7 +282,7 @@
             <div class="modal-content">
                 <!-- HEADER -->
                 <div class="modal-header">
-                    <h5 class="modal-title">
+                    <h5 class="modal-title primary_color">
                         Créer un acquis d'apprentissage visé
                     </h5>
                     <button
@@ -295,7 +295,7 @@
                 </div>
 
                 <!-- BODY -->
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <div class="form-group mb-3">
                         <label>Libellé</label>
                         <input
@@ -315,7 +315,7 @@
                         ></textarea>
                     </div>
 
-                    <div class="form-group mb-3">
+                    <div class="form-group mb-3 w-75">
                         <label>Acquis d'apprentissage Terminal</label>
                         <select
                             class="form-control"
@@ -332,6 +332,18 @@
                             >
                                 {{ aat.name }}
                             </option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 w-50">
+                        <label>Niveau de contribution </label>
+
+                        <select
+                            class="form form-control"
+                            v-model="aavForm.contribution"
+                        >
+                            <option value="1" selected>faible</option>
+                            <option value="2">modéré</option>
+                            <option value="3">forte</option>
                         </select>
                     </div>
                 </div>
@@ -438,6 +450,7 @@ export default {
                 name: "",
                 description: "",
                 fk_AAT: "",
+				contribution: 1,
             },
             ueParent: {
                 contribution: "",

@@ -15,6 +15,8 @@ class AcquisApprentissageVise extends Controller
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string|max:2024',
             'fk_AAT'      => 'required|integer|exists:acquis_apprentissage_terminaux,id',
+            'contribution' => ['nullable', 'integer', 'min:1', 'max:3'],
+
         ]);
         // ----- Génération du code UExxx -----
         // Récupère le dernier code existant
@@ -81,9 +83,10 @@ class AcquisApprentissageVise extends Controller
         return $response;
     }
 
-    public function getPrerequis(){
-        $response = AAV::join('aavue_prerequis','fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise') 
-        ->get();
+    public function getPrerequis()
+    {
+        $response = AAV::join('aavue_prerequis', 'fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise.id')
+            ->get();
         return $response;
     }
 
