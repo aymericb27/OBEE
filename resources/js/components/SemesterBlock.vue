@@ -96,7 +96,7 @@
                             <router-link
                                 :to="{
                                     name: 'modifyUE',
-                                    params: { id: UE.id },
+                                    params: { id: EC.id },
                                 }"
                             >
                                 <i

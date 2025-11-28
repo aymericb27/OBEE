@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AcquisApprentissageTerminaux as AAT;
 use App\Models\AcquisApprentissageVise as AAV;
+use App\Models\AcquisApprentissageVise;
 use App\Models\UniteEnseignement;
 use Illuminate\Http\Request;
 
@@ -47,6 +48,9 @@ class AcquisApprentissageTerminaux extends Controller
 
             ->get();
         $aat->ues = $ues;
+        $aavs = AcquisApprentissageVise::select('code','contribution','name','id')
+        ->where('fk_AAT', $validated['id'])->get();
+        $aat->aavs = $aavs;
         return $aat;
     }
     public function getDetailed(Request $request)
