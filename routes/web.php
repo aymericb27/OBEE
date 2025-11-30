@@ -36,11 +36,13 @@ Route::get('/ue/aavvise/get', [UniteEnseignement::class, 'getAAVvise'])->name('u
 Route::get('/ue/aavprerequis/get', [UniteEnseignement::class, 'getAAVprerequis'])->name('ue.get.aavprerequis');
 Route::put('/ue/update', [UniteEnseignement::class, 'update'])->name('ue.update');
 Route::post('/ue/store', [UniteEnseignement::class, 'store'])->name('ue.update');
+Route::delete('ue/delete', [UniteEnseignement::class, 'delete']);
 
 //** Programme **//
 Route::get('/pro/get', [ProgrammeController::class, 'get'])->name('pro.get');
 Route::get('/pro/get/detailed', [ProgrammeController::class, 'getDetailed'])->name('pro.get.detailed');
 Route::get('/programme/get/tree', [ProgrammeController::class, 'getTree'])->name('pro.get.tree');
+Route::get('/pro/ue/get', [ProgrammeController::class,'getUE']);
 Route::post('/programme/create', [ProgrammeController::class, 'store'])->name('pro.store');
 Route::put('/programme/{id}', [ProgrammeController::class, 'update']);
 Route::post('/programme/add-semester', [ProgrammeController::class, 'addSemestre']);

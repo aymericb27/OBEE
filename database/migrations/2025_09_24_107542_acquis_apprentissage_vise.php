@@ -12,12 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('acquis_apprentissage_vise', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->id();
             $table->string('code');
             $table->string('name');
             $table->text('description')->nullable();
-            $table->integer('fk_AAT')->unsigned()->nullable();
-            $table->foreign('fk_AAT')->references('id')->on('acquis_apprentissage_vise');
+            $table->foreignId('fk_AAT')
+                ->constrained('acquis_apprentissage_terminaux')
+                ->onDelete('cascade');
             $table->integer('contribution')->default(1);
             $table->timestamps();
         });

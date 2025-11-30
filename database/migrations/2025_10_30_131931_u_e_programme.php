@@ -12,11 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ue_programme', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->id();
-            $table->integer('fk_unite_enseignement')->unsigned()->nullable();
-            $table->foreign('fk_unite_enseignement')->references('id')->on('unite_enseignement');
-            $table->integer('fk_programme')->unsigned()->nullable();
-            $table->foreign('fk_programme')->references('id')->on('programme');
+            $table->foreignId('fk_unite_enseignement')
+                ->constrained('unite_enseignement')
+                ->onDelete('cascade');
+            $table->foreignId('fk_programme')
+                ->constrained('programme')
+                ->onDelete('cascade');
             $table->integer('semester');
             $table->timestamps();
         });

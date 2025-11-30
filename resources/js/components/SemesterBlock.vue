@@ -29,7 +29,11 @@
 
         <!-- LISTE DES UEs -->
         <div v-if="isOpen" class="mt-3">
-            <div v-if="semester.UES.length !== 0" v-for="UE in semester.UES" class="ue-block mb-3">
+            <div
+                v-if="semester.UES.length !== 0"
+                v-for="UE in semester.UES"
+                class="ue-block mb-3"
+            >
                 <!-- UE HEADER -->
                 <div class="d-flex align-items-center mb-1">
                     <i
@@ -50,7 +54,9 @@
                                 params: { id: UE.id },
                             }"
                         >
-                            <span class="UE mr-2">{{ UE.code }}</span> </router-link
+                            <span class="UE mr-2">{{
+                                UE.code
+                            }}</span> </router-link
                         >{{ UE.name }}
                     </h5>
 
@@ -59,8 +65,9 @@
                     >
                     <span class="ml-auto">
                         <i
-                            style="font-size: 24px; color: #e70c0c"
-                            class="fa-regular fa-trash-can mr-3"
+                            style="font-size: 24px"
+                            @click="openModalDelete(UE)"
+                            class="fa-regular fa-trash-can mr-3 deleteBtn"
                         ></i>
                         <router-link
                             :to="{
@@ -90,15 +97,15 @@
                         class="p-3 border rounded mb-2 d-flex align-items-center ec-card"
                     >
                         <h5 class="d-inline-block ml-2 m-0">
-							                        <router-link
-                            v-if="UE.id"
-                            :to="{
-                                name: 'ue-detail',
-                                params: { id: EC.id },
-                            }"
-                        >
-                            <span class="UE">{{ EC.code }}</span>
-							</router-link>
+                            <router-link
+                                v-if="UE.id"
+                                :to="{
+                                    name: 'ue-detail',
+                                    params: { id: EC.id },
+                                }"
+                            >
+                                <span class="UE">{{ EC.code }}</span>
+                            </router-link>
                             {{ EC.name }}
                         </h5>
 
@@ -107,8 +114,9 @@
                         >
                         <span class="ml-auto">
                             <i
-                                style="font-size: 24px; color: #e70c0c"
-                                class="fa-regular fa-trash-can mr-3"
+                                style="font-size: 24px"
+                                @click="openModalDelete(EC)"
+                                class="fa-regular fa-trash-can mr-3 deleteBtn"
                             ></i>
                             <router-link
                                 :to="{
@@ -125,23 +133,55 @@
                     </div>
                 </div>
             </div>
-			<div v-else><p>Aucune unité d'enseignement présent dans ce semestre</p></div>
+            <div v-else>
+                <p>Aucune unité d'enseignement présent dans ce semestre</p>
+            </div>
         </div>
     </div>
+    <ConfirmDeleteModal
+        :show="modalDelete"
+        :name="ueSelected.name"
+        @confirm="deleteItem"
+        @cancel="modalDelete = false"
+    />
 </template>
 
 <script>
+import axios from "axios";
+import ConfirmDeleteModal from "./modal/confirmDeleteModal.vue";
+
 export default {
+    components: { ConfirmDeleteModal },
+
     props: {
         semester: { type: Object, required: true },
         number: { type: Number, required: true },
     },
+    emits: ["open-ue-modal", "deleteRefresh"],
+
     data() {
         return {
+            ueSelected: {
+                name: "",
+            },
+            modalDelete: false,
             isOpen: false,
         };
     },
     methods: {
+        async deleteItem() {
+            const response = await axios.delete("ue/delete", {
+                params: {
+                    id: this.ueSelected.id,
+                },
+            });
+			this.modalDelete = false;
+			this.$emit('deleteRefresh');
+        },
+        openModalDelete(UE) {
+            this.modalDelete = true;
+            this.ueSelected = UE;
+        },
         openModalUE(type, UE) {
             this.$emit("open-ue-modal", {
                 semester: this.semester,

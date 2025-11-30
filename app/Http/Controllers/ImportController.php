@@ -149,7 +149,7 @@ class ImportController extends Controller
             ], ['name' => $preData['libelle']]);
 
             // attacher le prérequis à l’UE
-            $ue->aavprerequis()->syncWithoutDetaching([$pre->id]);
+            $ue->prerequis()->syncWithoutDetaching([$pre->id]);
         }
 
         return $ue;

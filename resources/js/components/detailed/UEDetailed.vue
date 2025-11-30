@@ -42,7 +42,7 @@
                 ></i>
                 <span> {{ $route.query.message }} </span>
             </div>
-            <div class="p-4 border rounded bg-light mt-3">
+            <div class="p-4 border rounded bg-white mt-3">
                 <div class="row mb-2">
                     <h3 class="primary_color col-md-10 mb-0">
                         <span class="box_code UE pl-2 pr-2 mr-2">{{
@@ -53,10 +53,14 @@
                         </span>
                     </h3>
                     <span class="col-md-2 text-right">
+                        <i
+                            style="font-size: 24px"
+                            class="fa-regular fa-trash-can mr-2 deleteBtn"
+                            @click="openModalDelete = true"
+                        ></i>
                         <router-link
                             :to="{
                                 name: 'modifyUE',
-                                params: { isCreate: true },
                             }"
                         >
                             <i
@@ -80,6 +84,7 @@
                         </h4>
                     </div>
                     <list
+                        :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/pro/get"
                         :paramsRouteGET="{ id: ue.id }"
@@ -95,6 +100,7 @@
                         </h4>
                     </div>
                     <list
+                        :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/aavvise/get"
                         :paramsRouteGET="{ id: ue.id }"
@@ -110,6 +116,7 @@
                         </h4>
                     </div>
                     <list
+                        :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/aavprerequis/get"
                         :paramsRouteGET="{ id: ue.id }"
@@ -118,16 +125,41 @@
                         :listColonne="['code', 'name']"
                     />
                 </div>
+                <div class="listComponent mb-4">
+                    <div class="mb-2">
+                        <h4 class="d-inline-block primary_color">
+                            Liste des acquis d'apprentissages terminaux
+                        </h4>
+                    </div>
+                    <list
+                        :isBorder="true"
+                        v-if="ue.id"
+                        routeGET="/ue/aat/get"
+                        :paramsRouteGET="{ id: ue.id }"
+                        linkDetailed="aat-detail"
+                        typeList="AAT"
+                        :listColonne="['code', 'name']"
+                    />
+                </div>
             </div>
         </div>
     </div>
+
+    <ConfirmDeleteModal
+        :show="openModalDelete"
+        :name="ue.name"
+        @confirm="deleteItem"
+        @cancel="openModalDelete = false"
+    />
 </template>
 
 <script>
 import axios from "axios";
 import list from "../list.vue";
 import dayjs from "dayjs";
+
 import errorShedule from "../error/ErrUEShedule.vue";
+import ConfirmDeleteModal from "../modal/confirmDeleteModal.vue";
 
 const formatDate = (dateStr) => dayjs(dateStr).format("DD/MM/YYYY");
 export default {
@@ -137,9 +169,10 @@ export default {
             required: true,
         },
     },
-    components: { list, errorShedule },
+    components: { list, errorShedule, ConfirmDeleteModal },
     data() {
         return {
+            openModalDelete: false,
             selectedEC: false,
             ue: {
                 name: "",
@@ -180,6 +213,18 @@ export default {
             } catch (error) {
                 console.error("Erreur de téléchargement :", error);
             }
+        },
+        async deleteItem() {
+            const response = await axios.delete("/ue/delete", {
+                params: {
+                    id: this.ue.id,
+                },
+            });
+            this.openModalDelete = false;
+            this.$router.push({
+                name: "tree",
+                query: { message: response.data.message },
+            });
         },
 
         async loadUE() {

@@ -96,13 +96,13 @@ class AcquisApprentissageViseSeeder extends Seeder
         DB::table('acquis_apprentissage_vise')->insert([
             'name' => 'Modéliser une base de données à l’aide du modèle entité-association',
             'description' => 'L’étudiant sait représenter les besoins d’un système d’information sous forme de schémas conceptuels, identifier les entités, relations et contraintes, et traduire cette modélisation dans un modèle relationnel.',
-            'fk_AAT' => 4,
+            'fk_AAT' => 3,
             'code' => 'AAV112',
         ]);
         DB::table('acquis_apprentissage_vise')->insert([
             'name' => 'Maîtriser le langage SQL pour la gestion de données',
             'description' => 'L’étudiant apprend à créer, interroger et manipuler des bases de données relationnelles en utilisant SQL. Il est capable d’écrire des requêtes complexes incluant jointures, sous-requêtes et agrégations.',
-            'fk_AAT' => 4,
+            'fk_AAT' => 3,
             'code' => 'AAV113',
         ]);
 
@@ -110,13 +110,13 @@ class AcquisApprentissageViseSeeder extends Seeder
         DB::table('acquis_apprentissage_vise')->insert([
             'name' => 'Concevoir et développer une page web statique et dynamique',
             'description' => 'L’étudiant maîtrise les langages HTML, CSS et JavaScript pour construire des interfaces web interactives. Il comprend les notions de DOM, d’événements et de responsive design.',
-            'fk_AAT' => 5,
+            'fk_AAT' => 3,
             'code' => 'AAV114',
         ]);
         DB::table('acquis_apprentissage_vise')->insert([
             'name' => 'Comprendre les bases du développement web côté serveur',
             'description' => 'L’étudiant apprend à créer des applications web dynamiques en utilisant un langage serveur (comme PHP) et à gérer l’échange de données entre client et serveur via des formulaires ou des API.',
-            'fk_AAT' => 5,
+            'fk_AAT' => 3,
             'code' => 'AAV115',
         ]);
 
@@ -124,13 +124,13 @@ class AcquisApprentissageViseSeeder extends Seeder
         DB::table('acquis_apprentissage_vise')->insert([
             'name' => 'Identifier les principaux services d’un système d’exploitation',
             'description' => 'L’étudiant comprend les mécanismes de gestion des processus, de la mémoire, des fichiers et des périphériques. Il sait expliquer le rôle du noyau et les interactions entre les composants du système.',
-            'fk_AAT' => 6,
+            'fk_AAT' => 3,
             'code' => 'AAV116',
         ]);
         DB::table('acquis_apprentissage_vise')->insert([
             'name' => 'Utiliser efficacement un système Linux en ligne de commande',
             'description' => 'L’étudiant apprend les commandes fondamentales de Linux pour naviguer dans le système de fichiers, manipuler des données et automatiser des tâches via des scripts shell simples.',
-            'fk_AAT' => 6,
+            'fk_AAT' => 1,
             'code' => 'AAV117',
         ]);
 
@@ -138,13 +138,13 @@ class AcquisApprentissageViseSeeder extends Seeder
         DB::table('acquis_apprentissage_vise')->insert([
             'name' => 'Comprendre les principes de base des réseaux et de l’Internet',
             'description' => 'L’étudiant identifie les couches du modèle OSI et du modèle TCP/IP, comprend le fonctionnement des protocoles fondamentaux (IP, TCP, UDP, HTTP) et leur rôle dans la communication entre machines.',
-            'fk_AAT' => 7,
+            'fk_AAT' => 1,
             'code' => 'AAV118',
         ]);
         DB::table('acquis_apprentissage_vise')->insert([
             'name' => 'Configurer et diagnostiquer un réseau local simple',
             'description' => 'L’étudiant sait attribuer des adresses IP, configurer un routeur ou un commutateur, et utiliser des outils de diagnostic (ping, traceroute, Wireshark) pour analyser le trafic réseau.',
-            'fk_AAT' => 7,
+            'fk_AAT' => 1,
             'code' => 'AAV119',
         ]);
     }

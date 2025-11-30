@@ -147,14 +147,14 @@
                         </label>
                     </div>
                 </div> -->
-                <div class="text-right">
+<!--                 <div class="text-right">
                     <button
                         type="button"
                         @click="isModalExportVisible = true"
                         class="align-bottom btn btn-lg btn-success"
                     >
                         exporter sous .csv
-                    </button>
+                    </button> -->
                     <!--                     <diV>
                         <button
                             type="submit"
@@ -163,7 +163,7 @@
                             rechercher
                         </button>
                     </div> -->
-                </div>
+       <!--          </div> -->
             </form>
         </div>
         <div class="col-md-9">

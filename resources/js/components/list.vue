@@ -22,6 +22,7 @@
         :style="isBorder ? { borderTop: '0px !important' } : {}"
     >
         <div
+            v-if="filteredItems.length"
             v-for="(item, index) in filteredItems"
             :key="item.id"
             :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
@@ -59,6 +60,7 @@
                 {{ item.ects }}
             </div>
         </div>
+        <div v-else><p class="p-2 text-center mb-0">Aucune donnée à afficher</p></div>
     </div>
 </template>
 <script>

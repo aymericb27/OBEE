@@ -5,13 +5,35 @@
         </a>
     </div>
     <div class="container">
-        <div class="p-4 border rounded bg-light mt-3">
+        <div class="p-4 border rounded bg-white mt-3">
             <div class="row mb-2">
-                <h3 class="primary_color ml-2 mb-0">
+                <h3 class="primary_color col-md-10 mb-0">
                     <span class="box_code AAT pl-2 pr-2">{{ aat.code }}</span>
 
                     {{ aat.name }}
                 </h3>
+                <span class="col-md-2 text-right">
+                    <i
+                        style="font-size: 24px"
+                        class="fa-regular fa-trash-can mr-2 deleteBtn"
+                        @click="openModalDelete = true"
+                    ></i>
+                    <router-link
+                        :to="{
+                            name: 'modifyUE',
+                        }"
+                    >
+                        <i
+                            style="font-size: 28px"
+                            class="fa-regular fa-pen-to-square primary_color"
+                        ></i>
+                    </router-link>
+                    <i
+                        @click="exportUE(ue.id)"
+                        style="font-size: 28px"
+                        class="fa-solid ml-2 fa-download green_color cursor_pointer"
+                    ></i>
+                </span>
             </div>
             <p class="mb-4">{{ aat.description }}</p>
             <div class="listComponent mb-4">
@@ -23,6 +45,7 @@
 
                 <div>
                     <list
+                        :isBorder="true"
                         v-if="aat.id"
                         routeGET="/aat/aavs/get"
                         :paramsRouteGET="{ id: aat.id }"

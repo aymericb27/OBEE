@@ -12,11 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('element_constitutif', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->id();
-            $table->integer('fk_ue_parent')->unsigned()->nullable();
-            $table->foreign('fk_ue_parent')->references('id')->on('unite_enseignement');
-            $table->integer('fk_ue_child')->unsigned()->nullable();
-            $table->foreign('fk_ue_child')->references('id')->on('unite_enseignement');
+            $table->foreignId('fk_ue_parent')
+                ->constrained('unite_enseignement')
+                ->onDelete('cascade');
+            $table->foreignId('fk_ue_child')
+                ->constrained('unite_enseignement')
+                ->onDelete('cascade');
             $table->integer('contribution');
             $table->timestamps();
         });

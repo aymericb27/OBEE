@@ -12,11 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('aavue_prerequis', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->id();
-            $table->integer('fk_acquis_apprentissage_prerequis')->unsigned()->nullable();
-            $table->foreign('fk_acquis_apprentissage_prerequis')->references('id')->on('acquis_apprentissage_vise');
-            $table->integer('fk_unite_enseignement')->unsigned()->nullable();
-            $table->foreign('fk_unite_enseignement')->references('id')->on('unite_enseignement');
+            $table->foreignId('fk_acquis_apprentissage_prerequis')
+                ->constrained('acquis_apprentissage_vise')
+                ->onDelete('cascade');
+            $table->foreignId('fk_unite_enseignement')
+                ->constrained('unite_enseignement')
+                ->onDelete('cascade');
             $table->timestamps();
         });
     }

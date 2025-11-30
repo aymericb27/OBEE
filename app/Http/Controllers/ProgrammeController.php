@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\ProgExport;
 use App\Models\Programme;
 use App\Models\UEPRO;
 use App\Models\UniteEnseignement;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
-use PhpParser\Node\Expr\Cast\Array_;
-use PhpParser\Node\Expr\Cast\Object_;
 
 class ProgrammeController extends Controller
 {
@@ -124,6 +120,16 @@ class ProgrammeController extends Controller
             'message' => "Unité(s) d'enseignement(s) rajoutée(s) avec succès",
         ]);
     }
+
+    public function getUE(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+        $ues = UniteEnseignement::join('ue_programme', 'fk_unite_enseignement','=','unite_enseignement.id')->where('fk_programme', $validated['id'])->get();
+        return $ues;
+    }
+
 
     public function getTree(Request $request)
     {

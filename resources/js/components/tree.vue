@@ -68,6 +68,7 @@
                     :semester="semestre"
                     :number="semestre.number"
                     @open-ue-modal="openModalUE"
+					@deleteRefresh="loadProgramDetailed(prog.id)"
                 />
             </span>
         </div>

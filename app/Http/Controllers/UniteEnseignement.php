@@ -227,9 +227,22 @@ class UniteEnseignement extends Controller
         return $response;
     }
 
+    public function delete(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+        $ue = UE::findOrFail($validated['id']);
+        $ue->delete();
+        return response()->json([
+            'success' => true,
+            'message' => "Unité d'enseignement supprimé avec succès.",
+        ]);
+    }
+
     public function get(Request $request)
     {
-/*         // Convertir onlyErrors en bool si présent
+        /*         // Convertir onlyErrors en bool si présent
         if ($request->has('onlyErrors')) {
             $request->merge([
                 'onlyErrors' => filter_var($request->onlyErrors, FILTER_VALIDATE_BOOLEAN),
@@ -242,7 +255,7 @@ class UniteEnseignement extends Controller
 
         $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects');
 
-/*         // ✔ programme filtré seulement si fourni
+        /*         // ✔ programme filtré seulement si fourni
         if (!empty($validated['program'])) {
             $ues->join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
                 ->where('fk_programme', $validated['program']);
@@ -256,7 +269,7 @@ class UniteEnseignement extends Controller
         $ues = $ues->get();
 
         // Analyse d'erreurs
-       /*  $EC = new ErrorController;
+        /*  $EC = new ErrorController;
         $result = $EC->getErrorUES($ues, true);
 
         // ✔ onlyErrors appliqué uniquement si provided et true

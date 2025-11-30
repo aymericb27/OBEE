@@ -14,12 +14,12 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AcquisApprentissageTerminauxSeeder::class,
-            AcquisApprentissageViseSeeder::class,
             UniteEnseignementSeeder::class,
+            UeAatSeeder::class,
+            AcquisApprentissageViseSeeder::class,
             AAVUESeeder::class,
             ProgrammeSeeder::class,
             UEProgrammeSeeder::class,
-            UeAatSeeder::class,
         ]);
     }
 }

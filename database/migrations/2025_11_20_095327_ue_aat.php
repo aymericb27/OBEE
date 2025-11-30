@@ -6,27 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('ue_aat', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->id();
-            $table->integer('fk_ue')->unsigned()->nullable();
-            $table->foreign('fk_ue')->references('id')->on('unite_enseignement');
-            $table->integer('fk_aat')->unsigned()->nullable();
-            $table->foreign('fk_aat')->references('id')->on('acquis_apprentissage_terminaux');
+            $table->foreignId('fk_ue')
+                ->constrained('unite_enseignement')
+                ->onDelete('cascade');
+            $table->foreignId('fk_aat')
+                ->constrained('acquis_apprentissage_terminaux')
+                ->onDelete('cascade');
+
             $table->integer('contribution');
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('ue_aat');
     }
 };

@@ -198,6 +198,16 @@ textarea {
 .semester-card {
     background: #fdfdfd;
 }
+.fa-pen-to-square.primary_color:hover{
+    color: #6590c9e3;
+}
+.deleteBtn{
+    color: #e70c0c;
+}
+.deleteBtn:hover{
+    color : #e26969;
+    cursor: pointer;
+}
 
 .badge {
     font-size: 0.75rem;
