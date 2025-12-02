@@ -48,8 +48,8 @@ class AcquisApprentissageTerminaux extends Controller
 
             ->get();
         $aat->ues = $ues;
-        $aavs = AcquisApprentissageVise::select('code','contribution','name','id')
-        ->where('fk_AAT', $validated['id'])->get();
+        $aavs = AcquisApprentissageVise::select('code', 'contribution', 'name', 'id')
+            ->where('fk_AAT', $validated['id'])->get();
         $aat->aavs = $aavs;
         return $aat;
     }
@@ -74,5 +74,40 @@ class AcquisApprentissageTerminaux extends Controller
             ->where('fk_AAT', $validated['id'])
             ->get();
         return $response;
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'description' => 'nullable|string|max:2024',
+        ]);
+        // ----- Génération du code AATxxx -----
+        // Récupère le dernier code existant
+        $lastAAT = AAT::where('code', 'LIKE', 'AAT%')
+            ->orderBy('code', 'desc')
+            ->first();
+
+        if ($lastAAT) {
+            // extrait le numéro : PRO012 → 12
+            $lastNumber = intval(substr($lastAAT->code, 3));
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1; // premier code
+        }
+
+        // format UE001 / UE024 / UE300…
+        $newCode = 'AAT' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+
+        // Ajout du code au tableau validé
+        $validated['code'] = $newCode;
+
+        $aav = AAT::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'aav' => $aav,
+            'message' => "AAV créé avec succès."
+        ]);
     }
 }

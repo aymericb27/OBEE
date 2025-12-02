@@ -56,7 +56,7 @@
             <div class="col-md-1 p-2" v-if="listColonne.includes('semestre')">
                 {{ item.semestre }}
             </div>
-            <div class="col-md-1 p-2" v-if="listColonne.includes('ects')">
+            <div class="col-md-1 p-3" v-if="listColonne.includes('ects')">
                 {{ item.ects }}
             </div>
         </div>

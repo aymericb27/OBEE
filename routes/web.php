@@ -50,6 +50,7 @@ Route::post('/programme/ues/add', [ProgrammeController::class, 'addUEs'])->name(
 
 //** Acquis d'apprentissage terminaux **//
 Route::get('/aat/get', [AcquisApprentissageTerminaux::class, 'get']);
+Route::post('/aat/store', [AcquisApprentissageTerminaux::class, 'store']);
 Route::get('/aat/get/tree', [AcquisApprentissageTerminaux::class, 'getTree']);
 Route::get('/aat/get/detailed', [AcquisApprentissageTerminaux::class, 'getDetailed']);
 Route::get('/aat/aavs/get', [AcquisApprentissageTerminaux::class, 'getAAVs']);

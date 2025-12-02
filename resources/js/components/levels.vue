@@ -12,7 +12,7 @@
                     <i class="fa-brands fa-gg-circle primary_color"></i> Acquis
                     d'apprentissage terminaux
                 </h2>
-                <ul class="secondary_color">
+                <ul class="secondary_color" v-if="aats.length">
                     <li
                         class="p-2 aat-item"
                         :class="{ active: selectedAATId === aat.id }"
@@ -24,6 +24,20 @@
                         <h5 class="m-0">{{ aat.name }}</h5>
                     </li>
                 </ul>
+                <div v-else class="p-2">
+                    Aucune acquis d'apprentissage terminaux dans le programme
+                </div>
+                <div class="text-right">
+                    <router-link
+                        :to="{
+                            name: 'createAAT',
+                        }"
+                    >
+                        <button class="btn btn-lg btn-primary ml-auto mb-2">
+                            + ajout AAT
+                        </button>
+                    </router-link>
+                </div>
             </div>
         </div>
         <div class="col-md-9">
@@ -46,7 +60,7 @@
                         </li>
                     </ul>
                 </div>
-                <div class="bg-primary rounded p-4">
+                <div class="bg-primary rounded p-4" v-if="aat.id">
                     <h5>
                         <i
                             class="fa-solid fa-book-bookmark"
@@ -171,6 +185,15 @@
                         </div>
                     </div>
                 </div>
+                <div v-if="!aat.id">
+                    <h5 class="p-4">Aucun acquis d'apprentissage terminal sélectionné</h5>
+                </div>
+                <div v-if="selectedList == 'AAV' && !aat.aavs.length">
+                    <h5 class="p-4">Aucun acquis d'apprentissage visé lié</h5>
+                </div>
+                <div v-if="selectedList == 'UE' && !aat.ues.length">
+                    <h5 class="p-4">Aucune unité d'enseignement lié</h5>
+                </div>
             </div>
         </div>
     </div>
@@ -184,7 +207,10 @@ export default {
             aats: [],
             selectedAATId: "",
             selectedList: "UE",
-            aat: {},
+            aat: {
+				ues : [],
+				aavs : [],
+			},
         };
     },
     components: {},

@@ -20,7 +20,7 @@
                     ></i>
                     <router-link
                         :to="{
-                            //name: 'modifyAAV',
+                            name: 'modifyAAV',
                         }"
                     >
                         <i
@@ -122,7 +122,7 @@ export default {
         };
     },
     methods: {
-        async loadAAT() {
+        async loadAAV() {
             try {
                 const response = await axios.get("/aav/get/detailed", {
                     params: {
@@ -130,7 +130,6 @@ export default {
                     },
                 });
                 this.aav = response.data;
-                console.log(response);
             } catch (error) {
                 console.log(error);
             }
@@ -138,7 +137,7 @@ export default {
     },
 
     mounted() {
-        this.loadAAT();
+        this.loadAAV();
     },
 };
 </script>

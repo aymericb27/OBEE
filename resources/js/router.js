@@ -13,6 +13,8 @@ import ExportPanel from "./components/exportPanel.vue";
 import levels from "./components/levels.vue";
 import FormProgram from "./components/form/formProgram.vue";
 import FormImport from "./components/form/formImport.vue";
+import FormAAT from "./components/form/formAAT.vue";
+import FormAAV from "./components/form/formAAV.vue";
 const routes = [
     {
         path: "/",
@@ -65,6 +67,12 @@ const routes = [
         props: true, // transmet automatiquement tous les params comme props
     },
     {
+        path: "/modifyAAV/:id",
+        name: "modifyAAV",
+        component: FormAAV,
+        props: true, // transmet automatiquement tous les params comme props
+    },
+    {
         path: "/createUE",
         name: "createUE",
         component: FormUE,
@@ -81,6 +89,11 @@ const routes = [
         name: "createProgram",
         component: FormProgram,
         props: true,
+    },
+    {
+        path: "/createAAT",
+        name: "createAAT",
+        component: FormAAT,
     },
     {
         path: "/exportPanel",

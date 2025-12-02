@@ -735,7 +735,6 @@ export default {
             this.loadUEParent(this.$route.query.UEParentId);
         }
         if (this.id) {
-            console.log("ok");
             this.loadUE();
         }
     },
