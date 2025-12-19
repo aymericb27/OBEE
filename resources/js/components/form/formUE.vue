@@ -296,6 +296,13 @@
 
                 <!-- BODY -->
                 <div class="modal-body p-4">
+                    <div v-if="formAAvErrors" class="alert alert-danger mt-3">
+                        <i
+                            class="fa-solid fa-triangle-exclamation mr-2"
+                            style="color: crimson; font-size: 24px"
+                        ></i>
+                        <span> {{ formAAvErrors }} </span>
+                    </div>
                     <div class="form-group mb-3">
                         <label>Libellé</label>
                         <input
@@ -305,7 +312,6 @@
                             v-model="aavForm.name"
                         />
                     </div>
-
                     <div class="form-group mb-3">
                         <label>Description</label>
                         <textarea
@@ -317,11 +323,7 @@
 
                     <div class="form-group mb-3 w-75">
                         <label>Acquis d'apprentissage Terminal</label>
-                        <select
-                            class="form-control"
-                            required
-                            v-model="aavForm.fk_AAT"
-                        >
+                        <select class="form-control" v-model="aavForm.fk_AAT">
                             <option value="" disabled>
                                 — Sélectionner un type —
                             </option>
@@ -334,14 +336,17 @@
                             </option>
                         </select>
                     </div>
-                    <div class="form-group mb-3 w-50">
+                    <div class="form-group mb-3 w-75">
                         <label>Niveau de contribution </label>
 
                         <select
                             class="form form-control"
                             v-model="aavForm.contribution"
                         >
-                            <option value="1" selected>faible</option>
+                            <option value="" disabled selected>
+                                — Sélectionner une contribution —
+                            </option>
+                            <option value="1">faible</option>
                             <option value="2">modéré</option>
                             <option value="3">forte</option>
                         </select>
@@ -350,10 +355,18 @@
 
                 <!-- FOOTER -->
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" @click="closeModalAAV">
+                    <button
+                        class="btn btn-secondary"
+                        type="button"
+                        @click="closeModalAAV"
+                    >
                         Annuler
                     </button>
-                    <button class="btn btn-primary" @click="submitAAV">
+                    <button
+                        class="btn btn-primary"
+                        type="submit"
+                        @click="submitAAV"
+                    >
                         Créer
                     </button>
                 </div>
@@ -450,7 +463,7 @@ export default {
                 name: "",
                 description: "",
                 fk_AAT: "",
-				contribution: 1,
+                contribution: "",
             },
             ueParent: {
                 contribution: "",
@@ -467,6 +480,7 @@ export default {
                 aavs: {},
                 ecs: {},
             },
+            formAAvErrors: null,
             formErrors: null,
         };
     },
@@ -610,6 +624,11 @@ export default {
             this.listAAT = response.data;
         },
         async submitAAV() {
+            this.formAAvErrors = null;
+            if (!this.aavForm.name) {
+                this.formAAvErrors = "Le champs libellé doit être présent";
+                return;
+            }
             try {
                 const response = await axios.post("/aav/store", this.aavForm);
                 const createdAAV = response.data.aav;

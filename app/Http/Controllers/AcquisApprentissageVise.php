@@ -14,7 +14,7 @@ class AcquisApprentissageVise extends Controller
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string|max:2024',
-            'fk_AAT'      => 'required|integer|exists:acquis_apprentissage_terminaux,id',
+            'fk_AAT'      => 'nullable|integer|exists:acquis_apprentissage_terminaux,id',
             'contribution' => ['nullable', 'integer', 'min:1', 'max:3'],
 
         ]);
