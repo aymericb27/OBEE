@@ -8,6 +8,7 @@ use App\Models\AcquisApprentissageTerminaux;
 use App\Models\AcquisApprentissageVise;
 use App\Models\Programme;
 use App\Models\UniteEnseignement;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -21,12 +22,39 @@ class ImportController extends Controller
     {
         $import = new UEImport();
         Excel::import($import, $request->file('file'));
-        return $this->storeUE($import->parsedData);
+        //return $this->storeUE($import->parsedData);
         return response()->json([
             'message' => 'Import réussi',
             'data' => $import->parsedData
         ]);
     }
+
+    public function importAAT(Request $request)
+    {
+        $request->validate([
+            'startRow' => 'required|integer|min:1',
+            'endRow' => 'required|integer|min:1',
+            'columns' => 'required|array',
+            'columns.code' => 'required|string',
+            'columns.name' => 'required|string',
+            'file' => 'required|file|mimes:xlsx,xls,csv',
+        ]);
+
+        $import = new \App\Imports\AATImport(
+            startRow: $request->startRow,
+            endRow: $request->endRow,
+            columnMap: $request->columns
+        );
+
+        Excel::import($import, $request->file('file'));
+
+        return response()->json([
+            'message' => 'Import OK',
+            'data' => $import->parsedData,
+        ]);
+    }
+
+
 
 
 
@@ -123,7 +151,7 @@ class ImportController extends Controller
             $aat = AAT::firstOrCreate([
                 'code' => $aavData['AATCode'],
             ], ['name' => $aavData['AATName']]);
-
+            Log::info('Info message');
             // 2) Création / récupération de l’AAV
             $aav = AcquisApprentissageVise::updateOrCreate(
                 ['code' => $aavData['code']],

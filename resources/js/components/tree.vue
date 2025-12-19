@@ -68,7 +68,7 @@
                     :semester="semestre"
                     :number="semestre.number"
                     @open-ue-modal="openModalUE"
-					@deleteRefresh="loadProgramDetailed(prog.id)"
+                    @deleteRefresh="loadProgramDetailed(prog.id)"
                 />
             </span>
         </div>
@@ -148,26 +148,43 @@ export default {
             if (param.type === "EC") {
                 this.paramUEForm.UEParentId = param.UE.id;
             }
-            console.log(this.paramUEForm);
             this.modalRoute = "/ues/get";
             this.modalTitle = "Ajouter des unités d'enseignements";
             this.showModalUE = true;
+            this.semesterSelected = param.semester.number;
         },
         async handleSelectedUE(UES) {
-            try {
-                const response = await axios.post("programme/ues/add", {
-                    list: UES,
-                    id: this.selectedProgramId,
-                    semester: this.semesterSelected,
-                });
-                this.$router.replace({
-                    query: {
-                        message: response.data.message,
-                    },
-                });
-                this.loadProgramDetailed(this.selectedProgramId);
-            } catch (error) {
-                console.log(error);
+            if (this.paramUEForm.UEParentId) {
+                try {
+                    const response = await axios.post("ues/add/EC", {
+                        idParent: this.paramUEForm.UEParentId,
+                        listChild: UES,
+                    });
+                    this.$router.replace({
+                        query: {
+                            message: response.data.message,
+                        },
+                    });
+                    this.loadProgramDetailed(this.selectedProgramId);
+                } catch (error) {
+                    console.log(error);
+                }
+            } else {
+                try {
+                    const response = await axios.post("programme/ues/add", {
+                        list: UES,
+                        id: this.selectedProgramId,
+                        semester: this.semesterSelected,
+                    });
+                    this.$router.replace({
+                        query: {
+                            message: response.data.message,
+                        },
+                    });
+                    this.loadProgramDetailed(this.selectedProgramId);
+                } catch (error) {
+                    console.log(error);
+                }
             }
         },
         async loadPrograms() {

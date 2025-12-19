@@ -190,6 +190,25 @@ class UniteEnseignement extends Controller
             ->where('fk_ue', $validated['id'])->get();
         return $response;
     }
+    public function addEC(Request $request)
+    {
+        $validated = $request->validate([
+            'idParent' => 'required|integer',
+            'listChild' => 'required|array',
+        ]);
+
+        foreach ($validated['listChild'] as $index => $EC) {
+            ElementConstitutif::create([
+                'fk_ue_parent' => $validated['idParent'],
+                'fk_ue_child' => $EC['id'],
+                'contribution' => 1
+            ]);
+        }
+        return response()->json([
+            'success' => true,
+            'message' => "Unité d'enseignement mise à jour avec succès.",
+        ]);
+    }
 
     public function getAAVvise(Request $request)
     {

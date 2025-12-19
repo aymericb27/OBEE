@@ -37,12 +37,12 @@ Route::get('/ue/aavprerequis/get', [UniteEnseignement::class, 'getAAVprerequis']
 Route::put('/ue/update', [UniteEnseignement::class, 'update'])->name('ue.update');
 Route::post('/ue/store', [UniteEnseignement::class, 'store'])->name('ue.update');
 Route::delete('ue/delete', [UniteEnseignement::class, 'delete']);
-
+Route::post('/ues/add/EC', [UniteEnseignement::class, 'addEC']);
 //** Programme **//
 Route::get('/pro/get', [ProgrammeController::class, 'get'])->name('pro.get');
 Route::get('/pro/get/detailed', [ProgrammeController::class, 'getDetailed'])->name('pro.get.detailed');
 Route::get('/programme/get/tree', [ProgrammeController::class, 'getTree'])->name('pro.get.tree');
-Route::get('/pro/ue/get', [ProgrammeController::class,'getUE']);
+Route::get('/pro/ue/get', [ProgrammeController::class, 'getUE']);
 Route::post('/programme/create', [ProgrammeController::class, 'store'])->name('pro.store');
 Route::put('/programme/{id}', [ProgrammeController::class, 'update']);
 Route::post('/programme/add-semester', [ProgrammeController::class, 'addSemestre']);
@@ -77,6 +77,7 @@ Route::get('/export/ue/{id}', [ExportController::class, 'exportUE']);
 
 //** importation **//
 Route::post('/import/post', [ImportController::class, 'import']);
+Route::post('/import/aat', [ImportController::class, 'importAAT'])->name('import.aat');
 
 Route::get('/download/model_import', function () {
     return response()->download(
