@@ -45,6 +45,7 @@ class AcquisApprentissageTerminaux extends Controller
                         ->where('fk_aat', $validated['id']);
                 }
             ])
+            ->with('aavvise')
 
             ->get();
         $aat->ues = $ues;

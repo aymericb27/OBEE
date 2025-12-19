@@ -42,7 +42,7 @@
         </div>
         <div class="col-md-9">
             <div class="border m-3 p-4 bg-white rounded secondary_color">
-                <div>
+                <!--                 <div>
                     <ul class="p-0 mb-3">
                         <li
                             class="d-inline-block p-3 selectList cursor_pointer"
@@ -59,7 +59,7 @@
                             <h5>par acquis d'apprentissage visé</h5>
                         </li>
                     </ul>
-                </div>
+                </div> -->
                 <div class="bg-primary rounded p-4" v-if="aat.id">
                     <h5>
                         <i
@@ -85,40 +85,6 @@
                 </div>
                 <div
                     class="ml-4 mt-2"
-                    v-for="aav in aat.aavs"
-                    v-if="selectedList == 'AAV'"
-                >
-                    <div class="rounded p-4 bg-green">
-                        <h5 class="d-inline-block">
-                            <i
-                                class="fa-solid fa-arrow-right"
-                                style="color: #3ad55d"
-                            ></i>
-                            <router-link
-                                v-if="aav.id"
-                                :to="{
-                                    name: 'aav-detail',
-                                    params: { id: aav.id },
-                                }"
-                                class="AAVLink"
-                            >
-                                {{ aav.code }}
-                            </router-link>
-                            {{ aav.name }}
-                        </h5>
-                        <span
-                            :class="{
-                                strong_mapping: aav.contribution === 3,
-                                medium_mapping: aav.contribution === 2,
-                                weak_mapping: aav.contribution === 1,
-                            }"
-                            class="float-right ml-2 mr-1"
-                            >{{ aav.contribution }}</span
-                        >
-                    </div>
-                </div>
-                <div
-                    class="ml-4 mt-2"
                     v-for="ue in aat.ues"
                     v-if="selectedList === 'UE'"
                 >
@@ -140,15 +106,40 @@
                             </router-link>
                             {{ ue.name }}
                         </h5>
-                        <span
-                            :class="{
-                                strong_mapping: ue.contribution === 3,
-                                medium_mapping: ue.contribution === 2,
-                                weak_mapping: ue.contribution === 1,
-                            }"
-                            class="float-right ml-2 mr-1"
-                            >{{ ue.contribution }}</span
-                        >
+                    </div>
+                    <div class="ml-4 mt-2" v-for="aav in ue.aavvise">
+                        <div class="p-4 rounded bg-grey">
+                            <div>
+                                <h5 class="d-inline-block">
+                                    <i
+                                        class="fa-solid fa-arrow-right"
+                                        style="color: rgb(167 167 167)"
+                                    ></i>
+                                    <router-link
+                                        v-if="aav.id"
+                                        :to="{
+                                            name: 'ue-detail',
+                                            params: { id: aav.id },
+                                        }"
+                                        class="childUELink"
+                                    >
+                                        {{ aav.code }}
+                                    </router-link>
+                                    {{ aav.name }}
+                                </h5>
+                                <span
+                                    :class="{
+                                        strong_mapping:
+                                            aav.contribution === 3,
+                                        medium_mapping:
+                                            aav.contribution === 2,
+                                        weak_mapping: aav.contribution === 1,
+                                    }"
+                                    class="float-right ml-2 mr-1"
+                                    >{{ aav.contribution }}</span
+                                >
+                            </div>
+                        </div>
                     </div>
                     <div class="ml-4 mt-2" v-for="child in ue.children">
                         <div class="p-4 rounded bg-grey">
@@ -186,10 +177,9 @@
                     </div>
                 </div>
                 <div v-if="!aat.id">
-                    <h5 class="p-4">Aucun acquis d'apprentissage terminal sélectionné</h5>
-                </div>
-                <div v-if="selectedList == 'AAV' && !aat.aavs.length">
-                    <h5 class="p-4">Aucun acquis d'apprentissage visé lié</h5>
+                    <h5 class="p-4">
+                        Aucun acquis d'apprentissage terminal sélectionné
+                    </h5>
                 </div>
                 <div v-if="selectedList == 'UE' && !aat.ues.length">
                     <h5 class="p-4">Aucune unité d'enseignement lié</h5>
@@ -208,9 +198,9 @@ export default {
             selectedAATId: "",
             selectedList: "UE",
             aat: {
-				ues : [],
-				aavs : [],
-			},
+                ues: [],
+                aavs: [],
+            },
         };
     },
     components: {},
