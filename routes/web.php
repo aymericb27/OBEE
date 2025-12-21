@@ -33,6 +33,7 @@ Route::get('/ue/ecs/get', [UniteEnseignement::class, 'getECs'])->name('ue.get.ec
 Route::get('/ue/aat/get', [UniteEnseignement::class, 'getAATs'])->name('ue.get.aat');
 Route::get('ue/pro/get', [UniteEnseignement::class, 'getPro'])->name('ue.pro.get');
 Route::get('/ue/aavvise/get', [UniteEnseignement::class, 'getAAVvise'])->name('ue.get.aavvise');
+Route::get('/ue/aavvise/get/onlyParent', [UniteEnseignement::class, 'getAAVviseOnlyParent'])->name('ue.get.aavvise');
 Route::get('/ue/aavprerequis/get', [UniteEnseignement::class, 'getAAVprerequis'])->name('ue.get.aavprerequis');
 Route::put('/ue/update', [UniteEnseignement::class, 'update'])->name('ue.update');
 Route::post('/ue/store', [UniteEnseignement::class, 'store'])->name('ue.update');

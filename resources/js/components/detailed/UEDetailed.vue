@@ -148,6 +148,8 @@
     <ConfirmDeleteModal
         :show="openModalDelete"
         :name="ue.name"
+        type="UE"
+        :idToDelete="ue.id"
         @confirm="deleteItem"
         @cancel="openModalDelete = false"
     />

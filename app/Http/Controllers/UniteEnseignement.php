@@ -223,6 +223,21 @@ class UniteEnseignement extends Controller
         return $response;
     }
 
+    public function getAAVviseOnlyParent(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+        $response = AAV::select('acquis_apprentissage_vise.id', 'name', 'code')
+            ->join('aavue_vise', 'fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
+            ->where('aavue_vise.fk_unite_enseignement', $validated['id'])
+            ->groupBy('acquis_apprentissage_vise.id', 'name', 'code')
+            ->havingRaw('COUNT(aavue_vise.fk_unite_enseignement) = 1')
+            ->get();
+
+        return $response;
+    }
+
     public function getAAVprerequis(Request $request)
     {
         $validated = $request->validate([
