@@ -18,7 +18,7 @@ return new class extends Migration
                 ->constrained('acquis_apprentissage_terminaux')
                 ->onDelete('cascade');
 
-            $table->integer('contribution');
+            $table->integer('contribution')->nullable();
 
             $table->timestamps();
         });

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->engine = 'InnoDB';
             $table->id();
             $table->string('code');
-            $table->string('name');
+            $table->text('name');
             $table->text('description')->nullable();
             $table->foreignId('fk_AAT')
                 ->nullable()

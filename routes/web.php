@@ -79,6 +79,7 @@ Route::get('/export/ue/{id}', [ExportController::class, 'exportUE']);
 //** importation **//
 Route::post('/import/post', [ImportController::class, 'import']);
 Route::post('/import/aat', [ImportController::class, 'importAAT'])->name('import.aat');
+Route::post('/import/generic', [ImportController::class, 'import']);
 
 Route::get('/download/model_import', function () {
     return response()->download(

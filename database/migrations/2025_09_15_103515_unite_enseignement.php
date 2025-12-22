@@ -17,8 +17,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('code');
-            $table->text('description');
-            $table->integer('ects');
+            $table->text('description')->nullable();
+            $table->integer('ects')->nullable();
             $table->timestamps();
         });
     }
