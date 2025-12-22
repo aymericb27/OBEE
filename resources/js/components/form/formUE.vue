@@ -15,11 +15,15 @@
             </div>
             <form @submit.prevent="submitFormUE">
                 <div class="p-4 border rounded bg-white mt-3">
-                    <h3 class="mb-4 primary_color">
+                    <h3 v-if="!ueParent.name" class="mb-4 primary_color">
                         Création d'une unité d'enseignement
                     </h3>
+                    <h3 v-if="ueParent.name" class="mb-4 primary_color">
+                        Création d'un élément constitutif
+                    </h3>
+
                     <div class="mb-3" v-if="$route.query.UEParentId">
-                        Cette unité d'enseignement sera l'élément constitutif de
+                        Cette élément sera l'élément constitutif de
                         <span class="UE">{{ ueParent.code }}</span>
                         <span class="ml-1 font-weight-bold secondary_color">{{
                             ueParent.name
@@ -38,7 +42,7 @@
                     </div>
 
                     <div class="mb-4 d-flex align-items-center">
-                        <span class="pr-2 mr-2 mb-0 w-75 flex-grow-1">
+                        <span class="pr-2 mb-0 w-75 flex-grow-1">
                             <input
                                 type="text"
                                 class="form form-control"
@@ -47,13 +51,13 @@
                                 required
                             />
                         </span>
-                        <span class="">
+                        <span class="ml-2">
                             <input
+                                v-if="!ueParent.name"
                                 type="number"
                                 class="form form-control"
                                 v-model="ue.ects"
                                 placeholder="Nombre d'ects"
-                                required
                             />
                         </span>
                     </div>
@@ -168,7 +172,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="listComponent mb-5">
+                    <div class="listComponent mb-5" v-if="!ueParent.name">
                         <div class="mb-2">
                             <h4 class="d-inline-block primary_color">
                                 Liste des acquis d'apprentissages visé
