@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             AAVUESeeder::class,
             ProgrammeSeeder::class,
             UEProgrammeSeeder::class,
+            AAVAATSeeder::class,
         ]);
     }
 }

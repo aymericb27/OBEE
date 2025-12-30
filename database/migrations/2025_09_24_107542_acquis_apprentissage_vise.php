@@ -17,12 +17,6 @@ return new class extends Migration
             $table->string('code');
             $table->text('name');
             $table->text('description')->nullable();
-            $table->foreignId('fk_AAT')
-                ->nullable()
-
-                ->constrained('acquis_apprentissage_terminaux')
-                ->onDelete('cascade');
-            $table->integer('contribution')->nullable()->default(1);
             $table->timestamps();
         });
     }

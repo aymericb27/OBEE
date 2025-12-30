@@ -12,40 +12,67 @@ class AcquisApprentissageVise extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'        => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:2024',
-            'fk_AAT'      => 'nullable|integer|exists:acquis_apprentissage_terminaux,id',
-            'contribution' => ['nullable', 'integer', 'min:1', 'max:3'],
 
+            'aat' => 'required|array|min:1',
+            'aat.*.id' => 'nullable|integer|exists:acquis_apprentissage_terminaux,id',
+            'aat.*.contribution' => 'nullable|integer|min:1|max:3',
         ]);
-        // ----- Génération du code UExxx -----
-        // Récupère le dernier code existant
+
+        /*
+     |--------------------------------------------------------------------------
+     | Génération du code AAVxxx
+     |--------------------------------------------------------------------------
+     */
         $lastAAV = AAV::where('code', 'LIKE', 'AAV%')
             ->orderBy('code', 'desc')
             ->first();
 
-        if ($lastAAV) {
-            // extrait le numéro : PRO012 → 12
-            $lastNumber = intval(substr($lastAAV->code, 3));
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1; // premier code
-        }
+        $newNumber = $lastAAV
+            ? intval(substr($lastAAV->code, 3)) + 1
+            : 1;
 
-        // format UE001 / UE024 / UE300…
         $newCode = 'AAV' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
 
-        // Ajout du code au tableau validé
-        $validated['code'] = $newCode;
+        /*
+     |--------------------------------------------------------------------------
+     | Création de l’AAV
+     |--------------------------------------------------------------------------
+     */
+        $aav = AAV::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'code' => $newCode,
+        ]);
 
-        $aav = AAV::create($validated);
+        /*
+     |--------------------------------------------------------------------------
+     | Préparation des données pivot
+     |--------------------------------------------------------------------------
+     */
+        $pivotData = [];
+
+        foreach ($validated['aat'] as $aat) {
+            $pivotData[$aat['id']] = [
+                'contribution' => $aat['contribution']
+            ];
+        }
+
+        /*
+     |--------------------------------------------------------------------------
+     | Sync AAV ↔ AAT
+     |--------------------------------------------------------------------------
+     */
+        $aav->aats()->sync($pivotData);
 
         return response()->json([
             'success' => true,
-            'aav' => $aav,
+            'aav' => $aav->load('aats'),
             'message' => "AAV créé avec succès."
-        ]);
+        ], 201);
     }
+
     public function getDetailed(Request $request)
     {
         $validated = $request->validate([
@@ -93,14 +120,29 @@ class AcquisApprentissageVise extends Controller
     public function getAATs(Request $request)
     {
         $validated = $request->validate([
-            'id' => 'required|integer',
+            'id' => 'required|integer|exists:acquis_apprentissage_vise,id',
         ]);
-        $response = AAV::select('acquis_apprentissage_terminaux.code', 'acquis_apprentissage_terminaux.id', 'acquis_apprentissage_terminaux.name')
-            ->join('acquis_apprentissage_terminaux', 'fk_AAT', '=', 'acquis_apprentissage_terminaux.id')
-            ->where('acquis_apprentissage_vise.id', $validated['id'])
-            ->get();
-        return $response;
+
+        $aav = AAV::with(['aats' => function ($query) {
+            $query->select(
+                'acquis_apprentissage_terminaux.id',
+                'acquis_apprentissage_terminaux.code',
+                'acquis_apprentissage_terminaux.name'
+            );
+        }])->findOrFail($validated['id']);
+
+        $response = $aav->aats->map(function ($aat) {
+            return [
+                'id' => $aat->id,
+                'code' => $aat->code,
+                'name' => $aat->name,
+                'contribution' => $aat->pivot->contribution,
+            ];
+        });
+
+        return response()->json($response);
     }
+
     public function get()
     {
         $result = AAV::select('id', 'code', 'name')

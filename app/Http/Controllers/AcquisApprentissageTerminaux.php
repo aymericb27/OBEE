@@ -23,35 +23,34 @@ class AcquisApprentissageTerminaux extends Controller
         ]);
         $aat = AAT::where('id', $validated['id'])->first();
         $ues = UniteEnseignement::select(
-            'code',
-            'name',
             'unite_enseignement.id',
-            'ects',
-            'ue_aat.contribution'
+            'unite_enseignement.code',
+            'unite_enseignement.name',
+            'unite_enseignement.ects'
         )
-            ->join('ue_aat', 'fk_ue', '=', 'unite_enseignement.id')
-            ->where('fk_aat', $validated['id'])
-
-            // exclure les children dans la liste principale
-            ->whereNotIn('unite_enseignement.id', function ($query) {
-                $query->select('fk_ue_child')->from('element_constitutif');
+            ->whereHas('aavvise.aats', function ($q) use ($validated) {
+                $q->where('acquis_apprentissage_terminaux.id', $validated['id']);
             })
-
-            // charger les enfants et leur contribution
+            ->whereNotIn('unite_enseignement.id', function ($query) {
+                $query->select('fk_ue_child')
+                    ->from('element_constitutif');
+            })
             ->with([
-                'children' => function ($q) use ($validated) {
-                    $q->select('unite_enseignement.id', 'code', 'name', 'ects', 'ue_aat.contribution', 'element_constitutif.contribution as ECContribution')
-                        ->join('ue_aat', 'fk_ue', '=', 'unite_enseignement.id')
-                        ->where('fk_aat', $validated['id']);
+                'aavvise' => function ($q) use ($validated) {
+                    $q->join('aav_aat', 'aav_aat.fk_aav', '=', 'acquis_apprentissage_vise.id')
+                        ->where('aav_aat.fk_aat', $validated['id'])
+                        ->select(
+                            'acquis_apprentissage_vise.id',
+                            'acquis_apprentissage_vise.code',
+                            'acquis_apprentissage_vise.name',
+                            'aav_aat.contribution'
+                        );
                 }
             ])
-            ->with('aavvise')
-
             ->get();
+
         $aat->ues = $ues;
-        $aavs = AcquisApprentissageVise::select('code', 'contribution', 'name', 'id')
-            ->where('fk_AAT', $validated['id'])->get();
-        $aat->aavs = $aavs;
+
         return $aat;
     }
     public function getDetailed(Request $request)

@@ -17,6 +17,18 @@ class AcquisApprentissageVise extends Model
         'contribution',
     ];
 
+    public function aats()
+    {
+        return $this->belongsToMany(
+            AcquisApprentissageTerminaux::class,
+            'aav_aat',
+            'fk_aav',
+            'fk_aat'
+        )->withPivot('contribution')
+            ->withTimestamps();
+    }
+
+
     public function aat()
     {
         return $this->belongsTo(AcquisApprentissageTerminaux::class, 'fk_AAT');

@@ -237,8 +237,6 @@ export default {
                     },
                 });
                 this.ue = response.data;
-                this.ue.date_begin = formatDate(this.ue.date_begin);
-                this.ue.date_end = formatDate(this.ue.date_end);
                 this.ue.semestre = this.ue.semestre === 1 ? "1er" : "2ème";
                 const responseError = await axios.get("/Error/UE", {
                     params: {

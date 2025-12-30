@@ -118,7 +118,7 @@
                                     <router-link
                                         v-if="aav.id"
                                         :to="{
-                                            name: 'ue-detail',
+                                            name: 'aav-detail',
                                             params: { id: aav.id },
                                         }"
                                         class="childUELink"

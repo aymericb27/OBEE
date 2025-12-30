@@ -325,35 +325,61 @@
                         ></textarea>
                     </div>
 
-                    <div class="form-group mb-3 w-75">
+                    <div class="form-group mb-3">
                         <label>Acquis d'apprentissage Terminal</label>
-                        <select class="form-control" v-model="aavForm.fk_AAT">
+                        <select
+                            class="form-control"
+                            v-model="aavForm.selectedAATId"
+                            @change="addAAT"
+                        >
                             <option value="" disabled>
-                                — Sélectionner un type —
+                                — Sélectionner un AAT —
                             </option>
                             <option
                                 v-for="aat in listAAT"
                                 :key="aat.id"
                                 :value="aat.id"
+                                :disabled="isAATAlreadySelected(aat.id)"
                             >
                                 {{ aat.name }}
                             </option>
                         </select>
                     </div>
-                    <div class="form-group mb-3 w-75">
-                        <label>Niveau de contribution </label>
+                    <div v-if="aavForm.aatSelected.length" class="mt-4">
+                        <h6 class="mb-3">AAT sélectionnés</h6>
 
-                        <select
-                            class="form form-control"
-                            v-model="aavForm.contribution"
+                        <div
+                            :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
+                            v-for="(aat, index) in aavForm.aatSelected"
+                            :key="aat.id"
+                            class="d-flex align-items-center rounded p-2"
                         >
-                            <option value="" disabled selected>
-                                — Sélectionner une contribution —
-                            </option>
-                            <option value="1">faible</option>
-                            <option value="2">modéré</option>
-                            <option value="3">forte</option>
-                        </select>
+                            <!-- SUPPRIMER -->
+                            <button
+                                class="btn btn-sm me-3"
+                                @click="removeAAT(aat.id)"
+                            >
+                                <i
+                                    class="text-danger fa fa-close pr-0"
+                                    style="cursor: pointer"
+                                ></i>
+                            </button>
+
+                            <!-- NOM -->
+                            <div class="flex-grow-1">
+                                {{ aat.name }}
+                            </div>
+
+                            <!-- CONTRIBUTION -->
+                            <select
+                                class="form-control w-25 ms-3"
+                                v-model="aat.contribution"
+                            >
+                                <option value="1">Faible</option>
+                                <option value="2">Modéré</option>
+                                <option value="3">Forte</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -464,9 +490,10 @@ export default {
             modalTarget: "", // 'aavvise' ou 'aavprerequis'
             listAAT: [],
             aavForm: {
+                selectedAATId: "",
                 name: "",
                 description: "",
-                fk_AAT: "",
+                aatSelected: [], // [{ id, name, contribution }]
                 contribution: "",
             },
             ueParent: {
@@ -489,6 +516,33 @@ export default {
         };
     },
     methods: {
+        addAAT() {
+            if (!this.aavForm.selectedAATId) return;
+
+            const aat = this.listAAT.find(
+                (a) => a.id === this.aavForm.selectedAATId
+            );
+
+            if (!aat) return;
+
+            this.aavForm.aatSelected.push({
+                id: aat.id,
+                name: aat.name,
+                contribution: 1, // valeur par défaut
+            });
+
+            this.aavForm.selectedAATId = "";
+        },
+
+        removeAAT(id) {
+            this.aavForm.aatSelected = this.aavForm.aatSelected.filter(
+                (a) => a.id !== id
+            );
+        },
+
+        isAATAlreadySelected(id) {
+            return this.aavForm.aatSelected.some((a) => a.id === id);
+        },
         handleNewAAV() {
             this.loadAAT();
             this.showModalCreateAAV = true;
@@ -633,8 +687,16 @@ export default {
                 this.formAAvErrors = "Le champs libellé doit être présent";
                 return;
             }
+            const payload = {
+                name: this.aavForm.name,
+                description: this.aavForm.description,
+                aat: this.aavForm.aatSelected.map((a) => ({
+                    id: a.id,
+                    contribution: a.contribution,
+                })),
+            };
             try {
-                const response = await axios.post("/aav/store", this.aavForm);
+                const response = await axios.post("/aav/store", payload);
                 const createdAAV = response.data.aav;
 
                 // Ajout dans la bonne liste

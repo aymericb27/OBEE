@@ -7,7 +7,7 @@
     <div class="container">
         <form
             @submit.prevent="saveProgram"
-            class="text-center border p-4 rounded bg-white"
+            class="border p-4 rounded bg-white"
         >
             <h3 class="primary_color mb-4">
                 Modification d'un acquis d'apprentissage visé
@@ -21,13 +21,65 @@
                     required
                 />
             </div>
-            <div class="form-group mb-3 mb-3">
+            <div class="form-group mb-5 mb-3">
                 <textarea
                     class="form-control w-75 m-auto"
                     rows="3"
                     placeholder="description"
                     v-model="form.description"
                 ></textarea>
+            </div>
+            <div class="listComponent mb-5">
+                <div class="mb-2">
+                    <h4 class="d-inline-block primary_color">
+                        Liste des acquis d'apprentissages terminaux
+                        <button
+                            type="button"
+                            class="btn btn-primary ml-2 mb-2"
+                            @click="openModalTerminal()"
+                        >
+                            ajouter un acquis d'apprentissage terminal
+                        </button>
+                    </h4>
+                </div>
+                <div class="row border-bottom">
+                    <div class="col-md-1"></div>
+                    <div class="col-md-1 p-2">Code</div>
+                    <div class="col-md-8 p-2">Nom</div>
+                    <div class="col-md-2 p-2">Contribution</div>
+                </div>
+                <div
+                    v-if="!form.aats || !form.aats.length"
+                    class="p-2 text-center"
+                >
+                    aucune donnée à afficher
+                </div>
+
+                <div
+                    v-for="(aat, index) in form.aats"
+                    class="row"
+                    :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
+                >
+                    <div class="col-md-1 text-right p-2">
+                        <i
+                            @click="removeElement('aat', aat.id)"
+                            class="text-danger fa fa-close pr-0"
+                            style="cursor: pointer"
+                        ></i>
+                    </div>
+                    <div class="col-md-1 p-2 AAT">{{ aat.code }}</div>
+                    <div class="col-md-8 p-2">{{ aat.name }}</div>
+                    <div class="col-md-2 p-2">
+                        <select
+                            class="form form-control"
+                            v-model="aat.contribution"
+                        >
+                            <option value="1" selected>faible</option>
+                            <option value="2">modéré</option>
+                            <option value="3">forte</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             <button class="btn btn-primary">
                 Modifier l'acquis d'apprentissage visé
@@ -37,6 +89,7 @@
 </template>
 <script>
 import axios from "axios";
+import list from "../list.vue";
 
 export default {
     props: {
@@ -44,6 +97,7 @@ export default {
             type: [String, Number],
         },
     },
+    components: { list },
 
     data() {
         return {
@@ -51,6 +105,7 @@ export default {
                 id: null,
                 name: "",
                 description: "",
+                aats: [],
             },
         };
     },
@@ -72,6 +127,13 @@ export default {
                     },
                 });
                 this.form = response.data;
+                const responseAATS = await axios.get("/aav/aats/get", {
+                    params: {
+                        id: this.id,
+                    },
+                });
+				this.form.aats = responseAATS.data
+                console.log(this.form);
             } catch (error) {
                 console.log(error);
             }

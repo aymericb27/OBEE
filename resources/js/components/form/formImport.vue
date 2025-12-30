@@ -18,8 +18,6 @@
                     <option disabled value="">-- Choisir --</option>
                     <option value="UE">Unité d’enseignement</option>
                     <option value="AAT">Acquis d’apprentissage terminal</option>
-                    <option value="AAV">Acquis d’apprentissage visé</option>
-                    <option value="PROGRAMME">Programme</option>
                 </select>
             </div>
 
