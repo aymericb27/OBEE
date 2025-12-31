@@ -53,6 +53,37 @@ class AcquisApprentissageTerminaux extends Controller
 
         return $aat;
     }
+
+    public function update(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => ['required', 'integer', 'exists:acquis_apprentissage_terminaux,id'],
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:2024',
+        ]);
+
+        /*
+     |--------------------------------------------------------------------------
+     | Récupération AAT
+     |--------------------------------------------------------------------------
+     */
+        $aat = AAT::findOrFail($validated['id']);
+
+        /*
+     |--------------------------------------------------------------------------
+     | Mise à jour AAT
+     |--------------------------------------------------------------------------
+     */
+        $aat->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'AAT mis à jour avec succès.',
+        ]);
+    }
     public function getDetailed(Request $request)
     {
         $validated = $request->validate([
@@ -68,12 +99,23 @@ class AcquisApprentissageTerminaux extends Controller
     public function getAAVs(Request $request)
     {
         $validated = $request->validate([
-            'id' => 'required|integer',
+            'id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
         ]);
-        $response = AAV::select('code', 'id', 'name')
-            ->where('fk_AAT', $validated['id'])
-            ->get();
-        return $response;
+
+        $aavs = AAV::whereHas('aats', function ($q) use ($validated) {
+            $q->where('acquis_apprentissage_terminaux.id', $validated['id']);
+        })
+            ->select('id', 'code', 'name')
+            ->get()
+            ->map(function ($aav) {
+                return [
+                    'id' => $aav->id,
+                    'code' => $aav->code,
+                    'name' => $aav->name,
+                    'contribution' => $aav->aats->first()->pivot->contribution ?? null
+                ];
+            });
+        return $aavs;
     }
 
     public function store(Request $request)

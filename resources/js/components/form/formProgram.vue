@@ -5,11 +5,20 @@
         </a>
     </div>
     <div class="container">
+        <div v-if="$route.query.message" class="alert alert-success mt-3">
+            <i
+                class="fa-solid fa-check green mr-2"
+                style="color: darkgreen"
+            ></i>
+            <span> {{ $route.query.message }} </span>
+        </div>
         <form
             @submit.prevent="saveProgram"
             class="text-center border p-4 rounded bg-white"
         >
-            <h3 class="primary_color mb-4">Création d'un programme</h3>
+            <h3 class="primary_color mb-4">
+                {{ form.id ? "Modification" : "Création" }} d'un programme
+            </h3>
             <div class="mb-3">
                 <input
                     placeholder="Libellé du programme"
@@ -21,8 +30,9 @@
             </div>
 
             <div class="mb-3">
+                <label class="primary_color">Nombre de crédit</label>
+
                 <input
-                    placeholder="Nombre de crédit"
                     type="number"
                     v-model="form.ects"
                     class="form-control w-50 m-auto"
@@ -32,8 +42,8 @@
             </div>
 
             <div class="mb-3">
+                <label class="primary_color">Nombre de semestre</label>
                 <input
-                    placeholder="Nombre de semestre"
                     type="number"
                     v-model="form.semestre"
                     class="form-control w-50 m-auto"
@@ -53,7 +63,9 @@ import axios from "axios";
 
 export default {
     props: {
-        programToEdit: { type: Object, default: null },
+        id: {
+            type: [String, Number],
+        },
     },
 
     data() {
@@ -69,12 +81,26 @@ export default {
 
     mounted() {
         // mode édition
-        if (this.programToEdit) {
-            this.form = { ...this.programToEdit };
+        if (this.id) {
+            this.form.id = this.id;
+            this.loadPRO();
         }
     },
 
     methods: {
+        async loadPRO() {
+            try {
+                const response = await axios.get("/pro/get/detailed", {
+                    params: {
+                        id: this.id,
+                    },
+                });
+                this.form = response.data;
+                this.form.semestre = response.data.nbrSemester;
+            } catch (error) {
+                console.log(error);
+            }
+        },
         async saveProgram() {
             const url = this.form.id
                 ? "/programme/update"
@@ -83,7 +109,7 @@ export default {
             const response = await axios.post(url, this.form);
             // ✅ Redirection avec message (query param)
             this.$router.push({
-                name: "tree",
+                name: "pro-detail",
                 params: { id: response.data.id },
                 query: { message: response.data.message },
             });

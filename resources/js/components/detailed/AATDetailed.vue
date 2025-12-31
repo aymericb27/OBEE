@@ -5,6 +5,13 @@
         </a>
     </div>
     <div class="container">
+        <div v-if="$route.query.message" class="alert alert-success mt-3">
+            <i
+                class="fa-solid fa-check green mr-2"
+                style="color: darkgreen"
+            ></i>
+            <span> {{ $route.query.message }} </span>
+        </div>
         <div class="p-4 border rounded bg-white mt-3">
             <div class="row mb-2">
                 <h3 class="primary_color col-md-10 mb-0">
@@ -20,7 +27,7 @@
                     ></i>
                     <router-link
                         :to="{
-                            name: 'modifyUE',
+                            name: 'modifyAAT',
                         }"
                     >
                         <i
@@ -35,7 +42,7 @@
                     ></i>
                 </span>
             </div>
-            <p class="mb-4">{{ aat.description }}</p>
+            <div class="mb-4" v-html="aat.description"></div>
             <div class="listComponent mb-4">
                 <div class="mb-2">
                     <h5 class="d-inline-block primary_color">
@@ -74,9 +81,9 @@ export default {
     data() {
         return {
             aat: {
-                AATName: "",
-                AATDescription: "",
-                AATCode: "",
+                name: "",
+                description: "",
+                code: "",
             },
         };
     },

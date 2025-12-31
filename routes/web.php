@@ -48,6 +48,7 @@ Route::post('/programme/create', [ProgrammeController::class, 'store'])->name('p
 Route::put('/programme/{id}', [ProgrammeController::class, 'update']);
 Route::post('/programme/add-semester', [ProgrammeController::class, 'addSemestre']);
 Route::post('/programme/ues/add', [ProgrammeController::class, 'addUEs'])->name('pro.store');
+Route::post('/programme/update', [ProgrammeController::class, 'update']);
 
 //** Acquis d'apprentissage terminaux **//
 Route::get('/aat/get', [AcquisApprentissageTerminaux::class, 'get']);
@@ -55,6 +56,7 @@ Route::post('/aat/store', [AcquisApprentissageTerminaux::class, 'store']);
 Route::get('/aat/get/tree', [AcquisApprentissageTerminaux::class, 'getTree']);
 Route::get('/aat/get/detailed', [AcquisApprentissageTerminaux::class, 'getDetailed']);
 Route::get('/aat/aavs/get', [AcquisApprentissageTerminaux::class, 'getAAVs']);
+Route::post('/aat/update', [AcquisApprentissageTerminaux::class, 'update']);
 
 //** Acquis d'apprentissage visé **//
 Route::get('/aav/get/detailed', [AcquisApprentissageVise::class, 'getDetailed']);
@@ -62,6 +64,7 @@ Route::get('/aav/aats/get', [AcquisApprentissageVise::class, 'getAATs']);
 Route::get('/aav/pre/get', [AcquisApprentissageVise::class, 'getOnlyPrerequis']);
 Route::get('/aav/get', [AcquisApprentissageVise::class, 'get']);
 Route::post('/aav/store', [AcquisApprentissageVise::class, 'store']);
+Route::post('/aav/update', [AcquisApprentissageVise::class, 'update']);
 Route::get('/aav/prerequis/get', [AcquisApprentissageVise::class, 'getOnlyPrerequis']);
 Route::get('/aav/UEvise/get', [AcquisApprentissageVise::class, 'getUEvise']);
 Route::get('/aav/UEPrerequis/get', [AcquisApprentissageVise::class, 'getUEprerequis']);

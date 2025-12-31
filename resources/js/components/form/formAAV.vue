@@ -5,10 +5,7 @@
         </a>
     </div>
     <div class="container">
-        <form
-            @submit.prevent="saveProgram"
-            class="border p-4 rounded bg-white"
-        >
+        <form @submit.prevent="saveProgram" class="border p-4 rounded bg-white">
             <h3 class="primary_color mb-4">
                 Modification d'un acquis d'apprentissage visé
             </h3>
@@ -17,17 +14,19 @@
                     placeholder="Libellé de l'acquis d'apprentissage terminal"
                     type="text"
                     v-model="form.name"
-                    class="form-control w-50 m-auto"
+                    class="form-control"
                     required
                 />
             </div>
             <div class="form-group mb-5 mb-3">
-                <textarea
-                    class="form-control w-75 m-auto"
-                    rows="3"
+                <quill-editor
+                    v-model:content="form.description"
                     placeholder="description"
-                    v-model="form.description"
-                ></textarea>
+                    content-type="html"
+                    theme="snow"
+                    style="height: 175px"
+                    required
+                ></quill-editor>
             </div>
             <div class="listComponent mb-5">
                 <div class="mb-2">
@@ -62,7 +61,7 @@
                 >
                     <div class="col-md-1 text-right p-2">
                         <i
-                            @click="removeElement('aat', aat.id)"
+                            @click="removeAAT(aat.id)"
                             class="text-danger fa fa-close pr-0"
                             style="cursor: pointer"
                         ></i>
@@ -81,15 +80,27 @@
                     </div>
                 </div>
             </div>
-            <button class="btn btn-primary">
+            <button class="btn btn-primary" type="submit">
                 Modifier l'acquis d'apprentissage visé
             </button>
         </form>
     </div>
+    <modalList
+        v-if="showModalAAT"
+        :visible="showModalAAT"
+        :routeGET="modalRoute"
+        :title="modalTitle"
+        :listToExclude="aatToExclude"
+        type="AAT"
+        @close="showModalAAT = false"
+        @selected="handleSelectedAAT"
+    />
 </template>
 <script>
 import axios from "axios";
 import list from "../list.vue";
+import { QuillEditor } from "@vueup/vue-quill";
+import modalList from "../modalList.vue";
 
 export default {
     props: {
@@ -97,10 +108,15 @@ export default {
             type: [String, Number],
         },
     },
-    components: { list },
+    components: { list, modalList },
 
     data() {
         return {
+            showModalAAT: false,
+            modalTarget: "",
+            modalRoute: "",
+            modalTitle: "",
+            aatToExclude: [],
             form: {
                 id: null,
                 name: "",
@@ -119,6 +135,25 @@ export default {
     },
 
     methods: {
+        handleSelectedAAT(selectedItems) {
+            const itemsWithContribution = selectedItems.map((item) => ({
+                ...item,
+                contribution: 1,
+            }));
+            this.form.aats.push(...itemsWithContribution);
+        },
+        removeAAT(id) {
+            this.form.aats = this.form.aats.filter(
+                (a) => a.id !== id
+            );
+        },
+        openModalTerminal() {
+            this.modalTarget = "aat";
+            this.modalRoute = "/aat/get";
+            this.modalTitle = "Ajouter des acquis d’apprentissage terminaux";
+            this.aatToExclude = this.form.aats;
+            this.showModalAAT = true;
+        },
         async loadAAV() {
             try {
                 const response = await axios.get("/aav/get/detailed", {
@@ -132,16 +167,15 @@ export default {
                         id: this.id,
                     },
                 });
-				this.form.aats = responseAATS.data
+                this.form.aats = responseAATS.data;
+                this.form.id = this.id;
                 console.log(this.form);
             } catch (error) {
                 console.log(error);
             }
         },
         async saveProgram() {
-            const url = this.form.id ? "/aat/update" : "/aat/store";
-
-            const response = await axios.post("aav/update", this.form);
+            const response = await axios.post("/aav/update", this.form);
             // ✅ Redirection avec message (query param)
             this.$router.push({
                 name: "aav-detail",

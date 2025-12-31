@@ -109,8 +109,8 @@
                     </div>
                     <div class="ml-4 mt-2" v-for="aav in ue.aavvise">
                         <div class="p-4 rounded bg-grey">
-                            <div>
-                                <h5 class="d-inline-block">
+                            <div class="row">
+                                <h5 class="col-md-11">
                                     <i
                                         class="fa-solid fa-arrow-right"
                                         style="color: rgb(167 167 167)"
@@ -127,17 +127,20 @@
                                     </router-link>
                                     {{ aav.name }}
                                 </h5>
-                                <span
-                                    :class="{
-                                        strong_mapping:
-                                            aav.contribution === 3,
-                                        medium_mapping:
-                                            aav.contribution === 2,
-                                        weak_mapping: aav.contribution === 1,
-                                    }"
-                                    class="float-right ml-2 mr-1"
-                                    >{{ aav.contribution }}</span
-                                >
+                                <div class="col-md-1">
+                                    <span
+                                        :class="{
+                                            strong_mapping:
+                                                aav.contribution === 3,
+                                            medium_mapping:
+                                                aav.contribution === 2,
+                                            weak_mapping:
+                                                aav.contribution === 1,
+                                        }"
+                                        class="ml-2 mr-1"
+                                        >{{ aav.contribution }}</span
+                                    >
+                                </div>
                             </div>
                         </div>
                     </div>

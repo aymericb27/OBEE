@@ -15,7 +15,7 @@ class AcquisApprentissageVise extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:2024',
 
-            'aat' => 'required|array|min:1',
+            'aat' => 'nullable|array',
             'aat.*.id' => 'nullable|integer|exists:acquis_apprentissage_terminaux,id',
             'aat.*.contribution' => 'nullable|integer|min:1|max:3',
         ]);
@@ -72,6 +72,63 @@ class AcquisApprentissageVise extends Controller
             'message' => "AAV créé avec succès."
         ], 201);
     }
+    public function update(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => ['required', 'integer', 'exists:acquis_apprentissage_vise,id'],
+
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:2024',
+
+            'aats' => 'nullable|array',
+            'aats.*.id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
+            'aats.*.contribution' => 'required|integer|min:1|max:3',
+        ]);
+
+        /*
+     |--------------------------------------------------------------------------
+     | Récupération AAV
+     |--------------------------------------------------------------------------
+     */
+        $aav = AAV::findOrFail($validated['id']);
+
+        /*
+     |--------------------------------------------------------------------------
+     | Mise à jour AAV
+     |--------------------------------------------------------------------------
+     */
+        $aav->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        /*
+     |--------------------------------------------------------------------------
+     | Préparation pivot AAV ↔ AAT
+     |--------------------------------------------------------------------------
+     */
+        $pivotData = [];
+
+        foreach ($validated['aats'] as $aat) {
+            $pivotData[$aat['id']] = [
+                'contribution' => $aat['contribution']
+            ];
+        }
+
+        /*
+     |--------------------------------------------------------------------------
+     | Sync pivot (insert / update / delete)
+     |--------------------------------------------------------------------------
+     */
+        $aav->aats()->sync($pivotData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'AAV mis à jour avec succès.',
+            'aav' => $aav->load('aats')
+        ]);
+    }
+
 
     public function getDetailed(Request $request)
     {

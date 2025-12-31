@@ -73,6 +73,18 @@ const routes = [
         props: true, // transmet automatiquement tous les params comme props
     },
     {
+        path: "/modifyAAT/:id",
+        name: "modifyAAT",
+        component: FormAAT,
+        props: true, // transmet automatiquement tous les params comme props
+    },
+    {
+        path: "/modifyPRO/:id",
+        name: "modifyPRO",
+        component: FormProgram,
+        props: true, // transmet automatiquement tous les params comme props
+    },
+    {
         path: "/createUE",
         name: "createUE",
         component: FormUE,
