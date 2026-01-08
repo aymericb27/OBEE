@@ -16,10 +16,24 @@ class AcquisApprentissageTerminaux extends Controller
             ->get();
         return $result;
     }
+
+    public function delete(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
+        ]);
+        $aat = AAT::findOrFail($validated['id']);
+        $aat->delete();
+        return response()->json([
+            'success' => true,
+            'message' => "Acquis d'apprentissage terminal supprimé avec succès.",
+        ]);
+    }
+
     public function getTree(Request $request)
     {
         $validated = $request->validate([
-            'id' => 'required|integer',
+            'id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
         ]);
         $aat = AAT::where('id', $validated['id'])->first();
         $ues = UniteEnseignement::select(

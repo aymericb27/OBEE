@@ -41,6 +41,7 @@ Route::delete('ue/delete', [UniteEnseignement::class, 'delete']);
 Route::post('/ues/add/EC', [UniteEnseignement::class, 'addEC']);
 //** Programme **//
 Route::get('/pro/get', [ProgrammeController::class, 'get'])->name('pro.get');
+Route::delete('/pro/delete', [ProgrammeController::class, 'delete'])->name('pro.delete');
 Route::get('/pro/get/detailed', [ProgrammeController::class, 'getDetailed'])->name('pro.get.detailed');
 Route::get('/programme/get/tree', [ProgrammeController::class, 'getTree'])->name('pro.get.tree');
 Route::get('/pro/ue/get', [ProgrammeController::class, 'getUE']);
@@ -56,6 +57,7 @@ Route::post('/aat/store', [AcquisApprentissageTerminaux::class, 'store']);
 Route::get('/aat/get/tree', [AcquisApprentissageTerminaux::class, 'getTree']);
 Route::get('/aat/get/detailed', [AcquisApprentissageTerminaux::class, 'getDetailed']);
 Route::get('/aat/aavs/get', [AcquisApprentissageTerminaux::class, 'getAAVs']);
+Route::delete('/aat/delete', [AcquisApprentissageTerminaux::class, 'delete']);
 Route::post('/aat/update', [AcquisApprentissageTerminaux::class, 'update']);
 
 //** Acquis d'apprentissage visé **//
@@ -63,6 +65,7 @@ Route::get('/aav/get/detailed', [AcquisApprentissageVise::class, 'getDetailed'])
 Route::get('/aav/aats/get', [AcquisApprentissageVise::class, 'getAATs']);
 Route::get('/aav/pre/get', [AcquisApprentissageVise::class, 'getOnlyPrerequis']);
 Route::get('/aav/get', [AcquisApprentissageVise::class, 'get']);
+Route::delete('/aav/delete', [AcquisApprentissageVise::class, 'delete']);
 Route::post('/aav/store', [AcquisApprentissageVise::class, 'store']);
 Route::post('/aav/update', [AcquisApprentissageVise::class, 'update']);
 Route::get('/aav/prerequis/get', [AcquisApprentissageVise::class, 'getOnlyPrerequis']);

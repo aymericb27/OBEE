@@ -72,6 +72,19 @@ class AcquisApprentissageVise extends Controller
             'message' => "AAV créé avec succès."
         ], 201);
     }
+    public function delete(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:acquis_apprentissage_vise,id',
+        ]);
+        $aav = AAV::findOrFail($validated['id']);
+        $aav->delete();
+        return response()->json([
+            'success' => true,
+            'message' => "Acquis d'apprentissage visé supprimé avec succès.",
+        ]);
+    }
+    
     public function update(Request $request)
     {
         $validated = $request->validate([

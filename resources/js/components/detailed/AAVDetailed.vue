@@ -104,10 +104,20 @@
             </div>
         </div>
     </div>
+    <ConfirmDeleteModal
+        :show="openModalDelete"
+        :name="aav.name"
+        type="AAV"
+        :idToDelete="aav.id"
+        @confirm="deleteItem"
+        @cancel="openModalDelete = false"
+    />
 </template>
 <script>
 import axios from "axios";
 import list from "../list.vue";
+import ConfirmDeleteModal from "../modal/confirmDeleteModal.vue";
+
 export default {
     props: {
         id: {
@@ -117,10 +127,13 @@ export default {
     },
     components: {
         list,
+        ConfirmDeleteModal,
     },
 
     data() {
         return {
+            openModalDelete: false,
+
             aav: {
                 name: "",
                 description: "",
@@ -129,6 +142,18 @@ export default {
         };
     },
     methods: {
+        async deleteItem() {
+            const response = await axios.delete("/aav/delete", {
+                params: {
+                    id: this.aav.id,
+                },
+            });
+            this.openModalDelete = false;
+            this.$router.push({
+                name: "tree",
+                query: { message: response.data.message },
+            });
+        },
         async loadAAV() {
             try {
                 const response = await axios.get("/aav/get/detailed", {

@@ -60,8 +60,17 @@
             </div>
         </div>
     </div>
+    <ConfirmDeleteModal
+        :show="openModalDelete"
+        :name="pro.name"
+        type="PRO"
+        :idToDelete="pro.id"
+        @confirm="deleteItem"
+        @cancel="openModalDelete = false"
+    />
 </template>
 <script>
+import ConfirmDeleteModal from "../modal/confirmDeleteModal.vue";
 import axios from "axios";
 import list from "../list.vue";
 export default {
@@ -73,10 +82,12 @@ export default {
     },
     components: {
         list,
+        ConfirmDeleteModal,
     },
 
     data() {
         return {
+            openModalDelete: false,
             pro: {
                 name: "",
                 code: "",
@@ -84,6 +95,18 @@ export default {
         };
     },
     methods: {
+        async deleteItem() {
+            const response = await axios.delete("/pro/delete", {
+                params: {
+                    id: this.pro.id,
+                },
+            });
+            this.openModalDelete = false;
+            this.$router.push({
+                name: "tree",
+                query: { message: response.data.message },
+            });
+        },
         async loadPRO() {
             try {
                 const response = await axios.get("/pro/get/detailed", {

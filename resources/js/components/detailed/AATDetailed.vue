@@ -64,10 +64,20 @@
             </div>
         </div>
     </div>
+    <ConfirmDeleteModal
+        :show="openModalDelete"
+        :name="aat.name"
+        type="AAT"
+        :idToDelete="aat.id"
+        @confirm="deleteItem"
+        @cancel="openModalDelete = false"
+    />
 </template>
 <script>
 import list from "../list.vue";
 import axios from "axios";
+import ConfirmDeleteModal from "../modal/confirmDeleteModal.vue";
+
 export default {
     props: {
         id: {
@@ -75,11 +85,12 @@ export default {
             required: true,
         },
     },
-    components: { list },
+    components: { list, ConfirmDeleteModal },
 
     emits: ["close"],
     data() {
         return {
+            openModalDelete: false,
             aat: {
                 name: "",
                 description: "",
@@ -88,6 +99,18 @@ export default {
         };
     },
     methods: {
+        async deleteItem() {
+            const response = await axios.delete("/aat/delete", {
+                params: {
+                    id: this.aat.id,
+                },
+            });
+            this.openModalDelete = false;
+            this.$router.push({
+                name: "tree",
+                query: { message: response.data.message },
+            });
+        },
         async loadAAT() {
             try {
                 const response = await axios.get("/aat/get/detailed", {

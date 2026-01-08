@@ -163,7 +163,6 @@ import dayjs from "dayjs";
 import errorShedule from "../error/ErrUEShedule.vue";
 import ConfirmDeleteModal from "../modal/confirmDeleteModal.vue";
 
-const formatDate = (dateStr) => dayjs(dateStr).format("DD/MM/YYYY");
 export default {
     props: {
         id: {

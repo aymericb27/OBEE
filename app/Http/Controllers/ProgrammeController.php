@@ -52,6 +52,20 @@ class ProgrammeController extends Controller
             'id' => $programme->id
         ]);
     }
+    
+    public function delete(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:programme,id',
+        ]);
+        $pro = Programme::findOrFail($validated['id']);
+        $pro->delete();
+        return response()->json([
+            'success' => true,
+            'message' => "Acquis d'apprentissage visé supprimé avec succès.",
+        ]);
+    }
+
     public function addSemestre(Request $request)
     {
         $validated = $request->validate([
@@ -126,7 +140,7 @@ class ProgrammeController extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
-        $ues = UniteEnseignement::join('ue_programme', 'fk_unite_enseignement','=','unite_enseignement.id')->where('fk_programme', $validated['id'])->get();
+        $ues = UniteEnseignement::join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')->where('fk_programme', $validated['id'])->get();
         return $ues;
     }
 
