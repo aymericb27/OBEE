@@ -14,7 +14,6 @@ class AcquisApprentissageVise extends Model
         'name',
         'code',
         'fk_AAT',
-        'contribution',
     ];
 
     public function aats()
@@ -28,6 +27,20 @@ class AcquisApprentissageVise extends Model
             ->withTimestamps();
     }
 
+    public function prerequis()
+    {
+        return $this->belongsToMany(
+            UniteEnseignement::class,
+            'aavue_prerequis',
+            'fk_acquis_apprentissage_prerequis',
+            'fk_unite_enseignement',
+        );
+    }
+    public function aavvise()
+    {
+        return $this->belongsToMany(UniteEnseignement::class, 'aavue_vise', 'fk_acquis_apprentissage_vise', 'fk_unite_enseignement')
+            ->withTimestamps();
+    }
 
     public function aat()
     {

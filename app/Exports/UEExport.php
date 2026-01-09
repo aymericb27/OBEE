@@ -34,7 +34,7 @@ class UEExport
         // UE
         $sheet->setCellValue('D4', $this->ue->code);
         $sheet->setCellValue('D5', $this->ue->name);
-        $sheet->setCellValue('D6', $this->ue->description);
+        $sheet->setCellValue('D6', trim(strip_tags($this->ue->description)));
         $sheet->setCellValue('D7', $this->ue->ects);
 
         // AAT UE

@@ -36,7 +36,7 @@
                         ></i>
                     </router-link>
                     <i
-                        @click="exportUE(ue.id)"
+                        @click="exportPRO(pro.id)"
                         style="font-size: 28px"
                         class="fa-solid ml-2 fa-download green_color cursor_pointer"
                     ></i>
@@ -117,6 +117,30 @@ export default {
                 this.pro = response.data;
             } catch (error) {
                 console.log(error);
+            }
+        },
+        async exportPRO(ueId) {
+            try {
+                const response = await axios.get(`/export/pro/${ueId}`, {
+                    responseType: "blob", // 🔥 OBLIGATOIRE pour télécharger un fichier
+                });
+
+                // Création d'un lien de téléchargement
+                const blob = new Blob([response.data], {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                });
+                const url = window.URL.createObjectURL(blob);
+
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `PRO_${this.pro.code}.xlsx`; // nom du fichier téléchargé
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error("Erreur de téléchargement :", error);
             }
         },
     },

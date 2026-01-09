@@ -14,4 +14,15 @@ class AcquisApprentissageTerminaux extends Model
         'name',
         'code',
     ];
+
+    public function aav()
+    {
+        return $this->belongsToMany(
+            AcquisApprentissageVise::class,
+            'aav_aat',
+            'fk_aat', // clé pivot vers AAT (ce modèle)
+            'fk_aav'  // clé pivot vers AAV (related)
+        )->withPivot('contribution')
+            ->withTimestamps();
+    }
 }

@@ -2,12 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\ProgExport;
-use App\Exports\UEExport;
-use App\Exports\AATExport;
-use App\Exports\AAVExport;
 
 class ExportController extends Controller
 {
@@ -18,7 +12,25 @@ class ExportController extends Controller
         return $export->download();
     }
 
-    public function export(Request $request, string $type)
+    public function exportAAT($aatID)
+    {
+        $export = new \App\Exports\AATExport($aatID);
+        return $export->download();
+    }
+
+    public function exportAAV($aavID)
+    {
+        $export = new \App\Exports\AAVExport($aavID);
+        return $export->download();
+    }
+
+    public function exportPRO($proID)
+    {
+        $export = new \App\Exports\PROExport($proID);
+        return $export->download();
+    }
+
+    /*     public function export(Request $request, string $type)
     {
         // On récupère les filtres envoyés par params
         $filters = $request->input('filter', []);
@@ -49,5 +61,5 @@ class ExportController extends Controller
 
         // Téléchargement via Laravel Excel
         return Excel::download($export, $filename);
-    }
+    } */
 }

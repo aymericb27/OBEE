@@ -2,25 +2,24 @@
 
 namespace App\Exports;
 
-use App\Models\AcquisApprentissageTerminaux;
+use App\Models\Programme;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Str;
-
-class AATExport
+class PROExport
 {
-    protected $aat;
+    protected $pro;
 
-    public function __construct($aatID)
+    public function __construct($proID)
     {
-        $this->aat = AcquisApprentissageTerminaux::with([
-            'aav'
-        ])->findOrFail($aatID);
+        $this->pro = Programme::with([
+            'ues'
+        ])->findOrFail($proID);
     }
     public function download()
     {
         // 1. Charger ton fichier modèle
-        $template = storage_path('app/templates/model_import_aat.xlsx');
+        $template = storage_path('app/templates/model_import_pro.xlsx');
         $spreadsheet = IOFactory::load($template);
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -29,22 +28,21 @@ class AATExport
         // ------------------------------------
 
         // UE
-        $sheet->setCellValue('B4', $this->aat->code);
-        $sheet->setCellValue('B5', $this->aat->name);
-        $sheet->setCellValue('B6', trim(strip_tags($this->aat->description)));
+        $sheet->setCellValue('B4', $this->pro->code);
+        $sheet->setCellValue('B5', $this->pro->name);
+        $sheet->setCellValue('B6', trim(strip_tags($this->pro->description)));
 
         $col = 9;
-        foreach ($this->aat->aav as $aav) {
-            $sheet->setCellValue('A' . $col, $aav->code);
-            $sheet->setCellValue('B' . $col, $aav->name);
-            $sheet->setCellValue('C' . $col, $aav->pivot->contribution);
+        foreach ($this->pro->ues as $ue) {
+            $sheet->setCellValue('A' . $col, $ue->code);
+            $sheet->setCellValue('B' . $col, $ue->name);
             $col++;
         }
 
         // ------------------------------------
         // 3. Télécharger le fichier rempli
         // ------------------------------------
-        $filename = "AAT_{$this->aat->code}.xlsx";
+        $filename = "AAT_{$this->pro->code}.xlsx";
 
         return new StreamedResponse(function () use ($spreadsheet) {
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');

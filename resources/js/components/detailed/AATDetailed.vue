@@ -36,7 +36,7 @@
                         ></i>
                     </router-link>
                     <i
-                        @click="exportUE(ue.id)"
+                        @click="exportAAT(aat.id)"
                         style="font-size: 28px"
                         class="fa-solid ml-2 fa-download green_color cursor_pointer"
                     ></i>
@@ -122,6 +122,30 @@ export default {
                 console.log(response);
             } catch (error) {
                 console.log(error);
+            }
+        },
+        async exportAAT(ueId) {
+            try {
+                const response = await axios.get(`/export/aat/${ueId}`, {
+                    responseType: "blob", // 🔥 OBLIGATOIRE pour télécharger un fichier
+                });
+
+                // Création d'un lien de téléchargement
+                const blob = new Blob([response.data], {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                });
+                const url = window.URL.createObjectURL(blob);
+
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `AAT_${this.aat.code}.xlsx`; // nom du fichier téléchargé
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error("Erreur de téléchargement :", error);
             }
         },
     },
