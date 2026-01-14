@@ -172,7 +172,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="listComponent mb-5" v-if="!ueParent.name">
+                    <div class="listComponent mb-5">
                         <div class="mb-2">
                             <h4 class="d-inline-block primary_color">
                                 Liste des acquis d'apprentissages visé

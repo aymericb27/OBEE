@@ -29,9 +29,10 @@ Route::get('/', function () {
 //** Unité d'enseignement **//
 Route::get('/ues/get', [UniteEnseignement::class, 'get'])->name('UE.get');
 Route::get('/UEGet/detailed', [UniteEnseignement::class, 'getDetailed'])->name('UE.get.detailed');
-Route::get('/ue/ecs/get', [UniteEnseignement::class, 'getECs'])->name('ue.get.ecs');
+Route::get('/ue/ecs/get', [UniteEnseignement::class, 'getChildren'])->name('ue.get.ecs');
 Route::get('/ue/aat/get', [UniteEnseignement::class, 'getAATs'])->name('ue.get.aat');
 Route::get('ue/pro/get', [UniteEnseignement::class, 'getPro'])->name('ue.pro.get');
+Route::get('ue/parent/get', [UniteEnseignement::class, 'getParent'])->name('ue.pro.get');
 Route::get('/ue/aavvise/get', [UniteEnseignement::class, 'getAAVvise'])->name('ue.get.aavvise');
 Route::get('/ue/aavvise/get/onlyParent', [UniteEnseignement::class, 'getAAVviseOnlyParent'])->name('ue.get.aavvise');
 Route::get('/ue/aavprerequis/get', [UniteEnseignement::class, 'getAAVprerequis'])->name('ue.get.aavprerequis');

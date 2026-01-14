@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AcquisApprentissageTerminaux as AAT;
 use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\AcquisApprentissageVise;
+use App\Models\ElementConstitutif;
 use App\Models\UniteEnseignement;
 use Illuminate\Http\Request;
 
@@ -32,40 +33,69 @@ class AcquisApprentissageTerminaux extends Controller
 
     public function getTree(Request $request)
     {
-        $validated = $request->validate([
-            'id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
-        ]);
-        $aat = AAT::where('id', $validated['id'])->first();
-        $ues = UniteEnseignement::select(
-            'unite_enseignement.id',
-            'unite_enseignement.code',
-            'unite_enseignement.name',
-            'unite_enseignement.ects'
-        )
-            ->whereHas('aavvise.aats', function ($q) use ($validated) {
-                $q->where('acquis_apprentissage_terminaux.id', $validated['id']);
-            })
-            ->whereNotIn('unite_enseignement.id', function ($query) {
-                $query->select('fk_ue_child')
-                    ->from('element_constitutif');
-            })
-            ->with([
-                'aavvise' => function ($q) use ($validated) {
-                    $q->join('aav_aat', 'aav_aat.fk_aav', '=', 'acquis_apprentissage_vise.id')
-                        ->where('aav_aat.fk_aat', $validated['id'])
-                        ->select(
-                            'acquis_apprentissage_vise.id',
-                            'acquis_apprentissage_vise.code',
-                            'acquis_apprentissage_vise.name',
-                            'aav_aat.contribution'
-                        );
-                }
-            ])
+            $validated = $request->validate([
+        'id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
+    ]);
+
+    $aatId = (int) $validated['id'];
+
+    $aat = AAT::findOrFail($aatId);
+
+    // 1) UEs "racines" liées à cet AAT (et pas des enfants)
+    $ues = UniteEnseignement::query()
+        ->select('unite_enseignement.id', 'unite_enseignement.code', 'unite_enseignement.name', 'unite_enseignement.ects')
+         ->whereHas('aavvise.aats', function ($q) use ($aatId) {
+            $q->where('acquis_apprentissage_terminaux.id', $aatId);
+        }) 
+        ->whereNotIn('unite_enseignement.id', function ($query) {
+            $query->select('fk_ue_child')->from('element_constitutif');
+        })
+        ->orderBy('unite_enseignement.code')
+        ->get();
+
+    // 2) Pour chaque UE, on ajoute ses AAV (UE + EC)
+    $ues->each(function ($ue) use ($aatId) {
+
+        // ids EC directs
+        $childIds = ElementConstitutif::where('fk_ue_parent', $ue->id)
+            ->pluck('fk_ue_child')
+            ->toArray();
+
+        $ueIds = array_unique(array_merge([$ue->id], $childIds));
+
+        // AAV venant de l'UE ou de ses EC, filtrés sur l'AAT demandé
+        $aavs = AAV::query()
+            ->select(
+                'acquis_apprentissage_vise.id as id',
+                'acquis_apprentissage_vise.code as code',
+                'acquis_apprentissage_vise.name as name',
+                'aav_aat.contribution as contribution',
+
+                'ue_source.id as ue_source_id',
+                'ue_source.code as ue_source_code',
+                'ue_source.name as ue_source_name'
+            )
+            ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
+            ->join('aav_aat', 'aav_aat.fk_aav', '=', 'acquis_apprentissage_vise.id')
+            ->join('unite_enseignement as ue_source', 'ue_source.id', '=', 'aavue_vise.fk_unite_enseignement')
+            ->where('aav_aat.fk_aat', $aatId)
+            ->whereIn('aavue_vise.fk_unite_enseignement', $ueIds)
+            ->orderBy('ue_source.code')
+            ->orderBy('acquis_apprentissage_vise.code')
             ->get();
 
-        $aat->ues = $ues;
+        // optionnel : marquer si ça vient d'un EC
+        $aavs->each(function ($row) use ($ue) {
+            $row->origine_type = ((int) $row->ue_source_id === (int) $ue->id) ? 'UE' : 'EC';
+        });
 
-        return $aat;
+        // on attache au modèle (pas besoin que ce soit une vraie relation)
+        $ue->setAttribute('aavvise', $aavs);
+    });
+
+    $aat->setAttribute('ues', $ues);
+
+    return $aat;
     }
 
     public function update(Request $request)

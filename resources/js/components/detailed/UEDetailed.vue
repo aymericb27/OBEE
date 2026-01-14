@@ -77,6 +77,39 @@
                 </div>
                 <span> </span>
                 <div class="mb-4" v-html="ue.description"></div>
+                <div class="mb-4" v-if="ue.parent && ue.parent.length">
+                    Cette unité est un élément constitutif de
+                    <strong>
+                        <router-link
+                            class="UE"
+                            v-if="ue.parent[0].id"
+                            :to="{
+                                name: 'ue-detail',
+                                params: { id: ue.parent[0].id },
+                            }"
+                        >
+                            {{ ue.parent[0].code }}
+                        </router-link>
+                        {{ ue.parent[0].name }}
+                    </strong>
+                </div>
+                <div class="listComponent mb-4" v-if="ue.children && ue.children.length">
+                    <div class="mb-2">
+                        <h4 class="d-inline-block primary_color">
+                            liste des éléments constitutifs
+                        </h4>
+                    </div>
+                    <list
+                        :key="`${ue.id}`"
+                        :isBorder="true"
+                        v-if="ue.id"
+                        routeGET="/ue/ecs/get"
+                        :paramsRouteGET="{ id: ue.id }"
+                        linkDetailed="ue-detail"
+                        typeList="UE"
+                        :listColonne="['code', 'name']"
+                    />
+                </div>
                 <div class="listComponent mb-4">
                     <div class="mb-2">
                         <h4 class="d-inline-block primary_color">
@@ -84,6 +117,7 @@
                         </h4>
                     </div>
                     <list
+                        :key="`${ue.id}`"
                         :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/pro/get"
@@ -100,13 +134,20 @@
                         </h4>
                     </div>
                     <list
+                        :key="`${ue.id}`"
                         :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/aavvise/get"
                         :paramsRouteGET="{ id: ue.id }"
                         linkDetailed="aav-detail"
                         typeList="AAV"
-                        :listColonne="['code', 'name']"
+                        :listColonne="[
+                            'code',
+                            'name',
+                            ...(ue.children && ue.children.length
+                                ? ['element_constitutif_aav']
+                                : []),
+                        ]"
                     />
                 </div>
                 <div class="listComponent mb-4">
@@ -116,6 +157,7 @@
                         </h4>
                     </div>
                     <list
+                        :key="`${ue.id}`"
                         :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/aavprerequis/get"
@@ -132,6 +174,7 @@
                         </h4>
                     </div>
                     <list
+                        :key="`${ue.id}`"
                         :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/aat/get"
@@ -159,6 +202,7 @@
 import axios from "axios";
 import list from "../list.vue";
 import dayjs from "dayjs";
+import { onMounted, watch } from "vue";
 
 import errorShedule from "../error/ErrUEShedule.vue";
 import ConfirmDeleteModal from "../modal/confirmDeleteModal.vue";
@@ -236,22 +280,27 @@ export default {
                     },
                 });
                 this.ue = response.data;
-                this.ue.semestre = this.ue.semestre === 1 ? "1er" : "2ème";
+                console.log(this.ue);
+                /*                 this.ue.semestre = this.ue.semestre === 1 ? "1er" : "2ème";
                 const responseError = await axios.get("/Error/UE", {
                     params: {
                         id: this.id,
                     },
                 });
-                this.errors = responseError.data;
-                console.log(responseError);
+                this.errors = responseError.data; */
             } catch (error) {
                 console.log(error);
             }
         },
     },
 
-    mounted() {
-        this.loadUE();
+    watch: {
+        id: {
+            immediate: true, // charge aussi au 1er affichage
+            handler() {
+                this.loadUE();
+            },
+        },
     },
 };
 </script>

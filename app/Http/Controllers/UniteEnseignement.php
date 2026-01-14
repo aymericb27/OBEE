@@ -17,8 +17,8 @@ class UniteEnseignement extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'ects' => 'required|integer|max:200',
-            'description' => 'required|string|max:2024',
+            'ects' => 'nullable|integer|max:200',
+            'description' => 'nullable|string|max:2024',
             'aavprerequis' => ['array'],
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'aavvise' => ['array'],
@@ -110,7 +110,7 @@ class UniteEnseignement extends Controller
             'id' => ['required', 'integer', 'exists:unite_enseignement,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'ects' => ['required', 'integer'],
+            'ects' => ['nullable', 'integer'],
             'aavprerequis' => ['array'],
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'aavvise' => ['array'],
@@ -180,6 +180,7 @@ class UniteEnseignement extends Controller
         return $response;
     }
 
+
     public function getAATs(Request $request)
     {
         $validated = $request->validate([
@@ -210,15 +211,57 @@ class UniteEnseignement extends Controller
         ]);
     }
 
+    public function getChildren(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+
+        $ues =UE::select('unite_enseignement.id', 'unite_enseignement.code', 'unite_enseignement.name', 'element_constitutif.contribution')
+        ->join('element_constitutif', 'element_constitutif.fk_ue_child', '=', 'unite_enseignement.id')
+        ->where('element_constitutif.fk_ue_parent', $validated['id'])
+        ->orderBy('unite_enseignement.code')
+        ->get();
+
+        return $ues;
+    }
+
     public function getAAVvise(Request $request)
     {
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
-        $response = AAV::select('acquis_apprentissage_vise.id', 'name', 'code')
-            ->join('aavue_vise', 'fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
-            ->where('aavue_vise.fk_unite_enseignement', $validated['id'])
+
+        $ueId = (int) $validated['id'];
+
+        // 1) IDs des UEs à prendre en compte : UE + ses éléments constitutifs
+        // ⚠️ Adapte le nom des colonnes de la table element_constitutif si besoin
+        // récupère les EC (UE enfants)
+        $ecIds = ElementConstitutif::where('fk_ue_parent', $ueId)
+            ->pluck('fk_ue_child')
+            ->toArray();
+        $ueIds = array_unique(array_merge([$ueId], $ecIds));
+
+        // 2) AAV vise de toutes ces UEs
+        $response = AAV::query()
+            ->select(
+                'acquis_apprentissage_vise.id as id',
+                'acquis_apprentissage_vise.code as code',
+                'acquis_apprentissage_vise.name as name',
+
+                'ue.id as ue_source_id',
+                'ue.code as ue_source_code',
+                'ue.name as ue_source_name'
+            )
+            ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
+            ->join('unite_enseignement as ue', 'ue.id', '=', 'aavue_vise.fk_unite_enseignement')
+            ->whereIn('aavue_vise.fk_unite_enseignement', $ueIds)
+            ->orderBy('ue.code')
+            ->orderBy('acquis_apprentissage_vise.code')
             ->get();
+
+        return $response;
+
 
         return $response;
     }
@@ -257,6 +300,7 @@ class UniteEnseignement extends Controller
             'id' => 'required|integer',
         ]);
         $response = UE::where('unite_enseignement.id', $validated['id'])
+            ->with(['parent', 'children'])
             ->first();
         return $response;
     }

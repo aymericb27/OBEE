@@ -125,6 +125,22 @@
                                     >
                                         {{ aav.code }}
                                     </router-link>
+                                    <span v-if="aav.ue_source_code != ue.code">
+                                        (<router-link
+                                            v-if="aav.ue_source_id"
+                                            :to="{
+                                                name: 'ue-detail',
+                                                params: {
+                                                    id: aav.ue_source_id,
+                                                },
+                                            }"
+                                            class="UELink"
+                                        >
+                                            {{
+                                                aav.ue_source_code
+                                            }} </router-link
+                                        >)</span
+                                    >
                                     {{ aav.name }}
                                 </h5>
                                 <div class="col-md-1">
