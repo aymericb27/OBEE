@@ -234,7 +234,7 @@ export default {
                 this.routeGET = "/pro/get";
                 this.linkDetailed = "pro-detail";
             } else if (element === "PRE") {
-                this.routeGET = "/aav/pre/get";
+                this.routeGET = "/aav/prerequis/get";
                 this.linkDetailed = "aav-detail";
             } 
             this.reloadKey++; // force la liste à se recharger

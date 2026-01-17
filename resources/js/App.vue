@@ -1,5 +1,5 @@
 <template>
-    <header>
+    <header class="app-header">
         <div class="listBtn m-3">
             <router-link to="/list">
                 <button class="btn btn_fa">
@@ -12,13 +12,61 @@
                     <i class="fa-solid fa-layer-group"></i>
                 </button>
             </router-link>
+
             <router-link to="/tree">
                 <button class="btn ml-1 btn_fa">
                     <i class="fa-solid fa-folder-tree"></i>
                 </button>
             </router-link>
         </div>
-        <h1>OBEE-tool</h1>
+
+        <h1 class="title">OBEE-tool</h1>
+
+        <div class="userBtn m-3">
+            <button class="btn btn-danger" @click="logout">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+        </div>
     </header>
+
     <router-view />
 </template>
+
+<script>
+import axios from "axios";
+
+export default {
+    methods: {
+        async logout() {
+            try {
+                await axios.post("/logout");
+                window.location.href = "/login";
+            } catch (e) {
+                console.error("Logout failed", e);
+            }
+        },
+    },
+};
+</script>
+<style>
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.title {
+    margin: auto;
+}
+
+.userBtn {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.listBtn {
+    position: absolute;
+    left: 0px;
+}
+</style>
