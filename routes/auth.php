@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
+use App\Models\University;
 
 Route::post('/register', [RegisteredUserController::class, 'store'])
     ->middleware('guest')
@@ -40,6 +41,9 @@ Route::get('/login', function () {
     return view('auth.login');
 })->middleware('guest')->name('login');
 
+
 Route::get('/register', function () {
-    return view('auth.register');
+    return view('auth.register', [
+        'universities' => University::orderBy('name')->get(['id', 'name']),
+    ]);
 })->middleware('guest')->name('register');

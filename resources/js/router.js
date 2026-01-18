@@ -15,8 +15,9 @@ import FormProgram from "./components/form/formProgram.vue";
 import FormImport from "./components/form/formImport.vue";
 import FormAAT from "./components/form/formAAT.vue";
 import FormAAV from "./components/form/formAAV.vue";
+import AdminLayout from "./components/admin/adminLayout.vue";
 import AdminUsers from "./components/admin/adminUsers.vue";
-
+import AdminUniversities from "./components/admin/adminUniversities.vue";
 const routes = [
     {
         path: "/",
@@ -25,9 +26,17 @@ const routes = [
     },
 
     {
-        path: "/admin/users",
-        name: "admin-users",
-        component: AdminUsers,
+        path: "/admin",
+        component: AdminLayout,
+        children: [
+            { path: "", redirect: { name: "admin-users" } },
+            { path: "users", name: "admin-users", component: AdminUsers },
+            {
+                path: "universities",
+                name: "admin-universities",
+                component: AdminUniversities,
+            },
+        ],
     },
 
     {

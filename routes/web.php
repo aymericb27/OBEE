@@ -21,6 +21,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // optionnel
     Route::delete('/admin/users/{user}', [AdminUserController::class, 'destroy']);
+
+    // Universities management
+    Route::get('/admin/universities/get', [AdminUserController::class, 'universitiesIndex']);
+    Route::post('/admin/universities', [AdminUserController::class, 'universitiesStore']);
+    Route::delete('/admin/universities/{university}', [AdminUserController::class, 'universitiesDestroy']);
 });
 Route::middleware(['auth', 'approved'])->group(function () {
     // routes de l'app
