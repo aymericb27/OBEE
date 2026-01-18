@@ -23,7 +23,12 @@
         <h1 class="title">OBEE-tool</h1>
 
         <div class="userBtn m-3">
-            <button class="btn btn-danger" @click="logout">
+            <router-link v-if="isAdmin" to="/admin/users">
+                <button class="btn ml-1 btn_fa">
+                    <i class="fa-solid fa-users-gear"></i>
+                </button>
+            </router-link>
+            <button class="btn btn-danger ml-1" @click="logout">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </button>
         </div>
@@ -36,6 +41,11 @@
 import axios from "axios";
 
 export default {
+    computed: {
+        isAdmin() {
+            return window.__USER__ && window.__USER__.role === "admin";
+        },
+    },
     methods: {
         async logout() {
             try {

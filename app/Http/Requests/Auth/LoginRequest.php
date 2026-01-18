@@ -37,20 +37,29 @@ class LoginRequest extends FormRequest
      *
      * @throws \Illuminate\Validation\ValidationException
      */
+
+
     public function authenticate(): void
     {
-        $this->ensureIsNotRateLimited();
+        $credentials = $this->only('email', 'password');
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        // ✅ autoriser uniquement les comptes approuvés
+        if (Auth::attempt(array_merge($credentials, ['is_approved' => 1]), $this->boolean('remember'))) {
+            return;
+        }
 
+        // (Optionnel) message plus clair si mdp ok mais compte non approuvé
+        if (Auth::validate($credentials)) {
             throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
+                'email' => "Votre compte est en attente de validation par un administrateur.",
             ]);
         }
 
-        RateLimiter::clear($this->throttleKey());
+        throw ValidationException::withMessages([
+            'email' => trans('auth.failed'),
+        ]);
     }
+
 
     /**
      * Ensure the login request is not rate limited.
@@ -80,6 +89,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->input('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->input('email')) . '|' . $this->ip());
     }
 }

@@ -15,12 +15,21 @@ import FormProgram from "./components/form/formProgram.vue";
 import FormImport from "./components/form/formImport.vue";
 import FormAAT from "./components/form/formAAT.vue";
 import FormAAV from "./components/form/formAAV.vue";
+import AdminUsers from "./components/admin/adminUsers.vue";
+
 const routes = [
     {
         path: "/",
         name: "index",
         component: ListFramework,
     },
+
+    {
+        path: "/admin/users",
+        name: "admin-users",
+        component: AdminUsers,
+    },
+
     {
         path: "/tree",
         name: "tree",
@@ -128,5 +137,11 @@ const router = createRouter({
     history: createWebHistory(),
     routes,
 });
+router.beforeEach((to) => {
+    const isAdmin = window.__USER__?.role === "admin";
 
+    if (to.path.startsWith("/admin") && !isAdmin) {
+        return { name: "list" };
+    }
+});
 export default router;

@@ -8,13 +8,22 @@ use App\Http\Controllers\AcquisApprentissageVise;
 use App\Http\Controllers\ErrorController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\AdminUserController;
 
 require __DIR__ . '/auth.php'; // ✅ contient GET /login, GET /register, POST /login etc.
 
 /**
  * ✅ SPA Vue (welcome/template) uniquement si connecté
  */
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/users/pending', [AdminUserController::class, 'pending']);
+    Route::post('/admin/users/{user}/approve', [AdminUserController::class, 'approve']);
+
+    // optionnel
+    Route::delete('/admin/users/{user}', [AdminUserController::class, 'destroy']);
+});
+Route::middleware(['auth', 'approved'])->group(function () {
+    // routes de l'app
 
     // page d'entrée de l'app (charge Vue)
     Route::get('/', fn() => view('welcome'));

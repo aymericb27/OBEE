@@ -12,7 +12,9 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 
     <!-- Feuilles de style CSS -->
-
+    <script>
+        window.__USER__ = @json(auth()->user());
+    </script>
     @vite('resources/js/app.js')
 
     @vite('resources/css/bootstrap_extend.css')
