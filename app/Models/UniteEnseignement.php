@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToUniversity;
 
 class UniteEnseignement extends Model
 
 {
+    use BelongsToUniversity;
+
     use HasFactory;
 
     protected $table = "unite_enseignement";
@@ -17,6 +20,7 @@ class UniteEnseignement extends Model
         'code',
         'ects',
         'semestre',
+        'university_id',
     ];
     public function children()
     {

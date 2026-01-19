@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->integer('ects')->nullable();
             $table->integer('semestre');
+            $table->foreignId("university_id")->constrained('universities');
             $table->timestamps();
         });
     }

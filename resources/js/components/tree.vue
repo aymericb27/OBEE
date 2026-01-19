@@ -48,7 +48,13 @@
             </div>
         </div>
         <div class="border bg-white rounded p-3 secondary_color col-md-6">
-            <span>
+            <div class="p-3">
+                <strong v-if="!progs.length" class="p-3 mt-3"
+                    >Aucun programme actuellement dans le logiciel.</strong
+                >
+            </div>
+
+            <span v-if="progs.length">
                 <h2 class="secondary_color mb-1 d-inline-block">
                     {{ prog.name }}
                 </h2>
@@ -190,7 +196,9 @@ export default {
         async loadPrograms() {
             const response = await axios.get("pro/get");
             this.progs = response.data;
-            this.selectProgram(this.progs[0].id);
+            if (this.progs.length) {
+                this.selectProgram(this.progs[0].id);
+            }
         },
 
         async selectProgram(id) {

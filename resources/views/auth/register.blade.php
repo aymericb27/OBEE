@@ -5,9 +5,16 @@
         <!-- Name -->
         <div>
             <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full p-2" type="text" name="name" :value="old('name')" required
-                autofocus autocomplete="name" />
+            <x-text-input id="name" class="block mt-1 w-full p-2" type="text" name="name" :value="old('name')"
+                required autofocus autocomplete="name" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
+        </div>
+        <!-- FirstName -->
+        <div>
+            <x-input-label for="firstname" :value="__('Firstname')" />
+            <x-text-input id="firstname" class="block mt-1 w-full p-2" type="text" name="firstname" :value="old('firstname')"
+                required autofocus autocomplete="firstname" />
+            <x-input-error :messages="$errors->get('firstname')" class="mt-2" />
         </div>
 
         <!-- Email Address -->

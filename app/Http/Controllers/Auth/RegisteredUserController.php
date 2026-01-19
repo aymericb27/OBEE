@@ -22,13 +22,16 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'firstname' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'university_id' => ['required', 'integer', 'exists:universities,id'],
+
         ]);
 
         $user = User::create([
             'name' => $request->name,
+            'firstname' => $request->firstname,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'university_id' => (int) $request->university_id,
@@ -37,7 +40,7 @@ class RegisteredUserController extends Controller
         ]);
         event(new Registered($user));
 
-        Auth::login($user);
+        //Auth::login($user);
 
         return redirect()->route('login')->with('status', 'Compte créé. En attente de validation par un administrateur.');
     }

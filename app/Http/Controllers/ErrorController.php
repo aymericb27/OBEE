@@ -7,8 +7,6 @@ use App\Models\Programme;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
 
-use function PHPUnit\Framework\isNull;
-
 class ErrorController extends Controller
 {
     public function getUES()

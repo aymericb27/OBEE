@@ -6,6 +6,7 @@ use App\Models\Programme;
 use App\Models\UEPRO;
 use App\Models\UniteEnseignement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProgrammeController extends Controller
 {
@@ -44,6 +45,8 @@ class ProgrammeController extends Controller
         $validated['code'] = $newCode;
 
         // ----- Création du programme -----
+        $validated['university_id'] = Auth::user()->university_id;
+
         $programme = Programme::create($validated);
 
         return response()->json([
@@ -52,7 +55,7 @@ class ProgrammeController extends Controller
             'id' => $programme->id
         ]);
     }
-    
+
     public function delete(Request $request)
     {
         $validated = $request->validate([

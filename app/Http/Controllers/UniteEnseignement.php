@@ -10,6 +10,8 @@ use App\Models\AcquisApprentissageTerminaux;
 use App\Models\ElementConstitutif;
 use App\Models\Programme;
 use App\Models\UEPRO;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class UniteEnseignement extends Controller
 {
@@ -52,11 +54,14 @@ class UniteEnseignement extends Controller
 
         // Ajout du code au tableau validé
         $validated['code'] = $newCode;
+        Log::debug(Auth::user());
         $ue = UE::create([
             'name' => $validated['name'],
             'ects' => $validated['ects'],
             'code' => $validated['code'],
             'description' => $validated['description'],
+            'university_id' => Auth::user()->university_id,
+
         ]);
 
         // ✅ Mise à jour des relations (si tu as des tables pivots)
@@ -217,11 +222,11 @@ class UniteEnseignement extends Controller
             'id' => 'required|integer',
         ]);
 
-        $ues =UE::select('unite_enseignement.id', 'unite_enseignement.code', 'unite_enseignement.name', 'element_constitutif.contribution')
-        ->join('element_constitutif', 'element_constitutif.fk_ue_child', '=', 'unite_enseignement.id')
-        ->where('element_constitutif.fk_ue_parent', $validated['id'])
-        ->orderBy('unite_enseignement.code')
-        ->get();
+        $ues = UE::select('unite_enseignement.id', 'unite_enseignement.code', 'unite_enseignement.name', 'element_constitutif.contribution')
+            ->join('element_constitutif', 'element_constitutif.fk_ue_child', '=', 'unite_enseignement.id')
+            ->where('element_constitutif.fk_ue_parent', $validated['id'])
+            ->orderBy('unite_enseignement.code')
+            ->get();
 
         return $ues;
     }

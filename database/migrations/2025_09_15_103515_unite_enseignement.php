@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('code');
             $table->text('description')->nullable();
             $table->integer('ects')->nullable();
+            $table->foreignId("university_id")->constrained('universities');
             $table->timestamps();
         });
     }
