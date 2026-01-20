@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.guest_title{
+    font-size:xx-large;
+    color: #2a71cde3;
+}

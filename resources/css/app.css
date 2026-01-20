@@ -39,73 +39,11 @@ textarea {
     color: #2a71cde3;
 }
 
-.eventDetailed {
-    background-color: #ffffff;
-    position: fixed;
-    top: 0;
-    z-index: 2;
-    right: 0;
-    width: 30%;
-    height: 100%;
-    box-shadow: 0px 0px 12px #a7a7a7;
-}
-
-.close_detailed {
-    text-align: right;
-    margin-bottom: 1rem;
-    font-size: larger;
-}
-
-.close_detailed .fa-solid {
-    cursor: pointer;
-}
-
-.box_checkbox {
-    display: flex;
-    align-items: center;
-    accent-color: #2a71cde3;
-}
-
-.linkedbtn {
-    padding: 1em;
-}
-
-.fc-event {
-    cursor: pointer;
-}
-
-.fc-event-time {
-    display: none;
-}
-
-
 .back_btn {
     position: absolute;
     left: 0;
     padding: 1em;
     font-size: larger;
-}
-
-.scale-y-enter-active,
-.scale-y-leave-active {
-    transition: all 0.3s ease;
-}
-
-.scale-y-enter-from,
-.scale-y-leave-to {
-    opacity: 0;
-    transform: scaley(2em);
-}
-
-.scale-x-enter-active,
-.scale-x-leave-active {
-    transition: all 0.3s ease;
-}
-
-.scale-x-enter-from,
-.scale-x-leave-to {
-    opacity: 0;
-    transform: scalex(2em);
 }
 .box_code {
     border-right: 1px solid;
@@ -147,14 +85,6 @@ textarea {
 .PRE:hover {
     text-decoration-color: #eba714 !important;
     text-decoration: underline;
-}
-
-.fc-day-today {
-    background-color: rgb(183 174 239 / 32%) !important;
-}
-
-.ql-container {
-    background-color: white;
 }
 
 .modal-backdrop {
