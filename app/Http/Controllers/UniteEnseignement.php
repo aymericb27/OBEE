@@ -54,7 +54,6 @@ class UniteEnseignement extends Controller
 
         // Ajout du code au tableau validé
         $validated['code'] = $newCode;
-        Log::debug(Auth::user());
         $ue = UE::create([
             'name' => $validated['name'],
             'ects' => $validated['ects'],
@@ -85,7 +84,7 @@ class UniteEnseignement extends Controller
 
             $pivotData = [];
             foreach ($validated['aat'] as $item) {
-                $pivotData[$item['id']] = ['contribution' => $item['contribution']];
+                $pivotData[$item['id']] = ['contribution' => $item['contribution'], 'university_id' => Auth::user()->university_id];
             }
 
             // ajoute tous les liens pivot d'un coup
@@ -178,7 +177,7 @@ class UniteEnseignement extends Controller
 
             $pivotData = [];
             foreach ($validated['aat'] as $item) {
-                $pivotData[$item['id']] = ['contribution' => $item['contribution']];
+                $pivotData[$item['id']] = ['contribution' => $item['contribution'], 'university_id' => Auth::user()->university_id];
             }
 
             // ajoute tous les liens pivot d'un coup

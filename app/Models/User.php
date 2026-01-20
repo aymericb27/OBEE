@@ -50,4 +50,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(\App\Models\University::class);
     }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
 }

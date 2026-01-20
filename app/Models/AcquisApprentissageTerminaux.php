@@ -2,17 +2,23 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUniversity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AcquisApprentissageTerminaux extends Model
 {
+
+    use BelongsToUniversity;
+
     use HasFactory;
     protected $table = "acquis_apprentissage_terminaux";
     protected $fillable = [
         'description',
         'name',
         'code',
+        'university_id',
+
     ];
 
     public function aav()
