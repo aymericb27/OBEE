@@ -66,11 +66,19 @@ class UniteEnseignement extends Controller
 
         // ✅ Mise à jour des relations (si tu as des tables pivots)
         if (isset($validated['aavvise'])) {
-            $ue->aavvise()->sync(array_column($validated['aavvise'], 'id'));
+            $pivotData = [];
+            foreach ($validated['aavvise'] as $item) {
+                $pivotData[$item['id']] = ['university_id' => Auth::user()->university_id];
+            }
+            $ue->aavvise()->sync($pivotData);
         }
 
         if (isset($validated['aavprerequis'])) {
-            $ue->prerequis()->sync(array_column($validated['aavprerequis'], 'id'));
+            $pivotData = [];
+            foreach ($validated['aavprerequis'] as $item) {
+                $pivotData[$item['id']] = ['university_id' => Auth::user()->university_id];
+            }
+            $ue->prerequis()->sync($pivotData);
         }
 
         if (!empty($validated['aat'])) {
@@ -88,7 +96,7 @@ class UniteEnseignement extends Controller
             $pivotData = [];
 
             foreach ($validated['pro'] as $item) {
-                $pivotData[$item['id']] = ['semester' => $item['semester']];
+                $pivotData[$item['id']] = ['semester' => $item['semester'], 'university_id' => Auth::user()->university_id];
             }
 
             // ajoute tous les liens pivot d'un coup
@@ -98,7 +106,9 @@ class UniteEnseignement extends Controller
             ElementConstitutif::create([
                 'fk_ue_parent' => $validated['ueParentID'],
                 'fk_ue_child' => $ue->id,
-                'contribution' => $validated['ueParentContribution']
+                'contribution' => $validated['ueParentContribution'],
+                'university_id' => Auth::user()->university_id,
+
             ]);
         }
         return response()->json([
@@ -142,17 +152,25 @@ class UniteEnseignement extends Controller
 
         // ✅ Mise à jour des relations (si tu as des tables pivots)
         if (isset($validated['aavvise'])) {
-            $ue->aavvise()->sync(array_column($validated['aavvise'], 'id'));
+            $pivotData = [];
+            foreach ($validated['aavvise'] as $item) {
+                $pivotData[$item['id']] = ['university_id' => Auth::user()->university_id];
+            }
+            $ue->aavvise()->sync($pivotData);
         }
 
         if (isset($validated['aavprerequis'])) {
-            $ue->prerequis()->sync(array_column($validated['aavprerequis'], 'id'));
+            $pivotData = [];
+            foreach ($validated['aavprerequis'] as $item) {
+                $pivotData[$item['id']] = ['university_id' => Auth::user()->university_id];
+            }
+            $ue->prerequis()->sync($pivotData);
         }
         if (isset($validated['pro'])) {
 
             $pivotData = [];
             foreach ($validated['pro'] as $item) {
-                $pivotData[$item['id']] = ['semester' => $item['semester']];
+                $pivotData[$item['id']] = ['semester' => $item['semester'], 'university_id' => Auth::user()->university_id];
             }
             $ue->pro()->sync($pivotData);
         }

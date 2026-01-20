@@ -18,7 +18,7 @@
                     required
                 />
             </div>
-            <div class="form-group mb-5 mb-3">
+            <div class="form-group mb-5">
                 <quill-editor
                     v-model:content="form.description"
                     placeholder="description"

@@ -118,26 +118,6 @@ class ProgrammeController extends Controller
         ]);
     }
 
-    public function addUEs(Request $request)
-    {
-        $validated = $request->validate([
-            'list' => 'required|array',
-            'id' => 'required|integer',
-            'semester' => 'required|integer',
-        ]);
-        foreach ($validated['list'] as $ue) {
-            UEPRO::create([
-                "fk_unite_enseignement" => $ue['id'],
-                "fk_programme" => $validated['id'],
-                "semester" => $validated['semester'],
-            ]);
-        }
-        return response()->json([
-            'success' => true,
-            'message' => "Unité(s) d'enseignement(s) rajoutée(s) avec succès",
-        ]);
-    }
-
     public function getUE(Request $request)
     {
         $validated = $request->validate([

@@ -580,7 +580,7 @@ export default {
         },
         openModalPrerequis() {
             this.modalTarget = "aavprerequis";
-            this.modalRoute = "/aav/prerequis/get";
+            this.modalRoute = "/aav/get";
             this.modalTitle = "Ajouter des prérequis";
             this.aavPrerequisToExclude = [
                 ...this.ue.aavvise,

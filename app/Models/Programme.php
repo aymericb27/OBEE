@@ -26,6 +26,6 @@ class Programme extends Model
             'ue_programme',       // table pivot
             'fk_programme',       // clé étrangère du programme
             'fk_unite_enseignement'               // clé étrangère de l'UE
-        );
+        )->withPivot(['semester', 'university_id']);
     }
 }

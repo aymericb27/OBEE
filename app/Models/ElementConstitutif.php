@@ -11,5 +11,6 @@ class ElementConstitutif extends Model
         'fk_ue_parent',
         'fk_ue_child',
         'contribution',
+        'university_id',
     ];
 }

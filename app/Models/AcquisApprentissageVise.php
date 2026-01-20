@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUniversity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AcquisApprentissageVise extends Model
 {
+    use BelongsToUniversity;
+
     use HasFactory;
     protected $table = "acquis_apprentissage_vise";
     protected $fillable = [
@@ -14,6 +17,7 @@ class AcquisApprentissageVise extends Model
         'name',
         'code',
         'fk_AAT',
+        'university_id',
     ];
 
     public function aats()

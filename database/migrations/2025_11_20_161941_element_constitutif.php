@@ -20,7 +20,10 @@ return new class extends Migration
             $table->foreignId('fk_ue_child')
                 ->constrained('unite_enseignement')
                 ->onDelete('cascade');
+            $table->foreignId("university_id")->constrained('universities');
+
             $table->integer('contribution');
+
             $table->timestamps();
         });
     }

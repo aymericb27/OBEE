@@ -6,6 +6,7 @@ use App\Models\AcquisApprentissageTerminaux as AAT;
 use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AcquisApprentissageVise extends Controller
 {
@@ -44,6 +45,7 @@ class AcquisApprentissageVise extends Controller
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'code' => $newCode,
+            "university_id" => Auth::user()->university_id,
         ]);
 
         /*
@@ -55,7 +57,9 @@ class AcquisApprentissageVise extends Controller
 
         foreach ($validated['aat'] as $aat) {
             $pivotData[$aat['id']] = [
-                'contribution' => $aat['contribution']
+                'contribution' => $aat['contribution'],
+                "university_id" => Auth::user()->university_id,
+
             ];
         }
 
@@ -84,7 +88,7 @@ class AcquisApprentissageVise extends Controller
             'message' => "Acquis d'apprentissage visé supprimé avec succès.",
         ]);
     }
-    
+
     public function update(Request $request)
     {
         $validated = $request->validate([
@@ -124,7 +128,9 @@ class AcquisApprentissageVise extends Controller
 
         foreach ($validated['aats'] as $aat) {
             $pivotData[$aat['id']] = [
-                'contribution' => $aat['contribution']
+                'contribution' => $aat['contribution'],
+                'university_id' => Auth::user()->university_id,
+
             ];
         }
 
