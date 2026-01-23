@@ -20,6 +20,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->integer('ects')->nullable();
             $table->foreignId("university_id")->constrained('universities');
+            $table->unique(['university_id', 'code'], 'ue_university_code_unique');
+
             $table->timestamps();
         });
     }

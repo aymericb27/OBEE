@@ -3,178 +3,156 @@
 namespace App\Services;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 class GenericSingleImportService
 {
     private $sheet;
 
-    /**
-     * Charge le fichier, initialise la sheet, et lance l'extraction générique
-     */
     public function extract($file, array $config): array
     {
-        // 📂 Charger le fichier Excel ici (plus besoin de constructeur)
         $spreadsheet = IOFactory::load($file->getRealPath());
         $this->sheet = $spreadsheet->getActiveSheet();
 
-        // 📌 Extraction UE simple via cells
+        $errors = [];
+
         $ue = [];
         if (isset($config['cells'])) {
-            $ue = $this->extractUECells($config['cells']);
+            $ue = $this->extractUECells($config['cells'], $errors);
         }
 
-        // 📌 Extraction générique pour les zones (prerequis, aav, aat, etc.)
-        $prerequis = $this->extractConfigBlock($config['prerequis'] ?? []);
-        $aav       = $this->extractConfigBlock($config['aav'] ?? []);
-        $aat       = $this->extractConfigBlock($config['aat'] ?? []);
+        $prerequis = $this->extractLineLists($config['prerequis'] ?? [], 'Prérequis', $errors);
+        $aav       = $this->extractLineLists($config['aav'] ?? [], 'AAV', $errors);
+        $aat       = $this->extractLineLists($config['aat'] ?? [], 'AAT', $errors);
+
+        // ✅ si erreurs => renvoie ValidationException
+        if (!empty($errors)) {
+            throw \Illuminate\Validation\ValidationException::withMessages($errors);
+        }
 
         return [
-            'ue'        => $ue,
+            'ue' => $ue,
             'prerequis' => $prerequis,
-            'aavs'       => $aav,
-            'aats'       => $aat,
+            'aavs' => $aav,
+            'aats' => $aat,
         ];
     }
 
-    /**
-     * Extrait les champs UE simples via des cellules uniques
-     */
-    private function extractUECells(array $cells): array
+    private function extractUECells(array $cells, array &$errors): array
     {
         return [
-            'code'        => $this->readCell($cells['code'] ?? null),
-            'name'        => $this->readCell($cells['name'] ?? null),
-            'ects'        => (int) $this->readCell($cells['ects'] ?? null),
-            'description' => $this->readCell($cells['description'] ?? null),
+            'code'        => $this->readCellRequired($cells['code'] ?? null, 'ue.code', 'Sigle UE', $errors, false),
+            'name'        => $this->readCellRequired($cells['name'] ?? null, 'ue.name', 'Libellé UE', $errors, true),
+            'ects'        => (int)($this->readCellRequired($cells['ects'] ?? null, 'ue.ects', 'ECTS UE', $errors, true) ?? 0),
+            'description' => $this->readCellRequired($cells['description'] ?? null, 'ue.description', 'Description UE', $errors, false),
         ];
     }
+    private function readCellRequired(?string $ref, string $key, string $label, array &$errors, bool $required = false): ?string
+    {
+        if (!$ref || trim($ref) === '') {
+            if ($required) {
+                $errors[$key][] = "Veuillez indiquer une cellule pour $label.";
+            }
+            return null;
+        }
 
-    /**
-     * Lit une cellule si elle existe
-     */
+        $val = $this->sheet->getCell($ref)->getCalculatedValue();
+        $val = trim((string) $val);
+
+        // ✅ cellule fournie mais vide
+        if ($val === '') {
+            $errors[$key][] = "La cellule $ref ($label) est vide.";
+            return null;
+        }
+
+        return $val;
+    }
+
     private function readCell(?string $ref): ?string
     {
         if (!$ref || trim($ref) === '') return null;
-        return trim((string) $this->sheet->getCell($ref)->getValue());
+
+        // getCalculatedValue() si tu as des formules
+        $val = $this->sheet->getCell($ref)->getCalculatedValue();
+        $val = trim((string) $val);
+
+        return $val === '' ? null : $val;
     }
 
     /**
-     * Reçoit une zone config avec base + extra
+     * Reçoit: ['code' => 'C9', 'libelle' => 'C11', 'contribution' => 'C12']
+     * Retourne: [
+     *   'code' => ['...', '...'],
+     *   'libelle' => ['...', '...'],
+     *   'contribution' => [...]
+     * ]
+     *
+     * Chaque champ est lu horizontalement depuis la cellule donnée jusqu'à cellule vide.
      */
-    private function extractConfigBlock(array $block): array
+    private function extractLineLists(array $block, string $label, array &$errors): array
     {
-        if (!isset($block['base'])) {
-            return [];
-        }
+        $rows = [];
+        foreach (['code', 'libelle', 'contribution'] as $key) {
+            $cell = trim($block[$key] ?? '');
 
-        $base = $this->extractBlock($block['base']);
+            if ($cell === '') continue;
 
-        $extras = [];
-        foreach ($block['extra'] ?? [] as $extraConf) {
-            $extras[] = $this->extractBlock($extraConf);
-        }
-
-        return $this->mergeBaseAndExtras($base, $extras);
-    }
-
-    /**
-     * Fusionne : chaque index du base absorbe les extras correspondants
-     */
-    private function mergeBaseAndExtras(array $base, array $extras): array
-    {
-        $count = count($base);
-        $results = [];
-
-        for ($i = 0; $i < $count; $i++) {
-            $row = $base[$i];
-
-            foreach ($extras as $block) {
-                if (isset($block[$i])) {
-                    // ex : [ "libelle" => "..." ] → fusion
-                    $row = array_merge($row, $block[$i]);
-                }
+            // ✅ le user a donné une cellule => on doit vérifier qu'elle n'est pas vide
+            $first = $this->readCell($cell);
+            if ($first === null || trim($first) === '') {
+                $errors["$label.$key"][] = "La cellule $cell ($label - $key) est vide.";
+                continue;
             }
 
-            $results[] = $row;
+            $rows[$key] = $this->readHorizontalUntilEmpty($cell);
         }
 
-        return $results;
-    }
+        // retour format array of objects
+        $max = 0;
+        foreach ($rows as $arr) $max = max($max, count($arr));
 
-    /**
-     * Gère un bloc : mode single ou horizontal
-     */
-    private function extractBlock(array $conf): array
-    {
-        return match($conf['mode']) {
-            'single'     => $this->extractSingle($conf),
-            'horizontal' => $this->extractHorizontal($conf),
-            default      => [],
-        };
-    }
-
-    /**
-     * MODE SINGLE avec séparateur
-     */
-    private function extractSingle(array $conf): array
-    {
-        if (empty($conf['cell'])) return []; // sécurité
-
-        $cell = trim((string) $this->sheet->getCell($conf['cell'])->getValue());
-        if (!$cell) return [];
-
-        $sep = $conf['separator'] ?: ',';
-
-        $values = preg_split('/[' . preg_quote($sep, '/') . '\n]+/', $cell);
-
-        return array_values(array_map(function ($val) use ($conf) {
-            return [
-                $conf['type'] => trim($val),
+        $results = [];
+        for ($i = 0; $i < $max; $i++) {
+            $results[] = [
+                'code' => $rows['code'][$i] ?? null,
+                'libelle' => $rows['libelle'][$i] ?? null,
+                'contribution' => $rows['contribution'][$i] ?? null,
             ];
-        }, array_filter($values)));
-    }
-
-    /**
-     * MODE HORIZONTAL : récupère plusieurs colonnes sur une ligne
-     */
-    private function extractHorizontal(array $conf): array
-    {
-        if (empty($conf['row']) || empty($conf['startCol']) || empty($conf['endCol'])) {
-            return []; // sécurité
-        }
-
-        $row   = (int) $conf['row'];
-        $start = $this->colToIndex($conf['startCol']);
-        $end   = $this->colToIndex($conf['endCol']);
-
-        $results = [];
-
-        for ($col = $start; $col <= $end; $col++) {
-            $value = trim((string) $this->sheet->getCellByColumnAndRow($col + 1, $row)->getValue());
-
-            if ($value !== '') {
-                $results[] = [
-                    $conf['type'] => $value
-                ];
-            }
         }
 
         return $results;
     }
 
-    /**
-     * Conversion lettre Excel → index numérique zéro-based
-     */
-    private function colToIndex(string $col): int
-    {
-        $col = strtoupper($col);
-        $len = strlen($col);
-        $index = 0;
 
-        for ($i = 0; $i < $len; $i++) {
-            $index = $index * 26 + (ord($col[$i]) - 64);
+    /**
+     * Lit C14, D14, E14... jusqu'à tomber sur une cellule vide.
+     * Retourne un tableau de strings.
+     */
+    private function readHorizontalUntilEmpty(string $startCell): array
+    {
+        $startCell = strtoupper(trim($startCell));
+
+        // Ex: "C14" => ["C", "14"]
+        [$colLetters, $row] = Coordinate::coordinateFromString($startCell);
+
+        $row = (int) $row;
+        $colIndex = Coordinate::columnIndexFromString($colLetters); // 1-based
+
+        $values = [];
+        while (true) {
+            $addr = Coordinate::stringFromColumnIndex($colIndex) . $row;
+
+            $val = $this->sheet->getCell($addr)->getCalculatedValue();
+            $val = trim((string) $val);
+
+            if ($val === '') {
+                break;
+            }
+
+            $values[] = $val;
+            $colIndex++;
         }
 
-        return $index - 1;
+        return $values;
     }
 }

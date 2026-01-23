@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class University extends Model
 {
     protected $fillable = ['name', 'code'];
+    protected $table = 'universities';
 
     public function users()
     {

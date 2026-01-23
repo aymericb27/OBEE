@@ -18,6 +18,8 @@ return new class extends Migration
             $table->text('name');
             $table->text('description')->nullable();
             $table->foreignId("university_id")->constrained('universities');
+            $table->unique(['university_id', 'code'], 'aav_university_code_unique');
+
             $table->timestamps();
         });
     }

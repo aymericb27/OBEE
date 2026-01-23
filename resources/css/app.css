@@ -209,3 +209,14 @@ textarea {
     background-color: #ffffff !important;
     color: #2a71cde3 !important;
 }
+
+.helper {
+    padding: 1em;
+    background-color: rgb(171, 228, 255);
+}
+
+.helper .fa-question{
+    color: rgb(52, 134, 172);
+    font-size: 36px;
+
+}

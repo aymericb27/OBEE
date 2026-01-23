@@ -17,8 +17,9 @@ return new class extends Migration
             $table->string('code');
             $table->string('name');
             $table->integer('ects')->nullable();
-            $table->integer('semestre');
+            $table->integer('semestre')->default(1);
             $table->foreignId("university_id")->constrained('universities');
+            $table->unique(['university_id', 'code'], 'programme_university_code_unique');
             $table->timestamps();
         });
     }
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('programme');
     }
 };

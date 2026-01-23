@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'is_approved',
         'approved_at',
+        'university_id',
 
     ];
 

@@ -23,7 +23,7 @@ return new class extends Migration
             $table->foreignId('university_id')
                 ->constrained('universities')
                 ->cascadeOnDelete();
-            $table->integer('semester');
+            $table->integer('semester')->default(1);
             $table->unique(['university_id', 'fk_unite_enseignement', 'fk_programme', 'semester'],'ue_prog_uni_ue_prog_sem_unique');
             $table->timestamps();
         });
