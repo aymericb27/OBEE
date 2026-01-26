@@ -52,6 +52,10 @@ class CodeGeneratorService
     {
         return $this->generate(\App\Models\AcquisApprentissageVise::class, 'AAV', 3, true);
     }
+    public function nextUE(): string
+    {
+        return $this->generate(\App\Models\UniteEnseignement::class, 'UE', 3, true);
+    }
 
     public function nextAAT(): string
     {

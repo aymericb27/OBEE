@@ -149,11 +149,15 @@
                     </div>
                     <div class="col-4">
                         <input
-                            placeholder="ex: A, C, D..."
+                            placeholder="ex: A1, C2, D3..."
                             v-model="config.columns[field.key]"
-                            class="form-control"
+                            class="form-control w-50"
                         />
                     </div>
+                </div>
+                <div class="primary_color mt-4">
+                    Indiquez la première cellule à laquelle commencent les
+                    données.
                 </div>
             </div>
 
@@ -180,120 +184,40 @@
                     <div class="col-4">
                         <input
                             placeholder="ex: C6"
-                            v-model="config.cells[field.key]"
-                            class="form-control"
+                            v-model="config.cells[config.type][field.key]"
+                            class="form-control w-50"
                         />
                     </div>
                 </div>
 
-                <!-- 🟦 UE SECTIONS -->
                 <div class="mt-5 row">
-                    <div class="col-md-4" v-if="config.type !== 'PRE'">
-                        <h5 class="mb-4">Liste des prérequis (AAV)</h5>
-                        <div class="row mt-2 mb-2">
-                            <div class="col-4"><label>Sigles </label></div>
+                    <div
+                        class="col-md-4"
+                        v-for="block in relatedBlocks"
+                        :key="block.id"
+                    >
+                        <h5 class="mb-4">{{ block.title }}</h5>
+
+                        <div
+                            class="row mb-2"
+                            v-for="f in block.fields"
+                            :key="f.key"
+                        >
                             <div class="col-4">
-                                <input
-                                    type="text"
-                                    v-model="config.prerequis.code"
-                                    class="form-control"
-                                    placeholder="ex: C9"
-                                />
+                                <label>{{ f.label }}</label>
                             </div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-4"><label>Libellés </label></div>
                             <div class="col-4">
                                 <input
                                     type="text"
-                                    v-model="config.prerequis.libelle"
                                     class="form-control"
-                                    placeholder="ex: C11"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4" v-if="config.type !== 'AAV'">
-                        <h5 class="mb-4">
-                            Liste des acquis d'apprentissage visées
-                        </h5>
-                        <div class="row mb-2">
-                            <div class="col-4"><label>Sigles </label></div>
-                            <div class="col-4">
-                                <input
-                                    type="text"
-                                    v-model="config.aav.code"
-                                    class="form-control"
-                                    placeholder="ex: C20"
-                                />
-                            </div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-4"><label>Libellés </label></div>
-                            <div class="col-4">
-                                <input
-                                    type="text"
-                                    v-model="config.aav.libelle"
-                                    class="form-control"
-                                    placeholder="ex: C21"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4" v-if="config.type !== 'AAT'">
-                        <h5 class="mb-4">
-                            Liste des acquis d'apprentissages terminaux
-                        </h5>
-                        <div class="row mb-2">
-                            <div class="col-4"><label>Sigles </label></div>
-                            <div class="col-4">
-                                <input
-                                    type="text"
-                                    v-model="config.aat.code"
-                                    class="form-control"
-                                    placeholder="ex: C30"
-                                />
-                            </div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-4"><label>Libellés </label></div>
-                            <div class="col-4">
-                                <input
-                                    type="text"
-                                    v-model="config.aat.libelle"
-                                    class="form-control"
-                                    placeholder="ex: C31"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4" v-if="config.type !== 'UE'">
-                        <h5 class="mb-4">Liste des unités d'enseignements</h5>
-                        <div class="row mb-2">
-                            <div class="col-4"><label>Sigles </label></div>
-                            <div class="col-4">
-                                <input
-                                    type="text"
-                                    v-model="config.ue.code"
-                                    class="form-control"
-                                    placeholder="ex: C30"
-                                />
-                            </div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-4"><label>Libellés </label></div>
-                            <div class="col-4">
-                                <input
-                                    type="text"
-                                    v-model="config.ue.libelle"
-                                    class="form-control"
-                                    placeholder="ex: C31"
+                                    :placeholder="f.placeholder"
+                                    v-model="config[block.modelKey][f.key]"
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="text-danger mt-4">
+                <div class="primary_color mt-4">
                     Pour les listes, indiquez la première cellule à laquelle
                     commencent les données. Si les données sont déjà présentes
                     dans le logiciel, veuillez juste indiquer le sigle.
@@ -384,6 +308,7 @@ export default {
         return {
             isDragging: false,
             showImportModeHelp: false,
+            isHydrating: true,
 
             errors: [],
             successMessage: "",
@@ -394,8 +319,19 @@ export default {
                 type: "UE",
                 importMode: "list",
                 columns: {},
-                cells: {},
 
+                cells: {
+                    UE: {
+                        code: "",
+                        name: "",
+                        description: "",
+                        ects: "",
+                    },
+                    AAT: {
+                        code: "",
+                        name: "",
+                    },
+                },
                 prerequis: {
                     code: "",
                     libelle: "",
@@ -417,6 +353,82 @@ export default {
     },
 
     computed: {
+        relatedBlocks() {
+            return [
+                {
+                    id: "prerequis",
+                    title: "Liste des prérequis (AAV)",
+                    hideWhenType: ["PRE", "AAT"], // équivaut à v-if="config.type !== 'PRE'"
+                    modelKey: "prerequis", // pointe vers config.prerequis
+                    fields: [
+                        { key: "code", label: "Sigles", placeholder: "ex: C9" },
+                        {
+                            key: "libelle",
+                            label: "Libellés",
+                            placeholder: "ex: C11",
+                        },
+                    ],
+                },
+                {
+                    id: "aav",
+                    title: "Liste des acquis d'apprentissage visées",
+                    hideWhenType: ["AAV"],
+                    modelKey: "aav",
+                    fields: [
+                        {
+                            key: "code",
+                            label: "Sigles",
+                            placeholder: "ex: C20",
+                        },
+                        {
+                            key: "libelle",
+                            label: "Libellés",
+                            placeholder: "ex: C21",
+                        },
+                    ],
+                },
+                {
+                    id: "aat",
+                    title: "Liste des acquis d'apprentissages terminaux",
+                    hideWhenType: ["AAT"],
+                    modelKey: "aat",
+                    fields: [
+                        {
+                            key: "code",
+                            label: "Sigles",
+                            placeholder: "ex: C30",
+                        },
+                        {
+                            key: "libelle",
+                            label: "Libellés",
+                            placeholder: "ex: C31",
+                        },
+                    ],
+                },
+                {
+                    id: "ue",
+                    title: "Liste des unités d'enseignements",
+                    hideWhenType: ["UE"],
+                    modelKey: "ue",
+                    fields: [
+                        {
+                            key: "code",
+                            label: "Sigles",
+                            placeholder: "ex: C30",
+                        },
+                        {
+                            key: "libelle",
+                            label: "Libellés",
+                            placeholder: "ex: C31",
+                        },
+                    ],
+                },
+            ].filter((b) => {
+                if (!b.hideWhenType) return true; // sécurité
+                return !b.hideWhenType.includes(this.config.type);
+            });
+        },
+
         preview() {
             if (!this.fullData.length) return [];
 
@@ -447,7 +459,11 @@ export default {
             if (this.config.type === "AAT")
                 return [
                     { key: "code", label: "Sigle AAT" },
-                    { key: "name", label: "Libellé AAT" },
+                    {
+                        key: "name",
+                        label: "Libellé AAT",
+                        isMandatory: true,
+                    },
                 ];
             if (this.config.type === "AAV")
                 return [
@@ -465,8 +481,10 @@ export default {
             },
         },
 
-        "config.type": {
+        /*         "config.type": {
             handler(newType) {
+                if (this.isHydrating) return; // ✅ ne reset pas au chargement
+
                 const defaults = {
                     prerequis: { code: "", libelle: "" },
                     aav: { code: "", libelle: "" },
@@ -480,10 +498,6 @@ export default {
                     AAV: "aav",
                     PRE: "prerequis",
                 };
-
-                const keep = map[newType];
-
-                // reset tous les blocs sauf celui du type
                 for (const key of Object.keys(defaults)) {
                     this.config[key] = { ...defaults[key] };
                 }
@@ -492,7 +506,7 @@ export default {
                 this.config.columns = {};
                 this.config.cells = {};
             },
-        },
+        },  */
     },
 
     mounted() {
@@ -514,10 +528,13 @@ export default {
                 },
                 aav: { ...this.config.aav, ...(saved.aav || {}) },
                 aat: { ...this.config.aat, ...(saved.aat || {}) },
+                ue: { ...this.config.ue, ...(saved.ue || {}) },
             };
         } catch (e) {
             // Si le JSON est corrompu
             localStorage.removeItem(STORAGE_KEY);
+        } finally {
+            this.isHydrating = false; // ✅ toujours exécuté
         }
     },
 

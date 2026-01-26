@@ -10,8 +10,8 @@ use App\Models\UniteEnseignement;
 use App\Services\CodeGeneratorService;
 use App\Services\GenericListImportService;
 use App\Services\GenericSingleImportService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -74,7 +74,7 @@ class ImportController extends Controller
             case "single":
                 $service = new GenericSingleImportService();
                 $data = $service->extract($file, $config);
-
+                Log::debug($data);
                 switch ($config['type']) {
                     case 'UE':
                         $stored = $this->storeUE($data);
@@ -116,15 +116,23 @@ class ImportController extends Controller
         }
     }
 
-
-
-
-    public function storeUE($values)
+    public function storeUE(array $values)
     {
         $uid = Auth::user()->university_id;
 
+        // ✅ si on reçoit le nouveau format generic
+        $type  = $values['type'] ?? 'UE';
+        $main  = $values['main'] ?? [];
+        $links = $values['links'] ?? [];
+
+        if ($type !== 'UE') {
+            throw ValidationException::withMessages([
+                'type' => ["storeUE ne gère que le type UE. Reçu: {$type}"]
+            ]);
+        }
+
         // --------------------------
-        // VALIDATION GLOBALE
+        // VALIDATION
         // --------------------------
         $messages = [
             'required' => 'Le champ :attribute est obligatoire.',
@@ -135,130 +143,138 @@ class ImportController extends Controller
             'max'      => 'Le champ :attribute est trop long (max :max caractères).',
             'min'      => 'Le champ :attribute doit être un nombre (min :min).',
 
-            // Messages plus “métier” pour les champs imbriqués
-            'aats.*.contribution.integer' => 'La contribution de l’AAT doit être un nombre (1, 2 ou 3).',
-            'aats.*.contribution.in'      => 'La contribution de l’AAT doit valoir 1, 2 ou 3.',
+            'links.aats.*.contribution.integer' => 'La contribution de l’AAT doit être un nombre (1, 2 ou 3).',
+            'links.aats.*.contribution.in'      => 'La contribution de l’AAT doit valoir 1, 2 ou 3.',
 
-            'aavs.*.contribution.integer' => 'La contribution de l’AAV doit être un nombre (1, 2 ou 3).',
-            'aavs.*.contribution.in'      => 'La contribution de l’AAV doit valoir 1, 2 ou 3.',
+            'links.aavs.*.contribution.integer' => 'La contribution de l’AAV doit être un nombre (1, 2 ou 3).',
+            'links.aavs.*.contribution.in'      => 'La contribution de l’AAV doit valoir 1, 2 ou 3.',
 
-            'programmes.*.semestre.integer' => 'Le semestre du programme doit être un nombre.',
-            'programmes.*.semestre.min'     => 'Le semestre du programme doit être au minimum 1.',
+            'links.programmes.*.semestre.integer' => 'Le semestre du programme doit être un nombre.',
+            'links.programmes.*.semestre.min'     => 'Le semestre du programme doit être au minimum 1.',
         ];
 
         $attributes = [
-            'ue.code' => 'Sigle de l’UE',
-            'ue.name' => 'Libellé de l’UE',
-            'ue.description' => 'Description de l’UE',
-            'ue.ects' => 'ECTS de l’UE',
+            'main.code'        => 'Sigle de l’UE',
+            'main.name'        => 'Libellé de l’UE',
+            'main.description' => 'Description de l’UE',
+            'main.ects'        => 'ECTS de l’UE',
 
-            'aats' => 'Liste des AAT',
-            'aats.*.code' => 'Sigle de l’AAT',
-            'aats.*.libelle' => 'Libellé de l’AAT',
-            'aats.*.contribution' => 'Contribution de l’AAT',
+            'links.aats'               => 'Liste des AAT',
+            'links.aats.*.code'        => 'Sigle de l’AAT',
+            'links.aats.*.libelle'     => 'Libellé de l’AAT',
+            'links.aats.*.contribution' => 'Contribution de l’AAT',
 
-            'aavs' => 'Liste des AAV',
-            'aavs.*.code' => 'Sigle de l’AAV',
-            'aavs.*.libelle' => 'Libellé de l’AAV',
-            'aavs.*.contribution' => 'Contribution de l’AAV',
+            'links.aavs'               => 'Liste des AAV',
+            'links.aavs.*.code'        => 'Sigle de l’AAV',
+            'links.aavs.*.libelle'     => 'Libellé de l’AAV',
+            'links.aavs.*.contribution' => 'Contribution de l’AAV',
 
-            'programmes' => 'Liste des programmes',
-            'programmes.*.code' => 'Code du programme',
-            'programmes.*.libelle' => 'Libellé du programme',
-            'programmes.*.semestre' => 'Semestre du programme',
+            'links.programmes'            => 'Liste des programmes',
+            'links.programmes.*.code'     => 'Code du programme',
+            'links.programmes.*.libelle'  => 'Libellé du programme',
+            'links.programmes.*.semestre' => 'Semestre du programme',
 
-            'prerequis' => 'Liste des prérequis',
-            'prerequis.*.code' => 'Sigle du prérequis',
-            'prerequis.*.libelle' => 'Libellé du prérequis',
+            'links.prerequis'           => 'Liste des prérequis',
+            'links.prerequis.*.code'    => 'Sigle du prérequis',
+            'links.prerequis.*.libelle' => 'Libellé du prérequis',
         ];
 
         $validator = Validator::make($values, [
-            "ue.code" => "nullable|string|max:50",
-            "ue.name" => "required|string|max:255",
-            "ue.description" => "nullable|string",
-            "ue.ects" => "required|integer|min:1|max:120",
+            'type' => 'required|in:UE',
 
-            "aats" => "array",
-            "aats.*.libelle" => "nullable|string|max:255",
-            "aats.*.code" => "nullable|string|max:50",
-            "aats.*.contribution" => "nullable|integer|in:1,2,3",
+            'main' => 'required|array',
+            'main.code'        => 'nullable|string|max:50',
+            'main.name'        => 'required|string|max:255',
+            'main.description' => 'nullable|string',
+            'main.ects'        => 'required|integer|min:1|max:120',
 
-            "programmes" => "array",
-            "programmes.*.code" => "nullable|string|max:50",
-            "programmes.*.libelle" => "nullable|string|max:255",
-            "programmes.*.semestre" => "nullable|integer|min:1",
+            'links' => 'nullable|array',
 
-            "aavs" => "array",
-            "aavs.*.code" => "nullable|string|max:50",
-            "aavs.*.libelle" => "nullable|string|max:255",
-            "aavs.*.AATCode" => "nullable|string|max:50",
-            "aavs.*.contribution" => "nullable|integer|in:1,2,3",
+            'links.aats' => 'nullable|array',
+            'links.aats.*.code' => 'nullable|string|max:50',
+            'links.aats.*.libelle' => 'nullable|string|max:255',
+            'links.aats.*.contribution' => 'nullable|integer|in:1,2,3',
 
-            "prerequis" => "array",
-            "prerequis.*.code" => "nullable|string|max:50",
-            "prerequis.*.libelle" => "nullable|string|max:255",
+            'links.aavs' => 'nullable|array',
+            'links.aavs.*.code' => 'nullable|string|max:50',
+            'links.aavs.*.libelle' => 'nullable|string|max:255',
+            'links.aavs.*.AATCode' => 'nullable|string|max:50',
+            'links.aavs.*.contribution' => 'nullable|integer|in:1,2,3',
+
+            'links.prerequis' => 'nullable|array',
+            'links.prerequis.*.code' => 'nullable|string|max:50',
+            'links.prerequis.*.libelle' => 'nullable|string|max:255',
+
+            'links.programmes' => 'nullable|array',
+            'links.programmes.*.code' => 'nullable|string|max:50',
+            'links.programmes.*.libelle' => 'nullable|string|max:255',
+            'links.programmes.*.semestre' => 'nullable|integer|min:1',
         ], $messages, $attributes);
 
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
 
-        Log::debug($values);
         // --------------------------
         // 1) Création UE
         // --------------------------
-        $ueCode = trim($values['ue']['code'] ?? '');
-        $ueName = trim($values['ue']['name'] ?? '');
-        $ueDesc = $values['ue']['description'] ?? null;
-        $ueEcts = (int) ($values['ue']['ects'] ?? 0);
+        $ueCode = trim($main['code'] ?? '');
+        $ueName = trim($main['name'] ?? '');
+        $ueDesc = $main['description'] ?? null;
+        $ueEcts = (int) ($main['ects'] ?? 0);
 
-        $ue = UniteEnseignement::create([
-            'name' => $ueName,
-            'ects' => $ueEcts,
-            'code' => $ueCode !== '' ? $ueCode : null,
-            'description' => $ueDesc,
-            'university_id' => $uid,
-        ]);
+        // ✅ si vide => générer
+        if ($ueCode === '') {
+            $ueCode = $this->codeGen->nextUE();
+        }
+
+        try {
+            $ue = UniteEnseignement::create([
+                'name' => $ueName,
+                'ects' => $ueEcts,
+                'code' => $ueCode,
+                'description' => $ueDesc,
+                'university_id' => $uid,
+            ]);
+        } catch (QueryException $e) {
+            // duplicate key
+            if (($e->errorInfo[0] ?? null) === '23000') {
+                throw ValidationException::withMessages([
+                    'main.code' => ["Le sigle d’UE \"$ueCode\" existe déjà dans le logiciel, veuillez en fournir un différent."]
+                ]);
+            }
+            throw $e;
+        }
 
         // -------------------------
-        // 2) Liaison AAT ↔ UE (avec contribution)
+        // 2) AATs liés
         // -------------------------
-        if (!empty($values['aats'])) {
-            foreach ($values['aats'] as $aatData) {
+        $aats = $links['aats'] ?? [];
+        if (!empty($aats)) {
+            foreach ($aats as $aatData) {
 
                 $code = trim($aatData['code'] ?? '');
                 $name = trim($aatData['libelle'] ?? '');
 
-                // Rien fourni
-                if ($code === '' && $name === '') {
-                    continue;
-                }
+                if ($code === '' && $name === '') continue;
 
-                // Pas de code mais un libellé => générer
                 if ($code === '' && $name !== '') {
                     $code = $this->codeGen->nextAAT();
                 }
 
-                // Rechercher (scopé université)
                 $aat = AAT::where('code', $code)
                     ->where('university_id', $uid)
                     ->first();
-                // Inexistant et pas de libellé => ignorer
-                if (!$aat && $name === '') {
-                    continue;
-                }
 
-                // Créer
+                if (!$aat && $name === '') continue;
+
                 if (!$aat) {
                     $aat = AAT::create([
                         'code' => $code,
                         'name' => $name !== '' ? $name : null,
                         'university_id' => $uid,
                     ]);
-                }
-
-                // Mettre à jour name si vide en base et fourni
-                if (($aat->name === null || trim((string)$aat->name) === '') && $name !== '') {
+                } elseif (($aat->name === null || trim((string)$aat->name) === '') && $name !== '') {
                     $aat->name = $name;
                     $aat->save();
                 }
@@ -267,7 +283,6 @@ class ImportController extends Controller
                     ? (int) $aatData['contribution']
                     : null;
 
-                // ⚠️ si ton pivot contient university_id, ajoute-le ici aussi
                 $ue->aat()->syncWithoutDetaching([
                     $aat->id => [
                         'contribution' => $contribution,
@@ -278,36 +293,28 @@ class ImportController extends Controller
         }
 
         // -------------------------
-        // 3) Liaison Programmes ↔ UE (pivot semester)
+        // 3) Programmes liés
         // -------------------------
-        if (!empty($values['programmes'])) {
-            foreach ($values['programmes'] as $proData) {
+        $programmes = $links['programmes'] ?? [];
+        if (!empty($programmes)) {
+            foreach ($programmes as $proData) {
                 $code = trim($proData['code'] ?? '');
                 $name = trim($proData['libelle'] ?? '');
                 $sem  = isset($proData['semestre']) && is_numeric($proData['semestre'])
                     ? (int) $proData['semestre']
                     : null;
 
-                if ($code === '' && $name === '') {
-                    continue;
-                }
+                if ($code === '' && $name === '') continue;
 
                 if ($code === '' && $name !== '') {
                     $code = $this->codeGen->nextProgramme();
                 }
 
-                // Inexistant + pas de libellé => ignorer
-                if ($code !== '') {
-                    $pro = Programme::where('code', $code)
-                        ->where('university_id', $uid)
-                        ->first();
-                } else {
-                    $pro = null;
-                }
+                $pro = Programme::where('code', $code)
+                    ->where('university_id', $uid)
+                    ->first();
 
-                if (!$pro && $name === '') {
-                    continue;
-                }
+                if (!$pro && $name === '') continue;
 
                 if (!$pro) {
                     $pro = Programme::create([
@@ -315,21 +322,13 @@ class ImportController extends Controller
                         'name' => $name !== '' ? $name : null,
                         'university_id' => $uid,
                     ]);
-                } else {
-                    // update name si vide
-                    if (($pro->name === null || trim((string)$pro->name) === '') && $name !== '') {
-                        $pro->name = $name;
-                        $pro->save();
-                    }
+                } elseif (($pro->name === null || trim((string)$pro->name) === '') && $name !== '') {
+                    $pro->name = $name;
+                    $pro->save();
                 }
 
-                // Attacher l’UE au programme avec semestre en pivot
-                // ⚠️ si ton pivot contient university_id, ajoute-le ici aussi
-                $pivot = [];
-                if ($sem !== null) {
-                    $pivot['semester'] = $sem;
-                }
-                $pivot['university_id'] = $uid;
+                $pivot = ['university_id' => $uid];
+                if ($sem !== null) $pivot['semester'] = $sem;
 
                 $ue->pro()->syncWithoutDetaching([
                     $pro->id => $pivot
@@ -338,16 +337,15 @@ class ImportController extends Controller
         }
 
         // -------------------------
-        // 4) Liaison AAV ↔ UE
+        // 4) AAVs liés
         // -------------------------
-        if (!empty($values['aavs'])) {
-            foreach ($values['aavs'] as $aavData) {
+        $aavs = $links['aavs'] ?? [];
+        if (!empty($aavs)) {
+            foreach ($aavs as $aavData) {
                 $code = trim($aavData['code'] ?? '');
                 $name = trim($aavData['libelle'] ?? '');
 
-                if ($code === '' && $name === '') {
-                    continue;
-                }
+                if ($code === '' && $name === '') continue;
 
                 if ($code === '' && $name !== '') {
                     $code = $this->codeGen->nextAAV();
@@ -357,10 +355,7 @@ class ImportController extends Controller
                     ->where('university_id', $uid)
                     ->first();
 
-                // Inexistant + pas de libellé => ignorer
-                if (!$aav && $name === '') {
-                    continue;
-                }
+                if (!$aav && $name === '') continue;
 
                 if (!$aav) {
                     $aav = AcquisApprentissageVise::create([
@@ -368,33 +363,27 @@ class ImportController extends Controller
                         'name' => $name !== '' ? $name : null,
                         'university_id' => $uid,
                     ]);
-                }
-
-                if (($aav->name === null || trim((string)$aav->name) === '') && $name !== '') {
+                } elseif (($aav->name === null || trim((string)$aav->name) === '') && $name !== '') {
                     $aav->name = $name;
                     $aav->save();
                 }
 
-                // Attacher pivot (si pivot contient university_id)
                 $ue->aavvise()->syncWithoutDetaching([
-                    $aav->id => [
-                        'university_id' => $uid,
-                    ]
+                    $aav->id => ['university_id' => $uid]
                 ]);
             }
         }
 
         // -------------------------
-        // 5) Liaison Prérequis ↔ UE
+        // 5) Prérequis liés
         // -------------------------
-        if (!empty($values['prerequis'])) {
-            foreach ($values['prerequis'] as $preData) {
+        $prerequis = $links['prerequis'] ?? [];
+        if (!empty($prerequis)) {
+            foreach ($prerequis as $preData) {
                 $code = trim($preData['code'] ?? '');
                 $name = trim($preData['libelle'] ?? '');
 
-                if ($code === '' && $name === '') {
-                    continue;
-                }
+                if ($code === '' && $name === '') continue;
 
                 if ($code === '' && $name !== '') {
                     $code = $this->codeGen->nextPrerequis();
@@ -404,10 +393,7 @@ class ImportController extends Controller
                     ->where('university_id', $uid)
                     ->first();
 
-                // Inexistant + pas de libellé => ignorer
-                if (!$pre && $name === '') {
-                    continue;
-                }
+                if (!$pre && $name === '') continue;
 
                 if (!$pre) {
                     $pre = AcquisApprentissageVise::create([
@@ -415,21 +401,197 @@ class ImportController extends Controller
                         'name' => $name !== '' ? $name : null,
                         'university_id' => $uid,
                     ]);
-                }
-
-                if (($pre->name === null || trim((string)$pre->name) === '') && $name !== '') {
+                } elseif (($pre->name === null || trim((string)$pre->name) === '') && $name !== '') {
                     $pre->name = $name;
                     $pre->save();
                 }
 
                 $ue->prerequis()->syncWithoutDetaching([
-                    $pre->id => [
+                    $pre->id => ['university_id' => $uid]
+                ]);
+            }
+        }
+
+        return $ue;
+    }
+
+
+    public function storeAAT(array $values)
+    {
+        $uid   = Auth::user()->university_id;
+        $type  = $values['type'] ?? 'AAT';
+        $main  = $values['main'] ?? [];
+        $links = $values['links'] ?? [];
+
+        if ($type !== 'AAT') {
+            throw ValidationException::withMessages([
+                'type' => ["storeAAT ne gère que le type AAT. Reçu: {$type}"]
+            ]);
+        }
+
+        // --------------------------
+        // VALIDATION
+        // --------------------------
+        $messages = [
+            'required' => 'Le champ :attribute est obligatoire.',
+            'string'   => 'Le champ :attribute doit être un texte.',
+            'array'    => 'Le champ :attribute doit être une liste.',
+            'max'      => 'Le champ :attribute est trop long (max :max caractères).',
+        ];
+
+        $attributes = [
+            'main.code' => 'Sigle AAT',
+            'main.name' => 'Libellé AAT',
+            'main.description' => 'Description AAT',
+
+            'links.ues' => 'Liste des UE liées',
+            'links.ues.*.code' => 'Sigle UE',
+            'links.ues.*.libelle' => 'Libellé UE',
+
+            'links.aavs' => 'Liste des AAV liés',
+            'links.aavs.*.code' => 'Sigle AAV',
+            'links.aavs.*.libelle' => 'Libellé AAV',
+        ];
+
+        $validator = Validator::make($values, [
+            'type' => 'required|in:AAT',
+
+            'main' => 'required|array',
+            'main.code' => 'nullable|string|max:50',
+            'main.name' => 'required|string|max:255',
+            'main.description' => 'nullable|string',
+
+            'links' => 'nullable|array',
+
+            // liens possibles depuis GenericSingleImportService
+            'links.ues' => 'nullable|array',
+            'links.ues.*.code' => 'nullable|string|max:50',
+            'links.ues.*.libelle' => 'nullable|string|max:255',
+
+            'links.aavs' => 'nullable|array',
+            'links.aavs.*.code' => 'nullable|string|max:50',
+            'links.aavs.*.libelle' => 'nullable|string|max:255',
+        ], $messages, $attributes);
+
+        if ($validator->fails()) {
+            throw new ValidationException($validator);
+        }
+
+        // --------------------------
+        // 1) Création AAT
+        // --------------------------
+        $aatCode = trim($main['code'] ?? '');
+        $aatName = trim($main['name'] ?? '');
+        $aatDesc = $main['description'] ?? null;
+
+        if ($aatCode === '') {
+            $aatCode = $this->codeGen->nextAAT();
+        }
+
+        try {
+            $aat = AAT::create([
+                'code' => $aatCode,
+                'name' => $aatName,
+                'description' => $aatDesc,
+                'university_id' => $uid,
+            ]);
+        } catch (QueryException $e) {
+            if (($e->errorInfo[0] ?? null) === '23000') {
+                throw ValidationException::withMessages([
+                    'main.code' => ["Le sigle AAT \"$aatCode\" existe déjà dans le logiciel, veuillez en fournir un différent."]
+                ]);
+            }
+            throw $e;
+        }
+
+        // --------------------------
+        // 2) Lier les UE (pivot ue_aat)
+        // --------------------------
+        $ues = $links['ues'] ?? [];
+        if (!empty($ues)) {
+            foreach ($ues as $ueData) {
+                $ueCode = trim($ueData['code'] ?? '');
+                $ueName = trim($ueData['libelle'] ?? '');
+
+                if ($ueCode === '' && $ueName === '') continue;
+
+                if ($ueCode === '' && $ueName !== '') {
+                    $ueCode = $this->codeGen->nextUE();
+                }
+
+                // UE scoped université
+                $ue = UniteEnseignement::where('code', $ueCode)
+                    ->where('university_id', $uid)
+                    ->first();
+
+                // pas trouvé + pas de libellé => ignore
+                if (!$ue && $ueName === '') continue;
+
+                if (!$ue) {
+                    $ue = UniteEnseignement::create([
+                        'code' => $ueCode,
+                        'name' => $ueName !== '' ? $ueName : null,
+                        'university_id' => $uid,
+                        // ⚠️ ects/description peuvent être nullables selon ta table
+                        'ects' => 1, // <-- ajuste si ects est NOT NULL
+                    ]);
+                } elseif (($ue->name === null || trim((string)$ue->name) === '') && $ueName !== '') {
+                    $ue->name = $ueName;
+                    $ue->save();
+                }
+
+                // pivot défini sur UniteEnseignement::aat()
+                $ue->aat()->syncWithoutDetaching([
+                    $aat->id => [
+                        // si ton pivot contient university_id, garde-le
                         'university_id' => $uid,
                     ]
                 ]);
             }
         }
 
-        return $ue;
+        // --------------------------
+        // 3) Lier les AAV (pivot AAT <-> AAV)
+        // --------------------------
+        $aavs = $links['aavs'] ?? [];
+        if (!empty($aavs)) {
+            foreach ($aavs as $aavData) {
+                $aavCode = trim($aavData['code'] ?? '');
+                $aavName = trim($aavData['libelle'] ?? '');
+
+                if ($aavCode === '' && $aavName === '') continue;
+
+                if ($aavCode === '' && $aavName !== '') {
+                    $aavCode = $this->codeGen->nextAAV();
+                }
+
+                $aav = AcquisApprentissageVise::where('code', $aavCode)
+                    ->where('university_id', $uid)
+                    ->first();
+
+                if (!$aav && $aavName === '') continue;
+
+                if (!$aav) {
+                    $aav = AcquisApprentissageVise::create([
+                        'code' => $aavCode,
+                        'name' => $aavName !== '' ? $aavName : null,
+                        'university_id' => $uid,
+                    ]);
+                } elseif (($aav->name === null || trim((string)$aav->name) === '') && $aavName !== '') {
+                    $aav->name = $aavName;
+                    $aav->save();
+                }
+
+                if (method_exists($aat, 'aav')) {
+                    $aat->aav()->syncWithoutDetaching([
+                        $aav->id => [
+                            'university_id' => $uid, // si pivot a ce champ
+                        ]
+                    ]);
+                } 
+            }
+        }
+
+        return $aat;
     }
 }
