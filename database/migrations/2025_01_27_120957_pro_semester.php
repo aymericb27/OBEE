@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('programme', function (Blueprint $table) {
+        Schema::create('pro_semester', function (Blueprint $table) {
             $table->engine = 'InnoDB';
             $table->id();
-            $table->string('code');
-            $table->string('name');
-            $table->integer('ects')->nullable();
+            $table->integer('ects');
+            $table->integer('semester');
             $table->foreignId("university_id")->constrained('universities');
-            $table->unique(['university_id', 'code'], 'programme_university_code_unique');
+            $table->foreignId("fk_programme")->constrained('programme');
             $table->timestamps();
         });
     }
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('programme');
+        //
     }
 };

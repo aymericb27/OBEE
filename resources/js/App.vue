@@ -76,7 +76,6 @@ export default {
 }
 
 .listBtn {
-    position: absolute;
     left: 0px;
 }
 </style>

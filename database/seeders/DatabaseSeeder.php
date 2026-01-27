@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             AcquisApprentissageViseSeeder::class,
             AAVUESeeder::class,
             ProgrammeSeeder::class,
+            ProSemesterSeeder::class,
             UEProgrammeSeeder::class,
             AAVAATSeeder::class,
         ]);

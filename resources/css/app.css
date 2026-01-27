@@ -38,7 +38,9 @@ textarea {
 .primary_color {
     color: #2a71cde3;
 }
-
+.back_btn a {
+    color: #2a71cde3;
+}
 .back_btn {
     position: absolute;
     left: 0;
@@ -124,14 +126,14 @@ textarea {
 .semester-card {
     background: #fdfdfd;
 }
-.fa-pen-to-square.primary_color:hover{
+.fa-pen-to-square.primary_color:hover {
     color: #6590c9e3;
 }
-.deleteBtn{
+.deleteBtn {
     color: #e70c0c;
 }
-.deleteBtn:hover{
-    color : #e26969;
+.deleteBtn:hover {
+    color: #e26969;
     cursor: pointer;
 }
 
@@ -215,8 +217,7 @@ textarea {
     background-color: rgb(171, 228, 255);
 }
 
-.helper .fa-question{
+.helper .fa-question {
     color: rgb(52, 134, 172);
     font-size: 36px;
-
 }

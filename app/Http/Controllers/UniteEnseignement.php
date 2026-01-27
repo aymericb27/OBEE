@@ -11,6 +11,7 @@ use App\Models\Programme;
 use App\Services\CodeGeneratorService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -95,15 +96,52 @@ class UniteEnseignement extends Controller
         }
         if (!empty($validated['pro'])) {
 
-            $pivotData = [];
+            $universityId = Auth::user()->university_id;
 
-            foreach ($validated['pro'] as $item) {
-                $pivotData[$item['id']] = ['semester' => $item['semester'], 'university_id' => Auth::user()->university_id];
+            // 1) on prépare un mapping (programme_id + semester) -> pro_semester.id
+            $programmeIds = collect($validated['pro'])->pluck('id')->unique()->values();
+
+            $proSemesters = DB::table('pro_semester')
+                ->whereIn('fk_programme', $programmeIds)
+                ->where('university_id', $universityId)
+                ->get(['id', 'fk_programme', 'semester']);
+
+            // clé "programmeId-semester" => pro_semester.id
+            $map = [];
+            foreach ($proSemesters as $ps) {
+                $map[$ps->fk_programme . '-' . $ps->semester] = $ps->id;
             }
 
-            // ajoute tous les liens pivot d'un coup
-            $ue->pro()->attach($pivotData);
+            // 2) construire les lignes pivot ue_programme
+            $rows = [];
+
+            foreach ($validated['pro'] as $item) {
+                $programmeId = (int) $item['id'];
+                $semesterNumber = (int) $item['semester'];
+
+                $key = $programmeId . '-' . $semesterNumber;
+
+                if (!isset($map[$key])) {
+                    // semestre invalide pour ce programme
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'pro' => ["Semestre $semesterNumber introuvable pour le programme ID $programmeId."]
+                    ]);
+                }
+
+                $rows[] = [
+                    'fk_unite_enseignement' => $ue->id,
+                    'fk_programme' => $programmeId,
+                    'fk_semester' => $map[$key], // ✅ pro_semester.id
+                    'university_id' => $universityId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            // 3) insert sans casser sur doublon (contrainte unique)
+            DB::table('ue_programme')->insertOrIgnore($rows);
         }
+
         if (!empty($validated['ueParentID'])) {
             ElementConstitutif::create([
                 'fk_ue_parent' => $validated['ueParentID'],
@@ -183,12 +221,54 @@ class UniteEnseignement extends Controller
         }
         if (isset($validated['pro'])) {
 
-            $pivotData = [];
-            foreach ($validated['pro'] as $item) {
-                $pivotData[$item['id']] = ['semester' => $item['semester'], 'university_id' => Auth::user()->university_id];
+            $universityId = Auth::user()->university_id;
+
+            // 1) construire le mapping (programme_id + semester) -> pro_semester.id
+            $programmeIds = collect($validated['pro'])->pluck('id')->unique()->values();
+
+            $proSemesters = DB::table('pro_semester')
+                ->whereIn('fk_programme', $programmeIds)
+                ->where('university_id', $universityId)
+                ->get(['id', 'fk_programme', 'semester']);
+
+            $map = [];
+            foreach ($proSemesters as $ps) {
+                $map[$ps->fk_programme . '-' . $ps->semester] = $ps->id;
             }
-            $ue->pro()->sync($pivotData);
+
+            // 2) construire les lignes pivot ue_programme
+            $rows = [];
+            foreach ($validated['pro'] as $item) {
+                $programmeId = (int) $item['id'];
+                $semesterNumber = (int) $item['semester'];
+
+                $key = $programmeId . '-' . $semesterNumber;
+
+                if (!isset($map[$key])) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'pro' => ["Semestre $semesterNumber introuvable pour le programme ID $programmeId."]
+                    ]);
+                }
+
+                $rows[] = [
+                    'fk_unite_enseignement' => $ue->id,
+                    'fk_programme' => $programmeId,
+                    'fk_semester' => $map[$key],
+                    'university_id' => $universityId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            // 3) sync "manuel" (on remplace ce que l'UE avait)
+            DB::table('ue_programme')
+                ->where('fk_unite_enseignement', $ue->id)
+                ->where('university_id', $universityId)
+                ->delete();
+
+            DB::table('ue_programme')->insert($rows);
         }
+
         if (isset($validated['aat'])) {
 
             $pivotData = [];
@@ -207,16 +287,24 @@ class UniteEnseignement extends Controller
 
     public function getPro(Request $request)
     {
-
         $validated = $request->validate([
-            'id' => 'required|integer',
+            'id' => 'required|integer|exists:unite_enseignement,id',
         ]);
-        $response = Programme::select('programme.id', 'name', 'code', 'semester')
-            ->join('ue_programme', 'fk_programme', '=', 'programme.id')
-            ->where('fk_unite_enseignement', $validated['id'])->get();
 
-        return $response;
+        $response = Programme::select(
+            'programme.id',
+            'programme.name',
+            'programme.code',
+            'pro_semester.semester'
+        )
+            ->join('ue_programme', 'ue_programme.fk_programme', '=', 'programme.id')
+            ->join('pro_semester', 'pro_semester.id', '=', 'ue_programme.fk_semester')
+            ->where('ue_programme.fk_unite_enseignement', $validated['id'])
+            ->get();
+
+        return response()->json($response);
     }
+
 
 
     public function getAATs(Request $request)

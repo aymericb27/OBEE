@@ -3,7 +3,7 @@
         <i class="fa-solid fa-check green mr-2" style="color: darkgreen"></i>
         <span> {{ $route.query.message }} </span>
     </div>
-    <div class="row mt-3 mr-0">
+    <div class="row mt-3 mr-0 p-3">
         <div class="col-md-3">
             <div class="border p-3 bg-white rounded">
                 <h2 class="secondary_color">
@@ -52,7 +52,7 @@
                 </div>
             </div>
         </div>
-        <div class="border bg-white rounded p-3 secondary_color col-md-6">
+        <div class="border bg-white rounded p-3 mb-3 secondary_color col-md-6">
             <BaseLoader v-if="isLoadingSEM" text="Chargement..." size="md" />
             <div v-else>
                 <div class="p-3">
@@ -65,16 +65,36 @@
                     <h2 class="secondary_color mb-1 d-inline-block">
                         {{ prog.name }}
                     </h2>
-                    <button
+                    <!--                     <button
                         class="btn btn-lg btn-primary float-right ml-auto mb-2"
                         @click="openSemesterModal"
                     >
                         + ajout semestre
-                    </button>
+                    </button> -->
+                    <router-link
+                        :to="{
+                            name: 'modifyPRO',
+                            params: { id: prog.id },
+                        }"
+                    >
+                        <button
+                            class="btn btn-lg btn-primary float-right ml-auto mb-2"
+                        >
+                            modifier le programme
+                        </button>
+                    </router-link>
                     <p class="text-muted mb-3">
                         Programme structuré avec les semestres, unité
                         d'enseignements et les éléments constitutifs
                     </p>
+                    <div class="mb-3">
+                        <span class="badge badge-success text-white ml-2 p-2">
+                            Total des crédits des UE pour le semestre
+                        </span>
+                        <span class="badge bg-light text-dark ml-2 border p-2">
+                            Nombre imposé par le programme
+                        </span>
+                    </div>
                 </span>
                 <span v-for="semestre in prog.listSemestre">
                     <SemesterBlock
@@ -88,7 +108,7 @@
         </div>
     </div>
     <!-- Modal ajout semestre -->
-    <div v-if="showSemesterModal" class="modal-backdrop-custom">
+    <!--     <div v-if="showSemesterModal" class="modal-backdrop-custom">
         <div class="modal-custom">
             <h4 class="mb-3">Confirmation</h4>
 
@@ -107,7 +127,7 @@
                 </button>
             </div>
         </div>
-    </div>
+    </div> -->
     <modalList
         v-if="showModalUE"
         :visible="showModalUE"
@@ -139,8 +159,8 @@ export default {
             showModalUE: false,
             UECreateType: null,
             paramUEForm: {},
-            showSemesterModal: false,
-            semesterSelected: "",
+            /*             showSemesterModal: false,
+             */ semesterSelected: "",
             selectedProgramId: null, // 👈 programme sélectionné
             prog: {
                 name: "",
@@ -191,7 +211,7 @@ export default {
                 try {
                     const response = await axios.post("programme/ues/add", {
                         list: UES,
-                        id: this.selectedProgramId,
+                        programme_id: this.selectedProgramId,
                         semester: this.semesterSelected,
                     });
                     this.$router.replace({
@@ -221,19 +241,19 @@ export default {
         },
 
         async loadProgramDetailed(id) {
-			this.isLoadingSEM = true;
+            this.isLoadingSEM = true;
             const response = await axios.get("/programme/get/tree", {
                 params: { id },
             });
             console.log(this.prog);
             this.prog = response.data;
-			this.isLoadingSEM = false;
+            this.isLoadingSEM = false;
         },
-        openSemesterModal() {
+        /*         openSemesterModal() {
             this.showSemesterModal = true;
-        },
+        }, */
 
-        async confirmAddSemester() {
+        /*         async confirmAddSemester() {
             this.showSemesterModal = false;
 
             const response = await axios.post("/programme/add-semester", {
@@ -246,7 +266,7 @@ export default {
                     message: "Semestre rajouté avec succès",
                 },
             });
-        },
+        }, */
     },
     mounted() {
         this.loadPrograms();

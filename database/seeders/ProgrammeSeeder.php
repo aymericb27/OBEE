@@ -17,21 +17,18 @@ class programmeSeeder extends Seeder
             'name' => 'license en informatique',
             'code' => 'PRO101',
             'ects' => 180,
-            'semestre' => 6,
             'university_id' => 1
         ]);
         DB::table('programme')->insert([
             'name' => 'license en mathématique',
             'code' => 'PRO102',
             'ects' => 180,
-            'semestre' => 10,
             'university_id' => 1
         ]);
         DB::table('programme')->insert([
             'name' => 'license en langue',
             'code' => 'PRO103',
             'ects' => 120,
-            'semestre' => 6,
             'university_id' => 1
 
         ]);

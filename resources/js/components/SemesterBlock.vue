@@ -15,10 +15,12 @@
                 {{ number }}
             </h5>
 
-            <span class="badge bg-light text-dark ml-2 border">
+            <span class="badge badge-success text-white ml-2">
                 {{ semester?.countECTS ?? "—" }} ECTS
             </span>
-
+            <span class="badge bg-light text-dark ml-2 border">
+                {{ semester?.ects ?? "—" }} ECTS
+            </span>
             <button
                 @click="openModalUE('UE', null)"
                 class="btn btn-lg btn-primary ml-auto"
