@@ -47,6 +47,8 @@
             <div class="listComponent mb-4">
                 <div class="mb-2">
                     <h5 class="d-inline-block primary_color">
+                        <i class="fa-solid fa-graduation-cap"></i>
+
                         acquis d'apprentissage terminaux lié(s)
                     </h5>
                 </div>
@@ -66,6 +68,8 @@
             <div class="listComponent mb-4">
                 <div class="mb-2">
                     <h5 class="d-inline-block primary_color">
+                        <i class="fa-solid fa-key"></i>
+
                         prérequis pour les unités d'enseignement
                     </h5>
                 </div>
@@ -85,6 +89,8 @@
             <div class="listComponent mb-4">
                 <div class="mb-2">
                     <h5 class="d-inline-block primary_color">
+                        <i class="fa-brands fa-google-scholar"></i>
+
                         acquis d'apprentissage visé pour les unités
                         d'enseignements
                     </h5>

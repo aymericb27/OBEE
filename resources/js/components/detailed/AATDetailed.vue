@@ -46,6 +46,8 @@
             <div class="listComponent mb-4">
                 <div class="mb-2">
                     <h5 class="d-inline-block primary_color">
+                        <i class="fa-brands fa-google-scholar"></i>
+
                         acquis d'apprentissage visés liés
                     </h5>
                 </div>

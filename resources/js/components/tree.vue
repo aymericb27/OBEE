@@ -10,7 +10,12 @@
                     <i class="fa-solid fa-graduation-cap primary_color"></i>
                     Programme
                 </h2>
-                <ul class="secondary_color">
+                <BaseLoader
+                    v-if="isLoadingPRO"
+                    text="Chargement..."
+                    size="md"
+                />
+                <ul v-else class="secondary_color">
                     <li
                         class="p-2 program-item"
                         :class="{ active: selectedProgramId === prog.id }"
@@ -48,35 +53,38 @@
             </div>
         </div>
         <div class="border bg-white rounded p-3 secondary_color col-md-6">
-            <div class="p-3">
-                <strong v-if="!progs.length" class="p-3 mt-3"
-                    >Aucun programme actuellement dans le logiciel.</strong
-                >
-            </div>
+            <BaseLoader v-if="isLoadingSEM" text="Chargement..." size="md" />
+            <div v-else>
+                <div class="p-3">
+                    <strong v-if="!progs.length" class="p-3 mt-3"
+                        >Aucun programme actuellement dans le logiciel.</strong
+                    >
+                </div>
 
-            <span v-if="progs.length">
-                <h2 class="secondary_color mb-1 d-inline-block">
-                    {{ prog.name }}
-                </h2>
-                <button
-                    class="btn btn-lg btn-primary float-right ml-auto mb-2"
-                    @click="openSemesterModal"
-                >
-                    + ajout semestre
-                </button>
-                <p class="text-muted mb-3">
-                    Programme structuré avec les semestres, unité
-                    d'enseignements et les éléments constitutifs
-                </p>
-            </span>
-            <span v-for="semestre in prog.listSemestre">
-                <SemesterBlock
-                    :semester="semestre"
-                    :number="semestre.number"
-                    @open-ue-modal="openModalUE"
-                    @deleteRefresh="loadProgramDetailed(prog.id)"
-                />
-            </span>
+                <span v-if="progs.length">
+                    <h2 class="secondary_color mb-1 d-inline-block">
+                        {{ prog.name }}
+                    </h2>
+                    <button
+                        class="btn btn-lg btn-primary float-right ml-auto mb-2"
+                        @click="openSemesterModal"
+                    >
+                        + ajout semestre
+                    </button>
+                    <p class="text-muted mb-3">
+                        Programme structuré avec les semestres, unité
+                        d'enseignements et les éléments constitutifs
+                    </p>
+                </span>
+                <span v-for="semestre in prog.listSemestre">
+                    <SemesterBlock
+                        :semester="semestre"
+                        :number="semestre.number"
+                        @open-ue-modal="openModalUE"
+                        @deleteRefresh="loadProgramDetailed(prog.id)"
+                    />
+                </span>
+            </div>
         </div>
     </div>
     <!-- Modal ajout semestre -->
@@ -120,10 +128,13 @@ import axios from "axios";
 import list from "./list.vue";
 import SemesterBlock from "./SemesterBlock.vue";
 import modalList from "./modalList.vue";
+import BaseLoader from "@/components/modal/BaseLoader.vue";
 
 export default {
     data() {
         return {
+            isLoadingPRO: true,
+            isLoadingSEM: true,
             UEsToExclude: [],
             showModalUE: false,
             UECreateType: null,
@@ -141,6 +152,7 @@ export default {
         list,
         modalList,
         SemesterBlock,
+        BaseLoader,
     },
 
     methods: {
@@ -194,11 +206,13 @@ export default {
             }
         },
         async loadPrograms() {
+            this.isLoadingPRO = true;
             const response = await axios.get("pro/get");
             this.progs = response.data;
             if (this.progs.length) {
                 this.selectProgram(this.progs[0].id);
             }
+            this.isLoadingPRO = false;
         },
 
         async selectProgram(id) {
@@ -207,11 +221,13 @@ export default {
         },
 
         async loadProgramDetailed(id) {
+			this.isLoadingSEM = true;
             const response = await axios.get("/programme/get/tree", {
                 params: { id },
             });
             console.log(this.prog);
             this.prog = response.data;
+			this.isLoadingSEM = false;
         },
         openSemesterModal() {
             this.showSemesterModal = true;

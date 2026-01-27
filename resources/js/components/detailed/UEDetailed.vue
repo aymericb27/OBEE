@@ -42,7 +42,7 @@
                 ></i>
                 <span> {{ $route.query.message }} </span>
             </div>
-            <div class="p-4 border rounded bg-white mt-3">
+            <div class="p-4 border rounded bg-white mt-3 shadow">
                 <div class="row mb-2">
                     <h3 class="primary_color col-md-10 mb-0">
                         <span class="box_code UE pl-2 pr-2 mr-2">{{
@@ -76,32 +76,37 @@
                     </span>
                 </div>
                 <span> </span>
-                <div class="mb-4" v-html="ue.description"></div>
-                <div class="mb-4" v-if="ue.parent && ue.parent.length">
-                    Cette unité est un élément constitutif de
-                    <strong>
-                        <router-link
-                            class="UE"
-                            v-if="ue.parent[0].id"
-                            :to="{
-                                name: 'ue-detail',
-                                params: { id: ue.parent[0].id },
-                            }"
-                        >
-                            {{ ue.parent[0].code }}
-                        </router-link>
-                        {{ ue.parent[0].name }}
-                    </strong>
+                <div class="pb-4 border-bottom mb-4">
+                    <div v-html="ue.description"></div>
+                    <div v-if="ue.parent && ue.parent.length">
+                        Cette unité est un élément constitutif de
+                        <strong>
+                            <router-link
+                                class="UE"
+                                v-if="ue.parent[0].id"
+                                :to="{
+                                    name: 'ue-detail',
+                                    params: { id: ue.parent[0].id },
+                                }"
+                            >
+                                {{ ue.parent[0].code }}
+                            </router-link>
+                            {{ ue.parent[0].name }}
+                        </strong>
+                    </div>
                 </div>
-                <div class="listComponent mb-4" v-if="ue.children && ue.children.length">
+
+                <div
+                    class="listComponent mb-4"
+                    v-if="ue.children && ue.children.length"
+                >
                     <div class="mb-2">
-                        <h4 class="d-inline-block primary_color">
+                        <h5 class="d-inline-block primary_color">
                             liste des éléments constitutifs
-                        </h4>
+                        </h5>
                     </div>
                     <list
                         :key="`${ue.id}`"
-                        :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/ecs/get"
                         :paramsRouteGET="{ id: ue.id }"
@@ -112,13 +117,13 @@
                 </div>
                 <div class="listComponent mb-4">
                     <div class="mb-2">
-                        <h4 class="d-inline-block primary_color">
-                            Faisant partie du/des programme(s)
-                        </h4>
+                        <h5 class="d-inline-block primary_color">
+                            <i class="fa-solid fa-scroll"></i> Faisant partie
+                            du/des programme(s)
+                        </h5>
                     </div>
                     <list
                         :key="`${ue.id}`"
-                        :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/pro/get"
                         :paramsRouteGET="{ id: ue.id }"
@@ -129,13 +134,13 @@
                 </div>
                 <div class="listComponent mb-4">
                     <div class="mb-2">
-                        <h4 class="d-inline-block primary_color">
+                        <h5 class="d-inline-block primary_color">
+                            <i class="fa-brands fa-google-scholar"></i>
                             Liste des acquis d'apprentissages visé
-                        </h4>
+                        </h5>
                     </div>
                     <list
                         :key="`${ue.id}`"
-                        :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/aavvise/get"
                         :paramsRouteGET="{ id: ue.id }"
@@ -152,30 +157,30 @@
                 </div>
                 <div class="listComponent mb-4">
                     <div class="mb-2">
-                        <h4 class="d-inline-block primary_color">
+                        <h5 class="d-inline-block primary_color">
+                            <i class="fa-solid fa-key"></i>
                             Liste des prérequis
-                        </h4>
+                        </h5>
                     </div>
                     <list
                         :key="`${ue.id}`"
-                        :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/aavprerequis/get"
                         :paramsRouteGET="{ id: ue.id }"
                         linkDetailed="aav-detail"
-                        typeList="AAV"
+                        typeList="PRE"
                         :listColonne="['code', 'name']"
                     />
                 </div>
                 <div class="listComponent mb-4">
                     <div class="mb-2">
-                        <h4 class="d-inline-block primary_color">
+                        <h5 class="d-inline-block primary_color">
+                            <i class="fa-solid fa-graduation-cap"></i>
                             Liste des acquis d'apprentissages terminaux
-                        </h4>
+                        </h5>
                     </div>
                     <list
                         :key="`${ue.id}`"
-                        :isBorder="true"
                         v-if="ue.id"
                         routeGET="/ue/aat/get"
                         :paramsRouteGET="{ id: ue.id }"

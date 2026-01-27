@@ -44,9 +44,10 @@
             </div>
             <div class="listComponent mb-4">
                 <div class="mb-2">
-                    <h4 class="d-inline-block primary_color">
+                    <h5 class="d-inline-block primary_color">
+                        <i class="fa-solid fa-book-open"></i>
                         Liste des unités d'enseignements
-                    </h4>
+                    </h5>
                 </div>
                 <list
                     :isBorder="true"
