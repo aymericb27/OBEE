@@ -6,35 +6,7 @@
                 Retour
             </a>
         </div>
-        <div class="container">
-            <!--             <div class="mt-3">
-                <div
-                    v-for="(prog, index) in errors.errorsECTS"
-                    :key="index"
-                    class="alert alert-danger mb-2"
-                >
-                    <i
-                        class="fa-solid fa-triangle-exclamation"
-                        style="color: #f3aa24; font-size: 24px"
-                    ></i>
-                    <span class="p-2">
-                        <strong>Erreur : </strong>L'unité d'enseignement fait
-                        partie du programme
-                        <router-link
-                            :to="{
-                                name: 'pro-detail',
-                                params: { id: prog.id },
-                            }"
-                            >{{ prog.code }}</router-link
-                        > </span
-                    >({{ prog.name }})
-                    <span v-if="prog.ects < prog.UEECts"
-                        >qui a trop de crédits attribués.</span
-                    >
-                    <span v-else>qui n'a pas assez de crédits attribués.</span>
-                </div>
-                <errorShedule :id="this.id" />
-            </div> -->
+        <div class="container pb-4 ">
             <div v-if="$route.query.message" class="alert alert-success mt-3">
                 <i
                     class="fa-solid fa-check green mr-2"

@@ -32,8 +32,8 @@
 
                         <div class="row border-bottom">
                             <div class="col-md-1"></div>
-                            <div class="col-md-1 p-2">Code</div>
-                            <div class="col-md-10 p-2">Libellé</div>
+                            <div class="col-md-2 p-2">Code</div>
+                            <div class="col-md-9 p-2">Libellé</div>
                         </div>
                         <div
                             v-if="!paginatedList.length"
@@ -55,10 +55,10 @@
                                     :value="item.id"
                                 />
                             </div>
-                            <div class="col-md-1 p-2" :class="type">
+                            <div class="col-md-2 p-2" :class="type">
                                 {{ item.code }}
                             </div>
-                            <p class="col-md-10 mb-0 p-2">
+                            <p class="col-md-9 mb-0 p-2">
                                 {{ item.name }}
                             </p>
                         </div>

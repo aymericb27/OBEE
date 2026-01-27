@@ -5,7 +5,7 @@
                 <i class="fa-solid fa-circle-arrow-left"></i> Retour
             </a>
         </div>
-        <div class="container p-4">
+        <div class="w-75 m-auto">
             <div v-if="formErrors" class="alert alert-danger mt-3">
                 <i
                     class="fa-solid fa-triangle-exclamation mr-2"
@@ -16,10 +16,10 @@
             <form @submit.prevent="submitFormUE">
                 <div class="p-4 border rounded bg-white mt-3">
                     <h3 v-if="!ueParent.name" class="mb-4 primary_color">
-                        Création d'une unité d'enseignement
+                        Introduire une unité d'enseignement
                     </h3>
                     <h3 v-if="ueParent.name" class="mb-4 primary_color">
-                        Création d'un élément constitutif
+                        Introduire un élément constitutif
                     </h3>
 
                     <div class="mb-3" v-if="$route.query.UEParentId">
@@ -42,11 +42,19 @@
                     </div>
 
                     <div class="mb-4 d-flex align-items-center">
-                        <span class="pr-2 mb-0 w-75 flex-grow-1">
+                        <span>
                             <input
                                 type="text"
                                 class="form form-control"
-                                placeholder="libellé"
+                                v-model="ue.code"
+                                placeholder="Sigle"
+                            />
+                        </span>
+                        <span class="pr-2 ml-2 mb-0 w-75 flex-grow-1">
+                            <input
+                                type="text"
+                                class="form form-control"
+                                placeholder="intitulé"
                                 v-model="ue.name"
                                 required
                             />
@@ -73,8 +81,9 @@
                     </p>
                     <div class="listComponent mb-5">
                         <div class="mb-2">
-                            <h4 class="d-inline-block primary_color">
+                            <h5 class="d-inline-block primary_color">
                                 Liste des acquis d'apprentissages terminaux
+                                auxquels cette UE contribue
                                 <button
                                     type="button"
                                     class="btn btn-primary ml-2 mb-2"
@@ -82,7 +91,7 @@
                                 >
                                     ajouter un acquis d'apprentissage terminal
                                 </button>
-                            </h4>
+                            </h5>
                         </div>
                         <div class="row border-bottom">
                             <div class="col-md-1"></div>
@@ -125,8 +134,8 @@
                     </div>
                     <div class="listComponent mb-5">
                         <div class="mb-2">
-                            <h4 class="d-inline-block mb-0 primary_color">
-                                Liste des programmes liés
+                            <h5 class="d-inline-block mb-0 primary_color">
+                                Liste des programmes qui comportent cette UE
                                 <button
                                     type="button"
                                     class="btn btn-primary ml-2 mb-2"
@@ -134,7 +143,7 @@
                                 >
                                     ajouter un programme
                                 </button>
-                            </h4>
+                            </h5>
                         </div>
                         <div class="row border-bottom">
                             <div class="col-md-1 p-2"></div>
@@ -174,7 +183,7 @@
                     </div>
                     <div class="listComponent mb-5">
                         <div class="mb-2">
-                            <h4 class="d-inline-block primary_color">
+                            <h5 class="d-inline-block primary_color">
                                 Liste des acquis d'apprentissages visé
                                 <button
                                     type="button"
@@ -183,7 +192,7 @@
                                 >
                                     ajouter un acquis d'apprentissage visé
                                 </button>
-                            </h4>
+                            </h5>
                         </div>
                         <div class="row border-bottom">
                             <div class="col-md-1"></div>
@@ -212,9 +221,9 @@
                     </div>
                     <div class="listComponent mb-5">
                         <div class="mb-2">
-                            <h4 class="d-inline-block primary_color">
+                            <h5 class="d-inline-block primary_color">
                                 Liste des prérequis
-                            </h4>
+                            </h5>
                             <button
                                 type="button"
                                 class="btn btn-primary ml-2 mb-2"
@@ -287,7 +296,7 @@
                 <!-- HEADER -->
                 <div class="modal-header">
                     <h5 class="modal-title primary_color">
-                        Créer un acquis d'apprentissage visé
+                        Introduire un acquis d'apprentissage visé
                     </h5>
                     <button
                         type="button"
@@ -520,7 +529,7 @@ export default {
             if (!this.aavForm.selectedAATId) return;
 
             const aat = this.listAAT.find(
-                (a) => a.id === this.aavForm.selectedAATId
+                (a) => a.id === this.aavForm.selectedAATId,
             );
 
             if (!aat) return;
@@ -536,7 +545,7 @@ export default {
 
         removeAAT(id) {
             this.aavForm.aatSelected = this.aavForm.aatSelected.filter(
-                (a) => a.id !== id
+                (a) => a.id !== id,
             );
         },
 
@@ -617,6 +626,7 @@ export default {
                         id: this.ue.id,
                         name: this.ue.name,
                         ects: this.ue.ects,
+                        code: this.ue.code,
                         description: this.ue.description,
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
@@ -639,6 +649,7 @@ export default {
                     const response = await axios.post("/ue/store", {
                         name: this.ue.name,
                         ects: this.ue.ects,
+                        code: this.ue.code,
                         description: this.ue.description,
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
@@ -727,7 +738,7 @@ export default {
 
                 if (response.data) {
                     const alreadyLinked = this.ue.pro.some(
-                        (pro) => pro.id === response.data.id
+                        (pro) => pro.id === response.data.id,
                     );
                     const responseProgram = response.data;
                     responseProgram.semester = parseInt(semesterNumber, 10);
@@ -792,7 +803,7 @@ export default {
                         params: {
                             id: this.id,
                         },
-                    }
+                    },
                 );
                 this.ue.aavprerequis = responseAAVprerequis.data;
             } catch (error) {

@@ -5,19 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\UniteEnseignement as UE;
 use Illuminate\Http\Request;
-use App\Http\Controllers\ErrorController;
 use App\Models\AcquisApprentissageTerminaux;
 use App\Models\ElementConstitutif;
 use App\Models\Programme;
-use App\Models\UEPRO;
+use App\Services\CodeGeneratorService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class UniteEnseignement extends Controller
 {
+    public function __construct(private CodeGeneratorService $codeGen) {}
+
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'code' => 'nullable|string|max:50',
             'name' => 'required|string|max:255',
             'ects' => 'nullable|integer|max:200',
             'description' => 'nullable|string|max:2024',
@@ -35,33 +39,32 @@ class UniteEnseignement extends Controller
             'ueParentContribution' => ["nullable", 'integer', 'min:1', 'max:3']
         ]);
 
-        // ----- Génération du code UExxx -----
-        // Récupère le dernier code existant
-        $lastUE = UE::where('code', 'LIKE', 'UE%')
-            ->orderBy('code', 'desc')
-            ->first();
-
-        if ($lastUE) {
-            // extrait le numéro : PRO012 → 12
-            $lastNumber = intval(substr($lastUE->code, 2));
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1; // premier code
+        // ✅ si vide => générer
+        if ($validated['code'] === '') {
+            $validated['code'] = $this->codeGen->nextUE();
         }
 
-        // format UE001 / UE024 / UE300…
-        $newCode = 'UE' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
 
-        // Ajout du code au tableau validé
-        $validated['code'] = $newCode;
-        $ue = UE::create([
-            'name' => $validated['name'],
-            'ects' => $validated['ects'],
-            'code' => $validated['code'],
-            'description' => $validated['description'],
-            'university_id' => Auth::user()->university_id,
+        try {
+            $ue = UE::create([
+                'name' => $validated['name'],
+                'ects' => $validated['ects'],
+                'code' => $validated['code'],
+                'description' => $validated['description'],
+                'university_id' => Auth::user()->university_id,
 
-        ]);
+            ]);
+        } catch (QueryException $e) {
+            // duplicate key
+            if (($e->errorInfo[0] ?? null) === '23000') {
+                $code = $validated['code'];
+                throw ValidationException::withMessages([
+                    'main.code' => ["Le sigle d’UE \"$code\" existe déjà dans le logiciel, veuillez en fournir un différent."]
+                ]);
+            }
+            throw $e;
+        }
+
 
         // ✅ Mise à jour des relations (si tu as des tables pivots)
         if (isset($validated['aavvise'])) {
@@ -125,6 +128,7 @@ class UniteEnseignement extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'ects' => ['nullable', 'integer'],
+            'code' => 'required|string|max:50',
             'aavprerequis' => ['array'],
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'aavvise' => ['array'],
@@ -142,13 +146,25 @@ class UniteEnseignement extends Controller
         // ✅ Récupération de l’UE
         $ue = UE::findOrFail($validated['id']);
 
-        // ✅ Mise à jour des champs de base
-        $ue->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? '',
-            'ects' => $validated['ects'],
-        ]);
-
+        try {
+            // ✅ Mise à jour des champs de base
+            $ue->update([
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? '',
+                'ects' => $validated['ects'],
+                'code' => $validated['code'],
+                'university_id' => Auth::user()->university_id,
+            ]);
+        } catch (QueryException $e) {
+            // duplicate key
+            if (($e->errorInfo[0] ?? null) === '23000') {
+                $code = $validated['code'];
+                throw ValidationException::withMessages([
+                    'main.code' => ["Le sigle d’UE \"$code\" existe déjà dans le logiciel, veuillez en fournir un différent."]
+                ]);
+            }
+            throw $e;
+        }
         // ✅ Mise à jour des relations (si tu as des tables pivots)
         if (isset($validated['aavvise'])) {
             $pivotData = [];
