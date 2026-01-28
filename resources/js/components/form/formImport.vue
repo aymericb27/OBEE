@@ -1,9 +1,6 @@
 <template>
     <div class="pb-5">
         <div class="m-5 p-5 border bg-white">
-            <div>
-                <pre>{{ config }}</pre>
-            </div>
             <!-- 🌋 Erreurs -->
             <div v-if="errors.length" class="alert alert-danger text-left">
                 <ul>

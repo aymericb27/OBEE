@@ -5,7 +5,7 @@
                 <i class="fa-solid fa-circle-arrow-left"></i> Retour
             </a>
         </div>
-        <div class="w-75 m-auto">
+        <div class="w-75 m-auto pb-3">
             <div v-if="formErrors" class="alert alert-danger mt-3">
                 <i
                     class="fa-solid fa-triangle-exclamation mr-2"

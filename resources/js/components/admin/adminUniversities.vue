@@ -18,9 +18,6 @@
           <div class="col-md-6">
             <input class="form-control" placeholder="Nom" v-model="form.name" />
           </div>
-          <div class="col-md-3">
-            <input class="form-control" placeholder="Code (optionnel)" v-model="form.code" />
-          </div>
           <div class="col-md-3 d-grid">
             <button class="btn btn-primary" @click="create" :disabled="creating || !form.name.trim()">
               <i class="fa-solid fa-plus me-1"></i> Créer
@@ -36,7 +33,6 @@
           <thead>
             <tr>
               <th>Nom</th>
-              <th>Code</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
@@ -44,7 +40,6 @@
           <tbody v-if="items.length">
             <tr v-for="u in items" :key="u.id">
               <td>{{ u.name }}</td>
-              <td>{{ u.code || "-" }}</td>
               <td class="text-end">
                 <button class="btn btn-danger btn-sm" @click="remove(u)" :disabled="busyId === u.id">
                   <i class="fa-solid fa-trash me-1"></i> Supprimer

@@ -4,7 +4,7 @@
             <i class="fa-solid fa-circle-arrow-left primary_color"></i> Retour
         </a>
     </div>
-    <div class="container">
+    <div class="container pb-3">
         <div v-if="$route.query.message" class="alert alert-success mt-3">
             <i
                 class="fa-solid fa-check green mr-2"
@@ -12,7 +12,7 @@
             ></i>
             <span> {{ $route.query.message }} </span>
         </div>
-        <div class="p-4 border rounded bg-white mt-3">
+        <div class="p-4 border rounded shadow bg-white mt-3">
             <div class="row mb-2">
                 <h3 class="primary_color col-md-10 mb-0">
                     <span class="box_code AAV pl-2 pr-2">{{ aav.code }}</span>
