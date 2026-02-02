@@ -18,6 +18,7 @@ class AcquisApprentissageTerminaux extends Model
         'name',
         'code',
         'university_id',
+        'level_contribution',
 
     ];
 

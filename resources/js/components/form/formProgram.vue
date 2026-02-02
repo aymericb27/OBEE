@@ -24,7 +24,10 @@
                         class="form-control m-auto"
                         required
                     >
+                        <option :value="2">2 semestres</option>
+                        <option :value="4">4 semestres</option>
                         <option :value="6">6 semestres</option>
+                        <option :value="8">8 semestres</option>
                         <option :value="10">10 semestres</option>
                     </select>
                 </div>

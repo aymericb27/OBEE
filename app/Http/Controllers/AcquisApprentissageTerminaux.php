@@ -7,14 +7,18 @@ use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\AcquisApprentissageVise;
 use App\Models\ElementConstitutif;
 use App\Models\UniteEnseignement;
+use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AcquisApprentissageTerminaux extends Controller
 {
+    public function __construct(private CodeGeneratorService $codeGen) {}
+
     public function get()
     {
-        $result = AAT::select('id', 'code', 'name', 'description')
+        $result = AAT::select('id', 'code', 'name', 'description','level_contribution')
             ->get();
         return $result;
     }
@@ -105,6 +109,7 @@ class AcquisApprentissageTerminaux extends Controller
             'id' => ['required', 'integer', 'exists:acquis_apprentissage_terminaux,id'],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:2024',
+            'level_contribution' => 'required|integer|min:3|max:10',
         ]);
 
         /*
@@ -122,7 +127,7 @@ class AcquisApprentissageTerminaux extends Controller
         $aat->update([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'university_id' => Auth::user()->university_id,
+            'level_contribution' => $validated['level_contribution'],
         ]);
 
         return response()->json([
@@ -135,7 +140,7 @@ class AcquisApprentissageTerminaux extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
-        $response = AAT::select('code', 'id', 'name', 'description')
+        $response = AAT::select('code', 'id', 'name', 'description', 'level_contribution')
             ->where('acquis_apprentissage_terminaux.id', $validated['id'])
             ->first();
 
@@ -169,28 +174,18 @@ class AcquisApprentissageTerminaux extends Controller
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string|max:2024',
+            'level_contribution' => 'required|integer|min:3|max:10',
         ]);
         // ----- Génération du code AATxxx -----
-        // Récupère le dernier code existant
-        $lastAAT = AAT::where('code', 'LIKE', 'AAT%')
-            ->orderBy('code', 'desc')
-            ->first();
 
-        if ($lastAAT) {
-            // extrait le numéro : PRO012 → 12
-            $lastNumber = intval(substr($lastAAT->code, 3));
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1; // premier code
-        }
-
-        // format UE001 / UE024 / UE300…
-        $newCode = 'AAT' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
 
         // Ajout du code au tableau validé
-        $validated['code'] = $newCode;
+        // ✅ si vide => générer
+        if ($validated['code'] === '') {
+            $validated['code'] = $this->codeGen->nextAAT();
+        }
         $validated['university_id'] = Auth::user()->university_id;
-
+        Log::debug($validated);
         $aav = AAT::create($validated);
 
         return response()->json([

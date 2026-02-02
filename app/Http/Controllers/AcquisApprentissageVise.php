@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\AcquisApprentissageTerminaux as AAT;
 use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\UniteEnseignement as UE;
+use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AcquisApprentissageVise extends Controller
 {
+    public function __construct(private CodeGeneratorService $codeGen) {}
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -18,7 +21,7 @@ class AcquisApprentissageVise extends Controller
 
             'aat' => 'nullable|array',
             'aat.*.id' => 'nullable|integer|exists:acquis_apprentissage_terminaux,id',
-            'aat.*.contribution' => 'nullable|integer|min:1|max:3',
+            'aat.*.contribution' => 'nullable|integer|min:1|max:10',
         ]);
 
         /*
@@ -26,16 +29,7 @@ class AcquisApprentissageVise extends Controller
      | Génération du code AAVxxx
      |--------------------------------------------------------------------------
      */
-        $lastAAV = AAV::where('code', 'LIKE', 'AAV%')
-            ->orderBy('code', 'desc')
-            ->first();
-
-        $newNumber = $lastAAV
-            ? intval(substr($lastAAV->code, 3)) + 1
-            : 1;
-
-        $newCode = 'AAV' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-
+        $validated['code'] = $this->codeGen->nextAAV();
         /*
      |--------------------------------------------------------------------------
      | Création de l’AAV
@@ -44,7 +38,7 @@ class AcquisApprentissageVise extends Controller
         $aav = AAV::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'code' => $newCode,
+            'code' => $validated['code'],
             "university_id" => Auth::user()->university_id,
         ]);
 
@@ -99,7 +93,7 @@ class AcquisApprentissageVise extends Controller
 
             'aats' => 'nullable|array',
             'aats.*.id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
-            'aats.*.contribution' => 'required|integer|min:1|max:3',
+            'aats.*.contribution' => 'required|integer|min:1|max:10',
         ]);
 
         /*
@@ -203,7 +197,8 @@ class AcquisApprentissageVise extends Controller
             $query->select(
                 'acquis_apprentissage_terminaux.id',
                 'acquis_apprentissage_terminaux.code',
-                'acquis_apprentissage_terminaux.name'
+                'acquis_apprentissage_terminaux.name',
+                'acquis_apprentissage_terminaux.level_contribution',
             );
         }])->findOrFail($validated['id']);
 
@@ -213,6 +208,7 @@ class AcquisApprentissageVise extends Controller
                 'code' => $aat->code,
                 'name' => $aat->name,
                 'contribution' => $aat->pivot->contribution,
+                'level_contribution' => $aat->level_contribution,
             ];
         });
 

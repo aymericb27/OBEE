@@ -1,9 +1,21 @@
 <template>
     <div class="m-3 border p-4 bg-white rounded">
-        <h5 class="d-inline-block">Niveau de contribution :</h5>
-        <span><span class="strong_mapping ml-2 mr-1">3</span>forte </span>
-        <span><span class="medium_mapping ml-2 mr-1">2</span>moyenne </span>
-        <span><span class="weak_mapping ml-2 mr-1">1</span>faible </span>
+        <BaseLoader v-if="isLoadingTree" text="Chargement..." size="md" />
+        <div v-else>
+            <h5 class="d-inline-block">Niveau de contribution :</h5>
+            <span
+                ><span class="strong_mapping ml-2 mr-1" :class="{strong_ten_mapping : aat.level_contribution === 10}">{{
+                    aat.level_contribution
+                }}</span
+                >forte
+            </span>
+            <span
+                ><span class="medium_mapping ml-2 mr-1">
+                    {{ Math.ceil(aat.level_contribution / 2) }}</span
+                >moyenne
+            </span>
+            <span><span class="weak_mapping ml-2 mr-1">1</span>faible </span>
+        </div>
     </div>
     <div class="row mr-0">
         <div class="col-md-3 pr-0">
@@ -144,14 +156,12 @@
                                     </h5>
                                     <div class="col-md-1">
                                         <span
-                                            :class="{
-                                                strong_mapping:
-                                                    aav.contribution === 3,
-                                                medium_mapping:
-                                                    aav.contribution === 2,
-                                                weak_mapping:
-                                                    aav.contribution === 1,
-                                            }"
+                                            :class="
+                                                contributionClass(
+                                                    aav.contribution,
+                                                    aat.level_contribution,
+                                                )
+                                            "
                                             class="ml-2 mr-1"
                                             >{{ aav.contribution }}</span
                                         >
@@ -180,14 +190,12 @@
                                         {{ child.name }}
                                     </h5>
                                     <span
-                                        :class="{
-                                            strong_mapping:
-                                                child.contribution === 3,
-                                            medium_mapping:
-                                                child.contribution === 2,
-                                            weak_mapping:
-                                                child.contribution === 1,
-                                        }"
+                                        :class="
+                                            contributionClass(
+                                                child.contribution,
+                                                aat.level_contribution,
+                                            )
+                                        "
                                         class="float-right ml-2 mr-1"
                                         >{{ child.contribution }}</span
                                     >
@@ -218,11 +226,12 @@ export default {
     data() {
         return {
             aats: [],
-			isLoadingTree: true,
+            isLoadingTree: true,
             isLoadingAAT: true,
             selectedAATId: "",
             selectedList: "UE",
             aat: {
+				level_contribution: 3,
                 ues: [],
                 aavs: [],
             },
@@ -230,18 +239,26 @@ export default {
     },
 
     methods: {
+        contributionClass(value, max) {
+            const oneThird = Math.ceil(max / 3);
+            const twoThirds = Math.ceil((max * 2) / 3);
+			if(value == 10) return "strong_mapping strong_ten_mapping";
+            if (value > twoThirds) return "strong_mapping";
+            if (value > oneThird) return "medium_mapping";
+            return "weak_mapping";
+        },
         selectAAT(id) {
             this.selectedAATId = id;
             this.loadAATTree(id);
         },
         async loadAATTree(id) {
-			this.isLoadingTree = false;
+            this.isLoadingTree = false;
             const responseAAT = await axios.get("aat/get/tree", {
                 params: { id },
             });
 
             this.aat = responseAAT.data;
-			this.isLoadingTree = false;
+            this.isLoadingTree = false;
         },
         async loadAAT() {
             const responseAAT = await axios.get("aat/get");

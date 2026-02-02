@@ -40,41 +40,88 @@ class ImportController extends Controller
 
         switch ($config['importMode']) {
 
+
             case "list":
                 $service = new GenericListImportService();
                 $rows = $service->extract($file, $config);
+
                 $stored = [];
+                $errors = [];
 
-                foreach ($rows as $data) {
-                    switch ($config['type']) {
+                foreach ($rows as $index => $data) {
+                    try {
+                        switch ($config['type']) {
+                            case "AAT":
+                                $payload = [
+                                    'type' => 'AAT',
+                                    'main' => [
+                                        'code' => $data['code'] ?? null,
+                                        'name' => $data['name'] ?? null,
+                                        'description' => $data['description'] ?? null,
+                                    ],
+                                    'links' => [],
+                                ];
+                                $stored[] = $this->storeAAT($payload);
+                                break;
 
-                        case "AAT":
-                            $stored[] = AAT::updateOrCreate(
-                                ['code' => $data['code']],
-                                ['name' => $data['name'] ?? null]
-                            );
-                            break;
+                            case "UE":
+                                $payload = [
+                                    'type' => 'UE',
+                                    'main' => [
+                                        'code' => $data['code'] ?? null,
+                                        'name' => $data['name'] ?? null,
+                                        'description' => $data['description'] ?? null,
+                                        'ects' => isset($data['ects']) ? (int) $data['ects'] : null,
+                                    ],
+                                    'links' => [],
+                                ];
+                                $stored[] = $this->storeUE($payload);
+                                break;
 
-                        case "AAV":
-                            $stored[] = AcquisApprentissageVise::updateOrCreate(
-                                ['code' => $data['code']],
-                                ['name' => $data['name'] ?? null]
-                            );
-                            break;
+                            default:
+                                // on force une validation-style error
+                                throw ValidationException::withMessages([
+                                    'type' => ["Type list non supporté: " . ($config['type'] ?? 'null')]
+                                ]);
+                        }
+                    } catch (ValidationException $e) {
+                        $errors[] = [
+                            'rowIndex' => $index,
+                            'row' => $data,
+                            'type' => 'validation',
+                            'errors' => $e->errors(), // ✅ détails par champ
+                        ];
+                    } catch (QueryException $e) {
+                        // ✅ utile si tu as une contrainte unique, duplicate key, etc.
+                        $errors[] = [
+                            'rowIndex' => $index,
+                            'row' => $data,
+                            'type' => 'database',
+                            'message' => $e->getMessage(),
+                            'sqlState' => $e->errorInfo[0] ?? null,
+                        ];
+                    } catch (\Throwable $e) {
+                        $errors[] = [
+                            'rowIndex' => $index,
+                            'row' => $data,
+                            'type' => 'unknown',
+                            'message' => $e->getMessage(),
+                        ];
                     }
                 }
+
                 return response()->json([
-                    'status' => 'ok',
-                    'mode'   => "list",
+                    'status' => empty($errors) ? 'ok' : (empty($stored) ? 'error' : 'partial'),
+                    'mode'   => 'list',
                     'type'   => $config['type'] ?? null,
                     'count'  => count($rows),
-                    'data'   => $rows,
-                ]);
-
+                    'stored' => $stored,
+                    'excelRow' => $data['__row'] ?? null,  // ✅
+                    'errors' => $errors,
+                ], empty($errors) ? 200 : 207); // ✅ 207 Multi-Status si partiel
             case "single":
                 $service = new GenericSingleImportService();
                 $data = $service->extract($file, $config);
-                Log::debug($data);
                 switch ($config['type']) {
                     case 'UE':
                         $stored = $this->storeUE($data);
@@ -184,7 +231,7 @@ class ImportController extends Controller
 
             'main' => 'required|array',
             'main.code'        => 'nullable|string|max:50',
-            'main.name'        => 'required|string|max:255',
+            'main.name'        => 'required|string|max:500',
             'main.description' => 'nullable|string',
             'main.ects'        => 'required|integer|min:1|max:120',
 
@@ -192,22 +239,22 @@ class ImportController extends Controller
 
             'links.aats' => 'nullable|array',
             'links.aats.*.code' => 'nullable|string|max:50',
-            'links.aats.*.libelle' => 'nullable|string|max:255',
+            'links.aats.*.libelle' => 'nullable|string|max:500',
             'links.aats.*.contribution' => 'nullable|integer|in:1,2,3',
 
             'links.aavs' => 'nullable|array',
             'links.aavs.*.code' => 'nullable|string|max:50',
-            'links.aavs.*.libelle' => 'nullable|string|max:255',
+            'links.aavs.*.libelle' => 'nullable|string|max:500',
             'links.aavs.*.AATCode' => 'nullable|string|max:50',
             'links.aavs.*.contribution' => 'nullable|integer|in:1,2,3',
 
             'links.prerequis' => 'nullable|array',
             'links.prerequis.*.code' => 'nullable|string|max:50',
-            'links.prerequis.*.libelle' => 'nullable|string|max:255',
+            'links.prerequis.*.libelle' => 'nullable|string|max:500',
 
             'links.programmes' => 'nullable|array',
             'links.programmes.*.code' => 'nullable|string|max:50',
-            'links.programmes.*.libelle' => 'nullable|string|max:255',
+            'links.programmes.*.libelle' => 'nullable|string|max:500',
             'links.programmes.*.semestre' => 'nullable|integer|min:1',
         ], $messages, $attributes);
 
@@ -458,7 +505,7 @@ class ImportController extends Controller
 
             'main' => 'required|array',
             'main.code' => 'nullable|string|max:50',
-            'main.name' => 'required|string|max:255',
+            'main.name' => 'required|string|max:500',
             'main.description' => 'nullable|string',
 
             'links' => 'nullable|array',
@@ -466,11 +513,11 @@ class ImportController extends Controller
             // liens possibles depuis GenericSingleImportService
             'links.ues' => 'nullable|array',
             'links.ues.*.code' => 'nullable|string|max:50',
-            'links.ues.*.libelle' => 'nullable|string|max:255',
+            'links.ues.*.libelle' => 'nullable|string|max:500',
 
             'links.aavs' => 'nullable|array',
             'links.aavs.*.code' => 'nullable|string|max:50',
-            'links.aavs.*.libelle' => 'nullable|string|max:255',
+            'links.aavs.*.libelle' => 'nullable|string|max:500',
         ], $messages, $attributes);
 
         if ($validator->fails()) {
@@ -588,7 +635,7 @@ class ImportController extends Controller
                             'university_id' => $uid, // si pivot a ce champ
                         ]
                     ]);
-                } 
+                }
             }
         }
 

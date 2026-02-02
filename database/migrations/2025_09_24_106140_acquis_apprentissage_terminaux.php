@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->foreignId("university_id")->constrained('universities');
             $table->unique(['university_id', 'code'], 'aat_university_code_unique');
-
+            $table->integer('level_contribution')->default(3);
             $table->timestamps();
         });
     }

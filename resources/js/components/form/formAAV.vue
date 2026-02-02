@@ -73,9 +73,13 @@
                             class="form form-control"
                             v-model="aat.contribution"
                         >
-                            <option value="1" selected>faible</option>
-                            <option value="2">modéré</option>
-                            <option value="3">forte</option>
+                            <option
+                                v-for="level in aat.level_contribution"
+                                :key="level"
+                                :value="level"
+                            >
+                                {{ level }}
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -143,9 +147,7 @@ export default {
             this.form.aats.push(...itemsWithContribution);
         },
         removeAAT(id) {
-            this.form.aats = this.form.aats.filter(
-                (a) => a.id !== id
-            );
+            this.form.aats = this.form.aats.filter((a) => a.id !== id);
         },
         openModalTerminal() {
             this.modalTarget = "aat";

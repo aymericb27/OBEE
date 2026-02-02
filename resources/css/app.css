@@ -173,6 +173,10 @@ textarea {
     background-color: #e0ffe7;
 }
 
+.strong_ten_mapping {
+    padding: 6px 8px;
+}
+
 .medium_mapping {
     color: orange;
     border: 2px solid orange;

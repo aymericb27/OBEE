@@ -10,7 +10,6 @@
             <div v-if="successMessage" class="alert alert-success">
                 {{ successMessage }}
             </div>
-
             <!-- SECTION : Choix du type d'import -->
             <div class="row">
                 <div class="mb-4 col-md-6">
@@ -147,7 +146,7 @@
                     <div class="col-4">
                         <input
                             placeholder="ex: A1, C2, D3..."
-                            v-model="config.columns[field.key]"
+                            v-model="config.columns[config.type][field.key]"
                             class="form-control w-50"
                         />
                     </div>
@@ -315,7 +314,18 @@ export default {
             config: {
                 type: "UE",
                 importMode: "list",
-                columns: {},
+                columns: {
+                    UE: {
+                        code: "",
+                        name: "",
+                        description: "",
+                        ects: "",
+                    },
+                    AAT: {
+                        code: "",
+                        name: "",
+                    },
+                },
 
                 cells: {
                     UE: {
@@ -450,7 +460,7 @@ export default {
                     { key: "code", label: "Sigle" },
                     { key: "name", label: "Libellé", isMandatory: true },
                     { key: "description", label: "Description" },
-                    { key: "ects", label: "ECTS" },
+                    { key: "ects", label: "ECTS", isMandatory: true },
                 ];
             }
             if (this.config.type === "AAT")
@@ -477,33 +487,6 @@ export default {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
             },
         },
-
-        /*         "config.type": {
-            handler(newType) {
-                if (this.isHydrating) return; // ✅ ne reset pas au chargement
-
-                const defaults = {
-                    prerequis: { code: "", libelle: "" },
-                    aav: { code: "", libelle: "" },
-                    aat: { code: "", libelle: "" },
-                    ue: { code: "", libelle: "" },
-                };
-
-                const map = {
-                    UE: "ue",
-                    AAT: "aat",
-                    AAV: "aav",
-                    PRE: "prerequis",
-                };
-                for (const key of Object.keys(defaults)) {
-                    this.config[key] = { ...defaults[key] };
-                }
-
-                // reset des mappings qui dépendent du type
-                this.config.columns = {};
-                this.config.cells = {};
-            },
-        },  */
     },
 
     mounted() {
@@ -680,6 +663,41 @@ export default {
             }
             return letter;
         },
+        formatImportErrors(payload) {
+            const out = [];
+
+            // errors: [ {rowIndex, row, type, errors|message }, ... ]
+            const list = payload?.errors;
+            if (!Array.isArray(list)) return out;
+
+            for (const e of list) {
+                const line =
+                    e.excelRow ?? e.row?.__row ?? (e.rowIndex ?? 0) + 1;
+
+                // ValidationException => e.errors = { "main.name": ["..."], ... }
+                if (
+                    e.type === "validation" &&
+                    e.errors &&
+                    typeof e.errors === "object"
+                ) {
+                    const msgs = Object.values(e.errors).flat();
+                    for (const msg of msgs) {
+                        out.push(`Ligne ${line} : ${msg}`);
+                    }
+                    continue;
+                }
+
+                // DB / unknown
+                if (e.message) {
+                    out.push(`Ligne ${line} : ${e.message}`);
+                    continue;
+                }
+
+                out.push(`Ligne ${line} : erreur inconnue`);
+            }
+
+            return out;
+        },
 
         async sendImport() {
             this.errors = [];
@@ -689,19 +707,24 @@ export default {
             const form = new FormData();
             form.append("file", this.excelFile);
             form.append("config", JSON.stringify(this.config));
-
             try {
                 const res = await axios.post("/import/generic", form);
 
-                // Désactive le bouton
                 this.isLoading = false;
 
-                // Message succès
-                this.successMessage = "Import réussi !";
+                // ✅ si le backend renvoie errors même en 200/207
+                const apiErrors = this.formatImportErrors(res.data);
 
-                // Scroll tout en haut
+                if (apiErrors.length) {
+                    // on garde ta UI existante : on remplit errors[]
+                    this.errors = apiErrors;
+                    this.successMessage = "Import terminé avec des erreurs.";
+                } else {
+                    this.errors = [];
+                    this.successMessage = "Import réussi !";
+                }
+
                 window.scrollTo({ top: 0, behavior: "smooth" });
-
                 console.log("Résultat import :", res.data);
             } catch (err) {
                 window.scrollTo({ top: 0, behavior: "smooth" });
@@ -709,18 +732,21 @@ export default {
                 this.isLoading = false;
 
                 const data = err.response?.data;
-
-                // Reset
                 this.errors = [];
 
-                // ✅ Cas Laravel ValidationException
+                // ✅ si backend a renvoyé le format list errors en erreur HTTP (rare mais possible)
+                const apiErrors = this.formatImportErrors(data);
+                if (apiErrors.length) {
+                    this.errors = apiErrors;
+                    return;
+                }
+
+                // ✅ Cas Laravel ValidationException classique
                 if (data?.errors && typeof data.errors === "object") {
-                    // data.errors = { field: [msg1, msg2], other: [msg] }
                     this.errors = Object.values(data.errors).flat();
                     return;
                 }
 
-                // ✅ Fallback : message simple
                 this.errors.push(data?.message || "Erreur inconnue.");
             }
         },

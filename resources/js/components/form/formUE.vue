@@ -283,7 +283,6 @@
             </form>
         </div>
     </div>
-    <!-- MODAL — Création AAV -->
     <!-- MODAL CRÉATION AAV -->
     <div
         v-if="showModalCreateAAV"
@@ -378,15 +377,18 @@
                             <div class="flex-grow-1">
                                 {{ aat.name }}
                             </div>
-
                             <!-- CONTRIBUTION -->
                             <select
                                 class="form-control w-25 ms-3"
                                 v-model="aat.contribution"
                             >
-                                <option value="1">Faible</option>
-                                <option value="2">Modéré</option>
-                                <option value="3">Forte</option>
+                                <option
+                                    v-for="level in aat.level_contribution"
+                                    :key="level"
+                                    :value="level"
+                                >
+                                    {{ level }}
+                                </option>
                             </select>
                         </div>
                     </div>
@@ -538,6 +540,7 @@ export default {
                 id: aat.id,
                 name: aat.name,
                 contribution: 1, // valeur par défaut
+				level_contribution: aat.level_contribution,
             });
 
             this.aavForm.selectedAATId = "";
@@ -564,12 +567,14 @@ export default {
 
         resetForm() {
             this.aavForm = {
-                code: "",
+                selectedAATId: "",
                 name: "",
                 description: "",
-                fk_AAT: "",
+                aatSelected: [],
+                contribution: "",
             };
         },
+
         openModalTerminal() {
             this.modalTarget = "aat";
             this.modalRoute = "/aat/get";

@@ -5,32 +5,54 @@
         </a>
     </div>
     <div class="container">
-        <form
-            @submit.prevent="saveProgram"
-            class="text-center border p-4 rounded bg-white"
-        >
-            <h3 class="primary_color mb-4">
+        <form @submit.prevent="saveProgram" class="border p-4 rounded bg-white">
+            <h3 class="primary_color mb-4 text-center">
                 {{ form.id ? "Modification" : "Création" }} d'un acquis
                 d'apprentissage terminal
             </h3>
             <div class="mb-3">
+                <h5 class="primary_color">
+                    Libellé
+                    <strong class="text-danger">*</strong>
+                </h5>
                 <input
-                    placeholder="Libellé de l'acquis d'apprentissage terminal"
                     type="text"
                     v-model="form.name"
                     class="form-control"
                     required
                 />
             </div>
-            <div class="form-group mb-3 mb-3">
+            <div class="form-group mb-3">
+                <h5 class="primary_color">
+                    description
+                </h5>
                 <quill-editor
                     v-model:content="form.description"
-                    placeholder="description"
                     content-type="html"
                     theme="snow"
                     style="height: 175px"
                     required
                 ></quill-editor>
+            </div>
+            <div class="mb-3">
+                <h5 class="primary_color">
+                    Nombre de niveau de contribution
+                    <strong class="text-danger">*</strong>
+                </h5>
+                <select
+                    v-model="form.level_contribution"
+                    class="form-control w-50"
+                    required
+                >
+                    <option :value="3">3</option>
+                    <option :value="4">4</option>
+                    <option :value="5">5</option>
+                    <option :value="6">6</option>
+                    <option :value="7">7</option>
+                    <option :value="8">8</option>
+                    <option :value="9">9</option>
+                    <option :value="10">10</option>
+                </select>
             </div>
             <button class="btn btn-primary">
                 {{ form.id ? "Modifier l'" : "Créer l'" }} acquis
@@ -55,6 +77,7 @@ export default {
                 id: null,
                 name: "",
                 description: "",
+                level_contribution: 3,
             },
         };
     },
@@ -74,7 +97,7 @@ export default {
                     id: this.id,
                 },
             });
-			this.form = response.data
+            this.form = response.data;
         },
         async saveProgram() {
             const url = this.form.id ? "/aat/update" : "/aat/store";
