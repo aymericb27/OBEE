@@ -42,10 +42,8 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/ue/aat/get', [UniteEnseignement::class, 'getAATs'])->name('ue.get.aat');
     Route::get('/ue/pro/get', [UniteEnseignement::class, 'getPro'])->name('ue.pro.get');
     Route::get('/ue/parent/get', [UniteEnseignement::class, 'getParent'])->name('ue.get.parent');
-
     Route::get('/ue/aavvise/get', [UniteEnseignement::class, 'getAAVvise'])->name('ue.get.aavvise');
     Route::get('/ue/aavvise/get/onlyParent', [UniteEnseignement::class, 'getAAVviseOnlyParent'])->name('ue.get.aavvise.onlyParent');
-
     Route::get('/ue/aavprerequis/get', [UniteEnseignement::class, 'getAAVprerequis'])->name('ue.get.aavprerequis');
     Route::put('/ue/update', [UniteEnseignement::class, 'update'])->name('ue.update');
     Route::post('/ue/store', [UniteEnseignement::class, 'store'])->name('ue.store');
@@ -54,6 +52,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
 
     // Programme
     Route::get('/pro/get', [ProgrammeController::class, 'get'])->name('pro.get');
+    Route::get('/pro/pre/get', [ProgrammeController::class, 'getPrerequis'])->name('pro.get');
     Route::delete('/pro/delete', [ProgrammeController::class, 'delete'])->name('pro.delete');
     Route::get('/pro/get/detailed', [ProgrammeController::class, 'getDetailed'])->name('pro.get.detailed');
     Route::get('/programme/get/tree', [ProgrammeController::class, 'getTree'])->name('pro.get.tree');
@@ -75,12 +74,14 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/aav/get/detailed', [AcquisApprentissageVise::class, 'getDetailed']);
     Route::get('/aav/aats/get', [AcquisApprentissageVise::class, 'getAATs']);
     Route::get('/aav/get', [AcquisApprentissageVise::class, 'get']);
+    Route::get('/aav/pro/prerequis/get', [AcquisApprentissageVise::class, 'getAAVPROPrerequis']);
     Route::delete('/aav/delete', [AcquisApprentissageVise::class, 'delete']);
     Route::post('/aav/store', [AcquisApprentissageVise::class, 'store']);
     Route::post('/aav/update', [AcquisApprentissageVise::class, 'update']);
     Route::get('/aav/prerequis/get', [AcquisApprentissageVise::class, 'getOnlyPrerequis']);
     Route::get('/aav/UEvise/get', [AcquisApprentissageVise::class, 'getUEvise']);
     Route::get('/aav/UEPrerequis/get', [AcquisApprentissageVise::class, 'getUEprerequis']);
+    Route::get('/aav/PROPrerequis/get', [AcquisApprentissageVise::class, 'getPROPrerequis']); // récupère les programmes dont l'aav est le prérequis
 
     // Errors
     Route::get('/Error/UE', [ErrorController::class, 'getErrorUE']);

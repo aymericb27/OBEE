@@ -29,4 +29,14 @@ class Programme extends Model
         )->withPivot('fk_semester', 'university_id')
             ->withTimestamps();
     }
+
+    public function prerequis()
+    {
+        return $this->belongsToMany(
+            AcquisApprentissageVise::class,
+            'aavpro_prerequis',
+            'fk_programme',
+            'fk_acquis_apprentissage_prerequis'
+        );
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AcquisApprentissageTerminaux as AAT;
 use App\Models\AcquisApprentissageVise as AAV;
+use App\Models\Programme;
 use App\Models\UniteEnseignement as UE;
 use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
@@ -81,6 +82,26 @@ class AcquisApprentissageVise extends Controller
             'success' => true,
             'message' => "Acquis d'apprentissage visé supprimé avec succès.",
         ]);
+    }
+
+    public function getAAVPROPrerequis(Request $request)
+    {
+        $aav = AAV::select('acquis_apprentissage_vise.id', 'code', 'name')->join('aavpro_prerequis', 'fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise.id')->get();
+
+        return $aav;
+    }
+
+    public function getPROPrerequis(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+        $response = Programme::select('code', 'programme.id', 'name')
+            ->join('aavpro_prerequis', 'fk_programme', '=', 'programme.id')
+            ->where('fk_acquis_apprentissage_prerequis', $validated['id'])
+            ->get();
+
+        return $response;
     }
 
     public function update(Request $request)

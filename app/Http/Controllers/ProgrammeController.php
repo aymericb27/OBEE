@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcquisApprentissageVise;
 use App\Models\Pro_semester;
 use App\Models\Programme;
 use App\Models\UniteEnseignement;
@@ -77,20 +78,31 @@ class ProgrammeController extends Controller
         ]);
     }
 
+    public function getPrerequis(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+        $ues = AcquisApprentissageVise::select('acquis_apprentissage_vise.id','code','name')->join('aavpro_prerequis', 'fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise.id')->where('fk_programme', $validated['id'])->get();
+        return $ues;
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'ects' => 'required|integer|min:0',
-            'semestre' => 'required|integer|in:6,10',
+            'semestre' => 'required|integer|in:2,10',
             'semestresCredits' => 'required|array',
             'semestresCredits.*' => 'required|integer|min:0',
+            'aavprerequis' => ['array'],
+            'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'code' => 'nullable|string|max:50',
         ]);
 
         // ✅ si vide => générer
         if (empty($validated['code'])) {
-            $validated['code'] = $this->codeGen->nextUE(); // (si tu as un nextProgramme(), mets-le ici)
+            $validated['code'] = $this->codeGen->nextProgramme(); // (si tu as un nextProgramme(), mets-le ici)
         }
 
         $validated['university_id'] = Auth::user()->university_id;
@@ -119,6 +131,13 @@ class ProgrammeController extends Controller
 
             DB::table('pro_semester')->insert($rows);
 
+            if (isset($validated['aavprerequis'])) {
+                $pivotData = [];
+                foreach ($validated['aavprerequis'] as $item) {
+                    $pivotData[$item['id']] = ['university_id' => Auth::user()->university_id];
+                }
+                $programme->prerequis()->sync($pivotData);
+            }
             return response()->json([
                 'success' => true,
                 'message' => 'Le programme a été créé correctement',
@@ -177,6 +196,8 @@ class ProgrammeController extends Controller
             'semestre' => 'required|integer|in:6,10',
             'semestresCredits' => 'required|array',
             'semestresCredits.*' => 'required|integer|min:0',
+            'aavprerequis' => ['array'],
+            'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
         ]);
 
         $programme = Programme::findOrFail($validated['id']);
@@ -210,6 +231,13 @@ class ProgrammeController extends Controller
 
             DB::table('pro_semester')->insert($rows);
 
+            if (isset($validated['aavprerequis'])) {
+                $pivotData = [];
+                foreach ($validated['aavprerequis'] as $item) {
+                    $pivotData[$item['id']] = ['university_id' => Auth::user()->university_id];
+                }
+                $programme->prerequis()->sync($pivotData);
+            }
             return response()->json([
                 'success' => true,
                 'message' => 'Programme modifié avec succès',

@@ -4,7 +4,7 @@
             <i class="fa-solid fa-circle-arrow-left primary_color"></i> Retour
         </a>
     </div>
-    <div class="container">
+    <div class="container pb-3">
         <div v-if="$route.query.message" class="alert alert-success mt-3">
             <i
                 class="fa-solid fa-check green mr-2"
@@ -56,6 +56,23 @@
                     :paramsRouteGET="{ id: pro.id }"
                     linkDetailed="ue-detail"
                     typeList="UE"
+                    :listColonne="['code', 'name']"
+                />
+            </div>
+            <div class="listComponent mb-4">
+                <div class="mb-2">
+                    <h5 class="d-inline-block primary_color">
+                        <i class="fa-solid fa-key"></i>
+                        Liste des prérequis
+                    </h5>
+                </div>
+                <list
+                    :isBorder="true"
+                    v-if="pro.id"
+                    routeGET="/pro/pre/get"
+                    :paramsRouteGET="{ id: pro.id }"
+                    linkDetailed="aav-detail"
+                    typeList="AAV"
                     :listColonne="['code', 'name']"
                 />
             </div>

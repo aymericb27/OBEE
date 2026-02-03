@@ -694,7 +694,6 @@ export default {
         },
         async loadAAT() {
             const response = await axios.get("/aat/get");
-            console.log(response.data);
             this.listAAT = response.data;
         },
         async submitAAV() {

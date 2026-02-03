@@ -50,6 +50,7 @@ textarea {
 .box_code {
     border-right: 1px solid;
     padding-right: 6px;
+    text-decoration: none !important;
 }
 .UE {
     color: #92429d !important;
@@ -61,10 +62,10 @@ textarea {
 }
 
 .AAV {
-    color: #156e1c !important;
+    color: #eba714 !important;
 }
 .AAV:hover {
-    text-decoration-color: #156e1c !important;
+    text-decoration-color: #eba714 !important;
     text-decoration: underline;
 }
 .PRO {
@@ -85,6 +86,13 @@ textarea {
     color: #eba714 !important;
 }
 .PRE:hover {
+    text-decoration-color: #eba714 !important;
+    text-decoration: underline;
+}
+.PREPRO {
+    color: #eba714 !important;
+}
+.PREPRO:hover {
     text-decoration-color: #eba714 !important;
     text-decoration: underline;
 }

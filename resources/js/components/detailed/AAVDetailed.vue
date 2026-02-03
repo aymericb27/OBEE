@@ -65,12 +65,12 @@
                     />
                 </div>
             </div>
-            <div class="listComponent mb-4">
+            <div class="listComponent mb-4" v-if="isPrerequisPro">
                 <div class="mb-2">
                     <h5 class="d-inline-block primary_color">
                         <i class="fa-solid fa-key"></i>
 
-                        prérequis pour les unités d'enseignement
+                        prérequis pour les programmes
                     </h5>
                 </div>
 
@@ -78,34 +78,57 @@
                     <list
                         :isBorder="true"
                         v-if="aav.id"
-                        routeGET="/aav/UEPrerequis/get"
+                        routeGET="/aav/PROPrerequis/get"
                         :paramsRouteGET="{ id: aav.id }"
-                        linkDetailed="ue-detail"
-                        typeList="UE"
+                        linkDetailed="pro-detail"
+                        typeList="PRO"
                         :listColonne="['code', 'name']"
                     />
                 </div>
             </div>
-            <div class="listComponent mb-4">
-                <div class="mb-2">
-                    <h5 class="d-inline-block primary_color">
-                        <i class="fa-brands fa-google-scholar"></i>
+            <div v-else>
+                <div class="listComponent mb-4">
+                    <div class="mb-2">
+                        <h5 class="d-inline-block primary_color">
+                            <i class="fa-solid fa-key"></i>
 
-                        acquis d'apprentissage visé pour les unités
-                        d'enseignements
-                    </h5>
+                            prérequis pour les unités d'enseignement
+                        </h5>
+                    </div>
+
+                    <div>
+                        <list
+                            :isBorder="true"
+                            v-if="aav.id"
+                            routeGET="/aav/UEPrerequis/get"
+                            :paramsRouteGET="{ id: aav.id }"
+                            linkDetailed="ue-detail"
+                            typeList="UE"
+                            :listColonne="['code', 'name']"
+                        />
+                    </div>
                 </div>
+                <div class="listComponent mb-4">
+                    <div class="mb-2">
+                        <h5 class="d-inline-block primary_color">
+                            <i class="fa-brands fa-google-scholar"></i>
 
-                <div>
-                    <list
-                        :isBorder="true"
-                        v-if="aav.id"
-                        routeGET="/aav/UEvise/get"
-                        :paramsRouteGET="{ id: aav.id }"
-                        linkDetailed="ue-detail"
-                        typeList="UE"
-                        :listColonne="['code', 'name']"
-                    />
+                            acquis d'apprentissage visé pour les unités
+                            d'enseignements
+                        </h5>
+                    </div>
+
+                    <div>
+                        <list
+                            :isBorder="true"
+                            v-if="aav.id"
+                            routeGET="/aav/UEvise/get"
+                            :paramsRouteGET="{ id: aav.id }"
+                            linkDetailed="ue-detail"
+                            typeList="UE"
+                            :listColonne="['code', 'name']"
+                        />
+                    </div>
                 </div>
             </div>
         </div>
@@ -139,7 +162,7 @@ export default {
     data() {
         return {
             openModalDelete: false,
-
+            isPrerequisPro: false,
             aav: {
                 name: "",
                 description: "",
@@ -168,6 +191,13 @@ export default {
                     },
                 });
                 this.aav = response.data;
+                const proPrerequis = await axios.get("/aav/PROPrerequis/get", {
+                    params: {
+                        id: this.id,
+                    },
+                });
+				console.log(proPrerequis);
+                this.isPrerequisPro = proPrerequis.data.length !== 0;
             } catch (error) {
                 console.log(error);
             }

@@ -91,7 +91,17 @@
                             style="list-style-type: none; cursor: pointer"
                             @click="selectProgram('PRE')"
                         >
-                            <h5 class="m-0">Prérequis</h5>
+                            <h5 class="m-0">Prérequis des unités d'enseignements</h5>
+                        </li>
+                        <li
+                            class="p-2 program-item"
+                            :class="{
+                                active: formFilter.displayElement === 'PREPRO',
+                            }"
+                            style="list-style-type: none; cursor: pointer"
+                            @click="selectProgram('PREPRO')"
+                        >
+                            <h5 class="m-0">Prérequis des programmes</h5>
                         </li>
                         <li
                             class="p-2 program-item"
@@ -105,65 +115,6 @@
                         </li>
                     </ul>
                 </div>
-
-                <!--                 <div>
-                    <label><h5>Pour le semestre</h5> </label>
-                    <select
-                        class="mr-2 form-control d-inline-block"
-                        v-model="formFilter.semestre"
-                    >
-                        <option value="" selected>
-                            -- Tout les semestres --
-                        </option>
-                        <option value="1">1er semestre</option>
-                        <option value="2">2ème semestre</option>
-                    </select>
-                </div>
-                <div v-if="formFilter.displayElement === 'UE'">
-                    <label><h5>Faisant partie du programme</h5> </label>
-
-                    <select
-                        class="mr-2 form-control d-inline-block"
-                        v-model="formFilter.program"
-                    >
-                        <option value="">-- Tous les programmes --</option>
-                        <option v-for="prog in this.progs" :value="prog.id">
-                            {{ prog.name }}
-                        </option>
-                    </select>
-                </div> -->
-                <!--                 <div class="col-md-12 mb-3">
-                    <div
-                        class="form-check d-inline-block align-middle mr-3 ml-3"
-                    >
-                        <input
-                            type="checkbox"
-                            id="filterError"
-                            class="form-check-input"
-                            v-model="formFilter.onlyErrors"
-                        />
-                        <label for="filterError" class="form-check-label">
-                            uniquement les éléments avec une erreur
-                        </label>
-                    </div>
-                </div> -->
-<!--                 <div class="text-right">
-                    <button
-                        type="button"
-                        @click="isModalExportVisible = true"
-                        class="align-bottom btn btn-lg btn-success"
-                    >
-                        exporter sous .csv
-                    </button> -->
-                    <!--                     <diV>
-                        <button
-                            type="submit"
-                            class="align-bottom btn btn-lg btn-primary"
-                        >
-                            rechercher
-                        </button>
-                    </div> -->
-       <!--          </div> -->
             </form>
         </div>
         <div class="col-md-9">
@@ -236,7 +187,10 @@ export default {
             } else if (element === "PRE") {
                 this.routeGET = "/aav/prerequis/get";
                 this.linkDetailed = "aav-detail";
-            } 
+            } else if (element === "PREPRO") {
+                this.routeGET = "/aav/pro/prerequis/get";
+                this.linkDetailed = "aav-detail";
+            }
             this.reloadKey++; // force la liste à se recharger
         },
         handleExportModal(value) {

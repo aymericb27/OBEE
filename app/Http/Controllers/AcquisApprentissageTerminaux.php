@@ -185,7 +185,8 @@ class AcquisApprentissageTerminaux extends Controller
             $validated['code'] = $this->codeGen->nextAAT();
         }
         $validated['university_id'] = Auth::user()->university_id;
-        Log::debug($validated);
+
+        
         $aav = AAT::create($validated);
 
         return response()->json([
