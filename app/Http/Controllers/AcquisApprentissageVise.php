@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AcquisApprentissageTerminaux as AAT;
 use App\Models\AcquisApprentissageVise as AAV;
+use App\Models\AcquisApprentissageVise as ModelsAcquisApprentissageVise;
 use App\Models\Programme;
 use App\Models\UniteEnseignement as UE;
 use App\Services\CodeGeneratorService;
@@ -86,7 +87,8 @@ class AcquisApprentissageVise extends Controller
 
     public function getAAVPROPrerequis(Request $request)
     {
-        $aav = AAV::select('acquis_apprentissage_vise.id', 'code', 'name')->join('aavpro_prerequis', 'fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise.id')->get();
+        $aav = AAV::select('acquis_apprentissage_vise.id', 'code', 'name')->join('aavpro_prerequis', 'fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise.id')->distinct()
+            ->get();
 
         return $aav;
     }
@@ -203,8 +205,9 @@ class AcquisApprentissageVise extends Controller
 
     public function getPrerequis()
     {
-        $response = AAV::join('aavue_prerequis', 'fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise.id')
-            ->get();
+        $response = AAV::prerequis();
+        //$response = AAV::innerJoin('aavue_prerequis', 'fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise.id')
+        //    ->get();
         return $response;
     }
 
@@ -251,8 +254,8 @@ class AcquisApprentissageVise extends Controller
             'acquis_apprentissage_vise.name'
         )
             ->join(
-                'aavue_vise',
-                'aavue_vise.fk_acquis_apprentissage_vise',
+                'aavue_prerequis',
+                'aavue_prerequis.fk_acquis_apprentissage_prerequis',
                 '=',
                 'acquis_apprentissage_vise.id'
             )
