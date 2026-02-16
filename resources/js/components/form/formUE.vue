@@ -54,7 +54,7 @@
                             <input
                                 type="text"
                                 class="form form-control"
-                                placeholder="intitulé"
+                                placeholder="intitulé (obligatoire)"
                                 v-model="ue.name"
                                 required
                             />
@@ -316,7 +316,9 @@
                         <span> {{ formAAvErrors }} </span>
                     </div>
                     <div class="form-group mb-3">
-                        <label>Libellé</label>
+                        <h6 class="primary_color"
+                            >Libellé <strong class="text-danger">*</strong>
+                        </h6>
                         <input
                             type="text"
                             class="form-control"
@@ -325,7 +327,7 @@
                         />
                     </div>
                     <div class="form-group mb-3">
-                        <label>Description</label>
+                        <h6 class="primary_color">Description</h6>
                         <textarea
                             class="form-control"
                             rows="3"
@@ -334,7 +336,7 @@
                     </div>
 
                     <div class="form-group mb-3">
-                        <label>Acquis d'apprentissage Terminal</label>
+                        <h6 class="primary_color">Acquis d'apprentissage Terminal</h6>
                         <select
                             class="form-control"
                             v-model="aavForm.selectedAATId"
@@ -540,7 +542,7 @@ export default {
                 id: aat.id,
                 name: aat.name,
                 contribution: 1, // valeur par défaut
-				level_contribution: aat.level_contribution,
+                level_contribution: aat.level_contribution,
             });
 
             this.aavForm.selectedAATId = "";

@@ -21,6 +21,9 @@
             <span class="badge bg-light text-dark ml-2 border">
                 {{ semester?.ects ?? "—" }} ECTS
             </span>
+            <span v-if="semester.ects !== semester.countECTS"
+                ><i style="color: orange;" class=" fa-solid fa-triangle-exclamation"></i
+            ></span>
             <button
                 @click="openModalUE('UE', null)"
                 class="btn btn-lg btn-primary ml-auto"
@@ -177,8 +180,8 @@ export default {
                     id: this.ueSelected.id,
                 },
             });
-			this.modalDelete = false;
-			this.$emit('deleteRefresh');
+            this.modalDelete = false;
+            this.$emit("deleteRefresh");
         },
         openModalDelete(UE) {
             this.modalDelete = true;

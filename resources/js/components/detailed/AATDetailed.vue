@@ -43,6 +43,7 @@
                 </span>
             </div>
             <div class="mb-4" v-html="aat.description"></div>
+			<div class="mb-4"><h5 class="d-inline-block primary_color">Contribution Maximum :</h5> <span class="strong_mapping">{{ aat.level_contribution }}</span></div>
             <div class="listComponent mb-4">
                 <div class="mb-2">
                     <h5 class="d-inline-block primary_color">
@@ -60,7 +61,7 @@
                         :paramsRouteGET="{ id: aat.id }"
                         linkDetailed="aav-detail"
                         typeList="AAV"
-                        :listColonne="['code', 'name']"
+                        :listColonne="['code', 'name','contribution']"
                     />
                 </div>
             </div>

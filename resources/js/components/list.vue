@@ -38,6 +38,12 @@
                     ECTS
                 </div>
                 <div
+                    class="col-md-1 p-2 pl-3"
+                    v-if="listColonne.includes('contribution')"
+                >
+                    contribution
+                </div>
+                <div
                     class="col-md-2 p-2"
                     v-if="listColonne.includes('element_constitutif_aav')"
                 >
@@ -111,6 +117,21 @@
                             {{ item.ects }}
                         </div>
 
+                        <div
+                            class="col-md-1 p-3 text-center"
+                            v-if="listColonne.includes('contribution')"
+                        >
+                            <span
+                                :class="
+                                    contributionClass(
+                                        item.contribution,
+                                        item.level_contribution,
+                                    )
+                                "
+                            >
+                                {{ item.contribution }}
+                            </span>
+                        </div>
                         <div
                             class="col-md-1 p-3"
                             v-if="
@@ -251,6 +272,14 @@ export default {
     },
 
     methods: {
+        contributionClass(value, max) {
+            const oneThird = Math.ceil(max / 3);
+            const twoThirds = Math.ceil((max * 2) / 3);
+            if (value == 10) return "strong_mapping strong_ten_mapping";
+            if (value > twoThirds) return "strong_mapping";
+            if (value > oneThird) return "medium_mapping";
+            return "weak_mapping";
+        },
         async loadItems() {
             this.isLoading = true;
 

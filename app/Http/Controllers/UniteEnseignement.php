@@ -41,10 +41,9 @@ class UniteEnseignement extends Controller
         ]);
 
         // ✅ si vide => générer
-        if ($validated['code'] === '') {
+        if (empty($validated['code'])) {
             $validated['code'] = $this->codeGen->nextUE();
         }
-
 
         try {
             $ue = UE::create([

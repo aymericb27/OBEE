@@ -18,7 +18,7 @@ class AcquisApprentissageTerminaux extends Controller
 
     public function get()
     {
-        $result = AAT::select('id', 'code', 'name', 'description','level_contribution')
+        $result = AAT::select('id', 'code', 'name', 'description', 'level_contribution')
             ->get();
         return $result;
     }
@@ -146,27 +146,35 @@ class AcquisApprentissageTerminaux extends Controller
 
         return $response;
     }
-
     public function getAAVs(Request $request)
     {
         $validated = $request->validate([
             'id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
         ]);
 
+        $aat = AAT::select('id', 'level_contribution')->findOrFail($validated['id']);
+
         $aavs = AAV::whereHas('aats', function ($q) use ($validated) {
             $q->where('acquis_apprentissage_terminaux.id', $validated['id']);
         })
+            ->with(['aats' => function ($q) use ($validated) {
+                $q->where('acquis_apprentissage_terminaux.id', $validated['id']);
+            }])
             ->select('id', 'code', 'name')
             ->get()
-            ->map(function ($aav) {
+            ->map(function ($aav) use ($aat) {
+                $aatPivot = $aav->aats->first()?->pivot;
+
                 return [
                     'id' => $aav->id,
                     'code' => $aav->code,
                     'name' => $aav->name,
-                    'contribution' => $aav->aats->first()->pivot->contribution ?? null
+                    'contribution' => $aatPivot?->contribution,
+                    'level_contribution' => $aat->level_contribution,
                 ];
             });
-        return $aavs;
+
+        return response()->json($aavs);
     }
 
     public function store(Request $request)
@@ -181,12 +189,12 @@ class AcquisApprentissageTerminaux extends Controller
 
         // Ajout du code au tableau validé
         // ✅ si vide => générer
-        if ($validated['code'] === '') {
+        if (empty($validated['code'])) {
             $validated['code'] = $this->codeGen->nextAAT();
         }
         $validated['university_id'] = Auth::user()->university_id;
 
-        
+
         $aav = AAT::create($validated);
 
         return response()->json([
