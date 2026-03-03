@@ -92,7 +92,7 @@ class ProgrammeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'ects' => 'required|integer|min:0',
-            'semestre' => 'required|integer|in:2,10',
+            'semestre' => 'required|integer|between:2,10',
             'semestresCredits' => 'required|array',
             'semestresCredits.*' => 'required|integer|min:0',
             'aavprerequis' => ['array'],
@@ -193,7 +193,7 @@ class ProgrammeController extends Controller
             'ects' => 'required|integer|min:0',
 
             // le front envoie ça
-            'semestre' => 'required|integer|in:6,10',
+            'semestre' => 'required|integer|between:2,10',
             'semestresCredits' => 'required|array',
             'semestresCredits.*' => 'required|integer|min:0',
             'aavprerequis' => ['array'],
