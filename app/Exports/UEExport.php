@@ -23,7 +23,7 @@ class UEExport
     public function download()
     {
         // 1. Charger ton fichier modèle
-        $template = storage_path('app/templates/model_import_ue.xlsx');
+        $template = resource_path('templates/model_import_ue.xlsx');
         $spreadsheet = IOFactory::load($template);
         $sheet = $spreadsheet->getActiveSheet();
 

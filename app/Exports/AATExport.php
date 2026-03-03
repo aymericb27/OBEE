@@ -20,7 +20,7 @@ class AATExport
     public function download()
     {
         // 1. Charger ton fichier modèle
-        $template = storage_path('app/templates/model_import_aat.xlsx');
+        $template = resource_path('templates/model_import_aat.xlsx');
         $spreadsheet = IOFactory::load($template);
         $sheet = $spreadsheet->getActiveSheet();
 
