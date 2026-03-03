@@ -8,12 +8,12 @@
 
             <nav class="admin-nav">
                 <router-link
-                    class="admin-link "
-                    :class="{ active: $route.name === 'admin-users' }"
-                    :to="{ name: 'admin-users' }"
+                    class="admin-link"
+                    :class="{ active: $route.name === 'admin-users-manage' }"
+                    :to="{ name: 'admin-users-manage' }"
                 >
-                    <i class="fa-solid fa-user-check me-2 mr-2 primary_color"></i>
-                    Valider les utilisateurs
+                    <i class="fa-solid fa-users me-2 mr-2 primary_color"></i>
+                    Gestion des utilisateurs
                 </router-link>
 
                 <router-link
@@ -22,7 +22,7 @@
                     :to="{ name: 'admin-universities' }"
                 >
                     <i class="fa-solid fa-building-columns me-2 mr-2 primary_color"></i>
-                    Universités
+                    Universites
                 </router-link>
             </nav>
         </aside>
@@ -36,7 +36,7 @@
 <style scoped>
 .admin-shell {
     display: flex;
-    min-height: calc(100vh - 70px); /* ajuste si ton header fait ~70px */
+    min-height: calc(100vh - 70px);
 }
 
 .admin-sidebar {

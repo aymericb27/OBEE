@@ -25,6 +25,7 @@ class User extends Authenticatable
         'is_approved',
         'approved_at',
         'university_id',
+        'role',
 
     ];
 
@@ -57,3 +58,4 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 }
+

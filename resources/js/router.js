@@ -16,21 +16,21 @@ import FormImport from "./components/form/formImport.vue";
 import FormAAT from "./components/form/formAAT.vue";
 import FormAAV from "./components/form/formAAV.vue";
 import AdminLayout from "./components/admin/adminLayout.vue";
-import AdminUsers from "./components/admin/adminUsers.vue";
+import AdminUsersManagement from "./components/admin/adminUsersManagement.vue";
 import AdminUniversities from "./components/admin/adminUniversities.vue";
+
 const routes = [
     {
         path: "/",
         name: "index",
         component: ListFramework,
     },
-
     {
         path: "/admin",
         component: AdminLayout,
         children: [
-            { path: "", redirect: { name: "admin-users" } },
-            { path: "users", name: "admin-users", component: AdminUsers },
+            { path: "", redirect: { name: "admin-users-manage" } },
+            { path: "users", name: "admin-users-manage", component: AdminUsersManagement },
             {
                 path: "universities",
                 name: "admin-universities",
@@ -38,7 +38,6 @@ const routes = [
             },
         ],
     },
-
     {
         path: "/tree",
         name: "tree",
@@ -58,7 +57,7 @@ const routes = [
         path: "/ue/:id",
         name: "ue-detail",
         component: UEDetailed,
-        props: true, // 👈 active la transmission des params comme props
+        props: true,
     },
     {
         path: "/aat/:id",
@@ -82,25 +81,25 @@ const routes = [
         path: "/modifyUE/:id",
         name: "modifyUE",
         component: FormUE,
-        props: true, // transmet automatiquement tous les params comme props
+        props: true,
     },
     {
         path: "/modifyAAV/:id",
         name: "modifyAAV",
         component: FormAAV,
-        props: true, // transmet automatiquement tous les params comme props
+        props: true,
     },
     {
         path: "/modifyAAT/:id",
         name: "modifyAAT",
         component: FormAAT,
-        props: true, // transmet automatiquement tous les params comme props
+        props: true,
     },
     {
         path: "/modifyPRO/:id",
         name: "modifyPRO",
         component: FormProgram,
-        props: true, // transmet automatiquement tous les params comme props
+        props: true,
     },
     {
         path: "/createUE",
@@ -146,6 +145,7 @@ const router = createRouter({
     history: createWebHistory(),
     routes,
 });
+
 router.beforeEach((to) => {
     const isAdmin = window.__USER__?.role === "admin";
 
@@ -153,4 +153,5 @@ router.beforeEach((to) => {
         return { name: "list" };
     }
 });
+
 export default router;

@@ -16,8 +16,10 @@ require __DIR__ . '/auth.php'; // ✅ contient GET /login, GET /register, POST /
  * ✅ SPA Vue (welcome/template) uniquement si connecté
  */
 Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::get('/admin/users/pending', [AdminUserController::class, 'pending']);
     Route::post('/admin/users/{user}/approve', [AdminUserController::class, 'approve']);
+    Route::patch('/admin/users/{user}', [AdminUserController::class, 'update']);
 
     // optionnel
     Route::delete('/admin/users/{user}', [AdminUserController::class, 'destroy']);
@@ -102,3 +104,4 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::post('/import/generic', [ImportController::class, 'import']);
     Route::get('/{any}', fn() => view('welcome'))->where('any', '.*');
 });
+
