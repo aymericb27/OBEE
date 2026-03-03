@@ -252,7 +252,7 @@ export default {
             this.loadAATTree(id);
         },
         async loadAATTree(id) {
-            this.isLoadingTree = false;
+            this.isLoadingTree = true;
             const responseAAT = await axios.get("aat/get/tree", {
                 params: { id },
             });
@@ -263,7 +263,17 @@ export default {
         async loadAAT() {
             const responseAAT = await axios.get("aat/get");
             this.aats = responseAAT.data;
-            this.selectAAT(this.aats[0].id);
+            if (this.aats.length > 0 && this.aats[0]?.id) {
+                this.selectAAT(this.aats[0].id);
+            } else {
+                this.selectedAATId = "";
+                this.aat = {
+                    level_contribution: 3,
+                    ues: [],
+                    aavs: [],
+                };
+                this.isLoadingTree = false;
+            }
             this.isLoadingAAT = false;
         },
     },
