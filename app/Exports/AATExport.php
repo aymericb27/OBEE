@@ -4,6 +4,8 @@ namespace App\Exports;
 
 use App\Models\AcquisApprentissageTerminaux;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
+
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Str;
 
@@ -19,9 +21,20 @@ class AATExport
     }
     public function download()
     {
-        // 1. Charger ton fichier modèle
         $template = resource_path('templates/model_import_aat.xlsx');
-        $spreadsheet = IOFactory::load($template);
+        if (!is_file($template) || filesize($template) === 0) {
+            throw new \RuntimeException("Template introuvable ou vide: {$template}");
+        }
+        // Copie temporaire (évite problèmes de lecture/lock)
+        $tmpDir = storage_path('app/tmp');
+        @mkdir($tmpDir, 0775, true);
+        $tmp = $tmpDir . '/model_import_aat_' . uniqid() . '.xlsx';
+        copy($template, $tmp);
+
+        // Reader explicite + readDataOnly
+        $reader = new XlsxReader();
+        $reader->setReadDataOnly(true);
+        $spreadsheet = $reader->load($tmp);
         $sheet = $spreadsheet->getActiveSheet();
 
         // ------------------------------------
