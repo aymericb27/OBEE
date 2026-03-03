@@ -156,7 +156,7 @@ class ProgrammeController extends Controller
         $pro->delete();
         return response()->json([
             'success' => true,
-            'message' => "Acquis d'apprentissage visé supprimé avec succès.",
+            'message' => "Programme supprimé avec succès.",
         ]);
     }
 /* 
