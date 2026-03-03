@@ -10,6 +10,7 @@ export default defineConfig({
                 "resources/js/app.js",
                 "resources/js/auth.js",
                 "resources/css/auth.css",
+                "resources/css/bootstrap_extend.css",
             ],
             refresh: true,
         }),
