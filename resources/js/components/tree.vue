@@ -231,7 +231,9 @@ export default {
             this.progs = response.data;
             if (this.progs.length) {
                 this.selectProgram(this.progs[0].id);
-            }
+            } else{
+				this.isLoadingSEM = false;
+			}
             this.isLoadingPRO = false;
         },
 
