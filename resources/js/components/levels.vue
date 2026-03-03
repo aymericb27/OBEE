@@ -69,7 +69,7 @@
                     size="md"
                 />
                 <div v-else>
-                    <div class="bg-primary rounded p-4" v-if="aat.id">
+                    <div class="bg-aat rounded p-4" v-if="aat.id">
                         <h5>
                             <i
                                 class="fa-solid fa-book-bookmark"
@@ -293,7 +293,7 @@ export default {
 .AAVLink:hover {
     color: #3ad55d;
 }
-.bg-primary {
+.bg-aat {
     background-color: #d2e6fb !important;
 }
 .AATLink {
