@@ -188,7 +188,7 @@
 </template>
 
 <script>
-import BaseLoader from "@/components/modal/BaseLoader.vue";
+import BaseLoader from "./modal/baseLoader.vue"
 
 import axios from "axios";
 
