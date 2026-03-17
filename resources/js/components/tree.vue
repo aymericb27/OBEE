@@ -71,18 +71,24 @@
                     >
                         + ajout semestre
                     </button> -->
-                    <router-link
-                        :to="{
-                            name: 'modifyPRO',
-                            params: { id: prog.id },
-                        }"
-                    >
-                        <button
-                            class="btn btn-lg btn-primary float-right ml-auto mb-2"
+                    <div class="float-right d-flex flex-column align-items-end">
+                        <router-link
+                            :to="{
+                                name: 'modifyPRO',
+                                params: { id: prog.id },
+                            }"
                         >
-                            modifier le programme
+                            <button class="btn btn-lg btn-primary ml-auto mb-2">
+                                modifier le programme
+                            </button>
+                        </router-link>
+                        <button
+                            class="btn btn-lg btn-success ml-auto mb-2"
+                            @click="openCopyModal(prog.id)"
+                        >
+                            copier le programme
                         </button>
-                    </router-link>
+                    </div>
                     <p class="text-muted mb-3">
                         Programme structuré avec les semestres, unité
                         d'enseignements et les éléments constitutifs
@@ -128,6 +134,56 @@
             </div>
         </div>
     </div> -->
+    <div v-if="showCopyModal" class="modal-backdrop-custom">
+        <div class="modal-custom">
+            <h4 class="mb-3">Confirmation</h4>
+            <p>Voulez vous copier le programme et tout ce qu'il contient ?</p>
+            <div class="text-right mt-4">
+                <button class="btn btn-danger mr-2" @click="closeCopyModal">
+                    Non
+                </button>
+                <button class="btn btn-success" @click="confirmCopyProgram">
+                    Oui
+                </button>
+            </div>
+        </div>
+    </div>
+    <div v-if="showCopyDetailsModal" class="modal-backdrop-custom">
+        <div class="modal-custom">
+            <h4 class="mb-3">Copier le programme</h4>
+            <p v-if="copyFormError" class="text-danger mb-2">
+                {{ copyFormError }}
+            </p>
+            <div class="form-group mb-3">
+                <label class="mb-1">Sigle du nouveau programme</label>
+                <input
+                    v-model="copyForm.code"
+                    type="text"
+                    class="form-control"
+                />
+            </div>
+            <div class="form-group mb-3">
+                <label class="mb-1">Libellé du nouveau programme</label>
+                <input
+                    v-model="copyForm.name"
+                    type="text"
+                    class="form-control"
+                />
+            </div>
+
+            <div class="text-right mt-4">
+                <button
+                    class="btn btn-danger mr-2"
+                    @click="closeCopyDetailsModal"
+                >
+                    Annuler
+                </button>
+                <button class="btn btn-success" @click="confirmCopyDetails">
+                    Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
     <modalList
         v-if="showModalUE"
         :visible="showModalUE"
@@ -157,6 +213,14 @@ export default {
             isLoadingSEM: true,
             UEsToExclude: [],
             showModalUE: false,
+            showCopyModal: false,
+            showCopyDetailsModal: false,
+            programToCopyId: null,
+            copyForm: {
+                name: "",
+                code: "",
+            },
+            copyFormError: null,
             UECreateType: null,
             paramUEForm: {},
             /*             showSemesterModal: false,
@@ -231,9 +295,9 @@ export default {
             this.progs = response.data;
             if (this.progs.length) {
                 this.selectProgram(this.progs[0].id);
-            } else{
-				this.isLoadingSEM = false;
-			}
+            } else {
+                this.isLoadingSEM = false;
+            }
             this.isLoadingPRO = false;
         },
 
@@ -250,6 +314,63 @@ export default {
             console.log(this.prog);
             this.prog = response.data;
             this.isLoadingSEM = false;
+        },
+        openCopyModal(programId) {
+            this.programToCopyId = programId;
+            this.showCopyModal = true;
+        },
+        closeCopyModal() {
+            this.showCopyModal = false;
+            this.programToCopyId = null;
+        },
+        confirmCopyProgram() {
+            if (!this.programToCopyId) return;
+            this.copyForm = {
+                name: this.prog?.name || "",
+                code: this.prog?.code || "",
+            };
+            this.showCopyModal = false;
+            this.showCopyDetailsModal = true;
+        },
+        closeCopyDetailsModal() {
+            this.showCopyDetailsModal = false;
+            this.programToCopyId = null;
+            this.copyFormError = null;
+            this.copyForm = {
+                name: "",
+                code: "",
+            };
+        },
+        async confirmCopyDetails() {
+            if (!this.programToCopyId) return;
+            this.copyFormError = null;
+            const name = (this.copyForm.name || "").trim();
+            const code = (this.copyForm.code || "").trim();
+
+            if (!name || !code) {
+                this.copyFormError =
+                    "Veuillez remplir le sigle et le libellé du programme.";
+                return;
+            }
+
+            try {
+                const response = await axios.post("/programme/copy", {
+                    source_id: this.programToCopyId,
+                    name,
+                    code,
+                });
+
+                this.closeCopyDetailsModal();
+                this.$router.push({
+                    name: "pro-detail",
+                    params: { id: response.data.id },
+                    query: { message: response.data.message },
+                });
+            } catch (error) {
+                this.copyFormError =
+                    error?.response?.data?.message ||
+                    "Erreur lors de la copie du programme.";
+            }
         },
         /*         openSemesterModal() {
             this.showSemesterModal = true;

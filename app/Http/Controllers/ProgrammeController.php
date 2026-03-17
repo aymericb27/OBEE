@@ -266,6 +266,111 @@ class ProgrammeController extends Controller
         });
     }
 
+    public function copy(Request $request)
+    {
+        $validated = $request->validate([
+            'source_id' => 'required|integer|exists:programme,id',
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50',
+        ]);
+
+        $universityId = Auth::user()->university_id;
+
+        return DB::transaction(function () use ($validated, $universityId) {
+            $sourceProgramme = Programme::where('id', $validated['source_id'])
+                ->where('university_id', $universityId)
+                ->firstOrFail();
+
+            $existingCode = Programme::where('university_id', $universityId)
+                ->where('code', $validated['code'])
+                ->exists();
+
+            if ($existingCode) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le sigle existe deja pour cette universite.',
+                ], 422);
+            }
+
+            $newProgramme = Programme::create([
+                'name' => $validated['name'],
+                'code' => $validated['code'],
+                'ects' => $sourceProgramme->ects,
+                'university_id' => $universityId,
+            ]);
+
+            $sourceSemesters = DB::table('pro_semester')
+                ->where('fk_programme', $sourceProgramme->id)
+                ->where('university_id', $universityId)
+                ->orderBy('semester')
+                ->get();
+
+            $semesterIdMap = [];
+            foreach ($sourceSemesters as $semester) {
+                $newSemesterId = DB::table('pro_semester')->insertGetId([
+                    'ects' => $semester->ects,
+                    'semester' => $semester->semester,
+                    'fk_programme' => $newProgramme->id,
+                    'university_id' => $universityId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $semesterIdMap[$semester->id] = $newSemesterId;
+            }
+
+            $sourcePrerequis = DB::table('aavpro_prerequis')
+                ->where('fk_programme', $sourceProgramme->id)
+                ->where('university_id', $universityId)
+                ->get();
+
+            if ($sourcePrerequis->isNotEmpty()) {
+                $prerequisRows = [];
+                foreach ($sourcePrerequis as $prerequis) {
+                    $prerequisRows[] = [
+                        'fk_acquis_apprentissage_prerequis' => $prerequis->fk_acquis_apprentissage_prerequis,
+                        'fk_programme' => $newProgramme->id,
+                        'university_id' => $universityId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+                DB::table('aavpro_prerequis')->insert($prerequisRows);
+            }
+
+            $sourceUes = DB::table('ue_programme')
+                ->where('fk_programme', $sourceProgramme->id)
+                ->where('university_id', $universityId)
+                ->get();
+
+            if ($sourceUes->isNotEmpty()) {
+                $ueRows = [];
+                foreach ($sourceUes as $ueLink) {
+                    if (!isset($semesterIdMap[$ueLink->fk_semester])) {
+                        continue;
+                    }
+                    $ueRows[] = [
+                        'fk_unite_enseignement' => $ueLink->fk_unite_enseignement,
+                        'fk_programme' => $newProgramme->id,
+                        'fk_semester' => $semesterIdMap[$ueLink->fk_semester],
+                        'university_id' => $universityId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                if (!empty($ueRows)) {
+                    DB::table('ue_programme')->insert($ueRows);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Programme copié avec succes',
+                'id' => $newProgramme->id,
+            ]);
+        });
+    }
+
 
     public function getUE(Request $request)
     {

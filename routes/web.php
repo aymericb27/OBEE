@@ -60,6 +60,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/programme/get/tree', [ProgrammeController::class, 'getTree'])->name('pro.get.tree');
     Route::get('/pro/ue/get', [ProgrammeController::class, 'getUE']);
     Route::post('/programme/create', [ProgrammeController::class, 'store'])->name('pro.store');
+    Route::post('/programme/copy', [ProgrammeController::class, 'copy'])->name('pro.copy');
     Route::post('/programme/update', [ProgrammeController::class, 'update'])->name('pro.update');
     Route::post('/programme/ues/add', [ProgrammeController::class, 'addUES'])->name('pro.add.ues');
 
