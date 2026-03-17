@@ -211,25 +211,45 @@ class ProgrammeController extends Controller
                 'ects' => $validated['ects'],
             ]);
 
-            // ✅ on remplace complètement les semestres pour ce programme
-            DB::table('pro_semester')
+            // ✅ conserver les semestres existants pour préserver les liens UE
+            $existingSemesters = DB::table('pro_semester')
                 ->where('fk_programme', $programme->id)
                 ->where('university_id', $universityId)
-                ->delete();
+                ->get()
+                ->keyBy('semester');
 
-            $rows = [];
+            $keptSemesterIds = [];
             for ($i = 1; $i <= (int) $validated['semestre']; $i++) {
-                $rows[] = [
-                    'ects' => (int) ($validated['semestresCredits'][$i] ?? 0),
+                $ects = (int) ($validated['semestresCredits'][$i] ?? 0);
+
+                if (isset($existingSemesters[$i])) {
+                    $semesterRow = $existingSemesters[$i];
+                    DB::table('pro_semester')
+                        ->where('id', $semesterRow->id)
+                        ->update([
+                            'ects' => $ects,
+                            'updated_at' => now(),
+                        ]);
+                    $keptSemesterIds[] = $semesterRow->id;
+                    continue;
+                }
+
+                $keptSemesterIds[] = DB::table('pro_semester')->insertGetId([
+                    'ects' => $ects,
                     'semester' => $i,
                     'fk_programme' => $programme->id,
                     'university_id' => $universityId,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ];
+                ]);
             }
 
-            DB::table('pro_semester')->insert($rows);
+            // ✅ supprimer uniquement les semestres retirés de la maquette
+            DB::table('pro_semester')
+                ->where('fk_programme', $programme->id)
+                ->where('university_id', $universityId)
+                ->whereNotIn('id', $keptSemesterIds)
+                ->delete();
 
             if (isset($validated['aavprerequis'])) {
                 $pivotData = [];
