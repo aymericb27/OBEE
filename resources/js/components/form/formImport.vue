@@ -9,6 +9,15 @@
             </div>
             <div v-if="successMessage" class="alert alert-success">
                 {{ successMessage }}
+                <div v-if="editTarget" class="mt-2">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-success"
+                        @click="goToImportedItemEdition"
+                    >
+                        Éditer l'élément importé
+                    </button>
+                </div>
             </div>
             <!-- SECTION : Choix du type d'import -->
             <div class="row">
@@ -308,6 +317,7 @@ export default {
 
             errors: [],
             successMessage: "",
+            editTarget: null,
             isLoading: false,
             excelFile: null,
             fullData: [],
@@ -702,6 +712,7 @@ export default {
         async sendImport() {
             this.errors = [];
             this.successMessage = "";
+            this.editTarget = null;
             this.isLoading = true;
 
             const form = new FormData();
@@ -710,18 +721,16 @@ export default {
             try {
                 const res = await axios.post("/import/generic", form);
 
-                this.isLoading = false;
-
-                // ✅ si le backend renvoie errors même en 200/207
+                // si le backend renvoie errors même en 200/207
                 const apiErrors = this.formatImportErrors(res.data);
 
                 if (apiErrors.length) {
-                    // on garde ta UI existante : on remplit errors[]
                     this.errors = apiErrors;
                     this.successMessage = "Import terminé avec des erreurs.";
                 } else {
                     this.errors = [];
                     this.successMessage = "Import réussi !";
+                    this.setEditTargetFromImportResponse(res.data);
                 }
 
                 window.scrollTo({ top: 0, behavior: "smooth" });
@@ -729,26 +738,59 @@ export default {
             } catch (err) {
                 window.scrollTo({ top: 0, behavior: "smooth" });
 
-                this.isLoading = false;
-
                 const data = err.response?.data;
                 this.errors = [];
 
-                // ✅ si backend a renvoyé le format list errors en erreur HTTP (rare mais possible)
                 const apiErrors = this.formatImportErrors(data);
                 if (apiErrors.length) {
                     this.errors = apiErrors;
+                    this.editTarget = null;
                     return;
                 }
 
-                // ✅ Cas Laravel ValidationException classique
                 if (data?.errors && typeof data.errors === "object") {
                     this.errors = Object.values(data.errors).flat();
+                    this.editTarget = null;
                     return;
                 }
 
+                this.editTarget = null;
                 this.errors.push(data?.message || "Erreur inconnue.");
+            } finally {
+                this.isLoading = false;
             }
+        },
+
+        setEditTargetFromImportResponse(payload) {
+            const mode = payload?.mode || this.config.importMode;
+            const type = payload?.type || this.config.type;
+            const id = payload?.stored?.id;
+
+            if (mode !== "single" || !id) {
+                this.editTarget = null;
+                return;
+            }
+
+            const routeByType = {
+                UE: "modifyUE",
+                AAT: "modifyAAT",
+            };
+
+            const routeName = routeByType[type];
+            if (!routeName) {
+                this.editTarget = null;
+                return;
+            }
+
+            this.editTarget = { id, routeName };
+        },
+
+        goToImportedItemEdition() {
+            if (!this.editTarget) return;
+            this.$router.push({
+                name: this.editTarget.routeName,
+                params: { id: this.editTarget.id },
+            });
         },
     },
 };
@@ -779,3 +821,4 @@ label {
     margin-top: 0.5rem;
 }
 </style>
+
