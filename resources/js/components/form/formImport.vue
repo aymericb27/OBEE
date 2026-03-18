@@ -19,6 +19,10 @@
                     </button>
                 </div>
             </div>
+            <div v-if="missingUELinksMessage" class="alert alert-warning">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                {{ missingUELinksMessage }}
+            </div>
             <!-- SECTION : Choix du type d'import -->
             <div class="row">
                 <div class="mb-4 col-md-6">
@@ -318,6 +322,7 @@ export default {
             errors: [],
             successMessage: "",
             editTarget: null,
+            missingUELinksMessage: "",
             isLoading: false,
             excelFile: null,
             fullData: [],
@@ -467,7 +472,7 @@ export default {
         availableFields() {
             if (this.config.type === "UE") {
                 return [
-                    { key: "code", label: "Sigle" },
+                    { key: "code", label: "Sigle", isMandatory: true },
                     { key: "name", label: "Libellé", isMandatory: true },
                     { key: "description", label: "Description" },
                     { key: "ects", label: "ECTS", isMandatory: true },
@@ -475,7 +480,7 @@ export default {
             }
             if (this.config.type === "AAT")
                 return [
-                    { key: "code", label: "Sigle AAT" },
+                    { key: "code", label: "Sigle AAT", isMandatory: true },
                     {
                         key: "name",
                         label: "Libellé AAT",
@@ -484,7 +489,7 @@ export default {
                 ];
             if (this.config.type === "AAV")
                 return [
-                    { key: "code", label: "Sigle AAV" },
+                    { key: "code", label: "Sigle AAV", isMandatory: true },
                     { key: "name", label: "Libellé AAV" },
                 ];
             return [];
@@ -713,7 +718,14 @@ export default {
             this.errors = [];
             this.successMessage = "";
             this.editTarget = null;
+            this.missingUELinksMessage = "";
             this.isLoading = true;
+
+            if (!this.validateRequiredImportFields()) {
+                this.isLoading = false;
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
 
             const form = new FormData();
             form.append("file", this.excelFile);
@@ -731,6 +743,7 @@ export default {
                     this.errors = [];
                     this.successMessage = "Import réussi !";
                     this.setEditTargetFromImportResponse(res.data);
+                    this.setUEWithoutLinksWarning(res.data);
                 }
 
                 window.scrollTo({ top: 0, behavior: "smooth" });
@@ -745,16 +758,19 @@ export default {
                 if (apiErrors.length) {
                     this.errors = apiErrors;
                     this.editTarget = null;
+                    this.missingUELinksMessage = "";
                     return;
                 }
 
                 if (data?.errors && typeof data.errors === "object") {
                     this.errors = Object.values(data.errors).flat();
                     this.editTarget = null;
+                    this.missingUELinksMessage = "";
                     return;
                 }
 
                 this.editTarget = null;
+                this.missingUELinksMessage = "";
                 this.errors.push(data?.message || "Erreur inconnue.");
             } finally {
                 this.isLoading = false;
@@ -791,6 +807,82 @@ export default {
                 name: this.editTarget.routeName,
                 params: { id: this.editTarget.id },
             });
+        },
+
+        setUEWithoutLinksWarning(payload) {
+            const mode = payload?.mode || this.config.importMode;
+            const type = payload?.type || this.config.type;
+
+            if (type !== "UE") {
+                this.missingUELinksMessage = "";
+                return;
+            }
+
+            // En mode liste, seules les données UE principales sont importées.
+            if (mode === "list") {
+                this.missingUELinksMessage =
+                    "Attention : vous avez importé une UE sans acquis d'apprentissage visé et sans acquis d'apprentissage terminal.";
+                return;
+            }
+
+            const links = payload?.data?.links || {};
+            const hasAAT =
+                Array.isArray(links.aats) &&
+                links.aats.some(
+                    (row) =>
+                        String(row?.code || "").trim() ||
+                        String(row?.libelle || "").trim()
+                );
+            const hasAAV =
+                Array.isArray(links.aavs) &&
+                links.aavs.some(
+                    (row) =>
+                        String(row?.code || "").trim() ||
+                        String(row?.libelle || "").trim()
+                );
+
+            if (!hasAAV && !hasAAT) {
+                this.missingUELinksMessage =
+                    "Attention : vous avez importé une UE sans acquis d'apprentissage visé et sans acquis d'apprentissage terminal.";
+                return;
+            }
+
+            if (!hasAAV) {
+                this.missingUELinksMessage =
+                    "Attention : vous avez importé une UE sans acquis d'apprentissage visé.";
+                return;
+            }
+
+            if (!hasAAT) {
+                this.missingUELinksMessage =
+                    "Attention : vous avez importé une UE sans acquis d'apprentissage terminal.";
+                return;
+            }
+
+            this.missingUELinksMessage = "";
+        },
+
+        validateRequiredImportFields() {
+            const type = this.config.type;
+            const mode = this.config.importMode;
+
+            if (mode === "list") {
+                const codeCol = this.config?.columns?.[type]?.code;
+                if (!String(codeCol || "").trim()) {
+                    this.errors = ["Le champ Sigle est obligatoire."];
+                    return false;
+                }
+            }
+
+            if (mode === "single") {
+                const codeCell = this.config?.cells?.[type]?.code;
+                if (!String(codeCell || "").trim()) {
+                    this.errors = ["Le champ Sigle est obligatoire."];
+                    return false;
+                }
+            }
+
+            return true;
         },
     },
 };
