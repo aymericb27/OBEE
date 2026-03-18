@@ -12,10 +12,46 @@
             ></i>
             <span> {{ $route.query.message }} </span>
         </div>
+        <div v-if="formErrors" class="alert alert-danger mt-3">
+            <i
+                class="fa-solid fa-triangle-exclamation mr-2"
+                style="color: crimson"
+            ></i>
+            <span>{{ formErrors }}</span>
+        </div>
         <form @submit.prevent="saveProgram" class="border p-4 rounded bg-white">
             <h3 class="primary_color mb-4 text-center">
                 {{ form.id ? "Modification" : "Création" }} d'un programme
             </h3>
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <h5 class="primary_color">
+                        Sigle du programme
+                        <strong class="text-danger">*</strong>
+                    </h5>
+
+                    <input
+                        type="text"
+                        v-model="form.code"
+                        class="form-control m-auto"
+                        required
+                    />
+                </div>
+
+                <div class="col-md-9">
+                    <h5 class="primary_color">
+                        Intitulé du programme
+                        <strong class="text-danger">*</strong>
+                    </h5>
+
+                    <input
+                        type="text"
+                        v-model="form.name"
+                        class="form-control m-auto"
+                        required
+                    />
+                </div>
+            </div>
             <div class="row mb-4">
                 <div class="col-md-3">
                     <h5 class="primary_color">Nombre de semestres</h5>
@@ -31,21 +67,7 @@
                         <option :value="10">10 semestres</option>
                     </select>
                 </div>
-                <div class="col-md-9">
-                    <h5 class="primary_color">
-                        Intitulé du programme
-                        <strong class="text-danger">*</strong>
-                    </h5>
-
-                    <input
-                        type="text"
-                        v-model="form.name"
-                        class="form-control m-auto"
-                        required
-                    />
-                </div>
             </div>
-
             <div class="mb-4" v-if="form.semestre">
                 <h5 class="primary_color mb-3">
                     Répartition des crédits par semestre
@@ -309,6 +331,7 @@ export default {
             form: {
                 aavprerequis: [],
                 id: null,
+                code: "",
                 name: "",
                 ects: "",
                 semestre: 6, // valeur par défaut
@@ -477,13 +500,13 @@ export default {
                     semestresCredits[s.semester] = s.ects;
                 });
 
-				const prerequis = await axios.get('/pro/pre/get', {
-					params: {id : this.id},
-				})
-
+                const prerequis = await axios.get("/pro/pre/get", {
+                    params: { id: this.id },
+                });
 
                 this.form = {
                     id: data.id,
+                    code: data.code,
                     name: data.name,
                     ects: data.ects,
                     semestre: data.semester.length, // nombre de semestres

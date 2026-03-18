@@ -189,6 +189,7 @@ class ProgrammeController extends Controller
     {
         $validated = $request->validate([
             'id' => 'required|integer|exists:programme,id',
+            'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
             'ects' => 'required|integer|min:0',
 
@@ -203,10 +204,23 @@ class ProgrammeController extends Controller
         $programme = Programme::findOrFail($validated['id']);
         $universityId = Auth::user()->university_id;
 
+        $existingCode = Programme::where('university_id', $universityId)
+            ->where('code', $validated['code'])
+            ->where('id', '!=', $programme->id)
+            ->exists();
+
+        if ($existingCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le sigle existe deja pour cette universite.',
+            ], 422);
+        }
+
         return DB::transaction(function () use ($validated, $programme, $universityId) {
 
             // ✅ update programme (sans semestre)
             $programme->update([
+                'code' => $validated['code'],
                 'name' => $validated['name'],
                 'ects' => $validated['ects'],
             ]);
