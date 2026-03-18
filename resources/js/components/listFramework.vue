@@ -118,7 +118,7 @@
             </form>
         </div>
         <div class="col-md-9">
-            <div class="border rounded bg-white pt-2">
+            <div class="border rounded bg-white pt-2 mb-2">
                 <list
                     :isBorder="true"
                     :routeGET="routeGET"

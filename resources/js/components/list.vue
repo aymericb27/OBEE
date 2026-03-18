@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <BaseLoader v-if="isLoading" text="Chargement..." size="md" />
 
     <div v-else>
@@ -10,6 +10,17 @@
                 v-model="search"
             />
             <i class="fa fa-search position-absolute search-icon"></i>
+        </div>
+        <div class="d-flex justify-content-end align-items-center gap-2 mb-2 mr-2">
+            <label class="mb-0 small mr-2">Nombre d'élément à afficher</label>
+            <select
+                v-model.number="pageSize"
+                class="form-control form-select form-select-sm w-auto"
+            >
+                <option v-for="size in pageSizeOptions" :key="size" :value="size">
+                    {{ size }}
+                </option>
+            </select>
         </div>
         <div class="rounded" :class="isResearch ? 'border-top' : 'border'">
             <div class="row m-auto bg-light border-bottom">
@@ -215,6 +226,7 @@ export default {
             items: [],
             isLoading: false,
             pageSize: 10,
+            pageSizeOptions: [10, 25, 50],
             currentPage: 1,
         };
     },
@@ -251,6 +263,10 @@ export default {
     watch: {
         // ✅ quand la recherche change, on revient page 1
         search() {
+            this.currentPage = 1;
+        },
+
+        pageSize() {
             this.currentPage = 1;
         },
 
@@ -326,3 +342,4 @@ export default {
     pointer-events: none; /* évite que l’icône bloque les clics */
 }
 </style>
+
