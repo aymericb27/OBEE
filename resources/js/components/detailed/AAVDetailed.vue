@@ -114,7 +114,7 @@
                             <i class="fa-brands fa-google-scholar"></i>
 
                             acquis d'apprentissage visé pour les unités
-                            d'enseignements
+                            d'enseignement
                         </h5>
                     </div>
 

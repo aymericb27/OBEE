@@ -26,7 +26,7 @@
                     <div v-else>
                         <div v-if="filter.displayElement === 'UE'">
                             <div class="primary_color">
-                                Exportation des unités d'enseignements :
+                                Exportation des unités d'enseignement :
                             </div>
                             <ul>
                                 <li class="py-1" v-if="filter.onlyErrors">
@@ -100,7 +100,7 @@
                                             class="form-check-input"
                                             v-model="select.ue.all"
                                         />
-                                        Les unités d'enseignements
+                                        Les unités d'enseignement
                                     </div>
                                     <ul>
                                         <li>
@@ -160,7 +160,7 @@
                                             class="form-check-input"
                                             v-model="select.aavvise.all"
                                         />
-                                        Les acquis d'apprentissages visés
+                                        Les acquis d'apprentissage visés
                                         <ul>
                                             <li>
                                                 <input
@@ -354,7 +354,7 @@ export default {
                     const link = document.createElement("a");
                     link.href = url;
 					if(this.filter.displayElement ==="UE"){
-						this.filename = "unité d'enseignements"
+						this.filename = "unité d'enseignement"
 					}
                     link.setAttribute(
                         "download",

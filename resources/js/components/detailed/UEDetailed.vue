@@ -108,7 +108,7 @@
                     <div class="mb-2">
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-brands fa-google-scholar"></i>
-                            Liste des acquis d'apprentissages visé
+                            Liste des acquis d'apprentissage visé
                         </h5>
                     </div>
                     <list
@@ -148,7 +148,7 @@
                     <div class="mb-2">
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-graduation-cap"></i>
-                            Liste des acquis d'apprentissages terminaux
+                            Liste des acquis d'apprentissage terminaux
                         </h5>
                     </div>
                     <list

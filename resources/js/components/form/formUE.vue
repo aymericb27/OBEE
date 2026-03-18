@@ -82,7 +82,7 @@
                     <div class="listComponent mb-5">
                         <div class="mb-2">
                             <h5 class="d-inline-block primary_color">
-                                Liste des acquis d'apprentissages terminaux
+                                Liste des acquis d'apprentissage terminaux
                                 auxquels cette UE contribue
                                 <button
                                     type="button"
@@ -184,7 +184,7 @@
                     <div class="listComponent mb-5">
                         <div class="mb-2">
                             <h5 class="d-inline-block primary_color">
-                                Liste des acquis d'apprentissages visé
+                                Liste des acquis d'apprentissage visé
                                 <button
                                     type="button"
                                     class="btn btn-primary ml-2 mb-2"

@@ -411,7 +411,7 @@ export default {
                 },
                 {
                     id: "aat",
-                    title: "Liste des acquis d'apprentissages terminaux",
+                    title: "Liste des acquis d'apprentissage terminaux",
                     hideWhenType: ["AAT"],
                     modelKey: "aat",
                     fields: [
@@ -429,7 +429,7 @@ export default {
                 },
                 {
                     id: "ue",
-                    title: "Liste des unités d'enseignements",
+                    title: "Liste des unités d'enseignement",
                     hideWhenType: ["UE"],
                     modelKey: "ue",
                     fields: [

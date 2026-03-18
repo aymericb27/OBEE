@@ -51,8 +51,8 @@
                 >.
             </span>
             <span v-else>
-                elles partagent des acquis d'apprentissages dépendants. Les
-                acquis d'apprentissages ci-dessous sont les prérequis de l'unité
+                elles partagent des acquis d'apprentissage dépendants. Les
+                acquis d'apprentissage ci-dessous sont les prérequis de l'unité
                 d'enseignement
                 <router-link
                     :to="{
@@ -62,7 +62,7 @@
                 >
                     {{ err.ueA.code }}
                 </router-link>
-                et les acquis d'apprentissages visés de l'unité d'enseignement
+                et les acquis d'apprentissage visés de l'unité d'enseignement
                 <router-link
                     :to="{
                         name: 'ue-detail',

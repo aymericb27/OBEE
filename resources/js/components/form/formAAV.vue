@@ -31,7 +31,7 @@
             <div class="listComponent mb-5">
                 <div class="mb-2">
                     <h4 class="d-inline-block primary_color">
-                        Liste des acquis d'apprentissages terminaux
+                        Liste des acquis d'apprentissage terminaux
                         <button
                             type="button"
                             class="btn btn-primary ml-2 mb-2"

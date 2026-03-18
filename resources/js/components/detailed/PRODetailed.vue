@@ -46,7 +46,7 @@
                 <div class="mb-2">
                     <h5 class="d-inline-block primary_color">
                         <i class="fa-solid fa-book-open"></i>
-                        Liste des unités d'enseignements
+                        Liste des unités d'enseignement
                     </h5>
                 </div>
                 <list

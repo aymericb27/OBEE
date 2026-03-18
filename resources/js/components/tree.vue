@@ -91,7 +91,7 @@
                     </div>
                     <p class="text-muted mb-3">
                         Programme structuré avec les semestres, unité
-                        d'enseignements et les éléments constitutifs
+                        d'enseignement et les éléments constitutifs
                     </p>
                     <div class="mb-3">
                         <span class="badge badge-success text-white ml-2 p-2">
@@ -252,7 +252,7 @@ export default {
                 this.paramUEForm.UEParentId = param.UE.id;
             }
             this.modalRoute = "/ues/get";
-            this.modalTitle = "Ajouter des unités d'enseignements";
+            this.modalTitle = "Ajouter des unités d'enseignement";
             this.showModalUE = true;
             this.semesterSelected = param.semester.number;
         },

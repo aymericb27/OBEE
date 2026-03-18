@@ -33,7 +33,7 @@
             <li class="mb-2">
                 <div>
                     <input type="checkbox" class="form-check-input" /> Les
-                    unités d'enseignements
+                    unités d'enseignement
                 </div>
                 <ul>
                     <li>
@@ -62,7 +62,7 @@
             <li class="mb-2">
                 <div>
                     <input type="checkbox" class="form-check-input" /> Les
-                    acquis d'apprentissages visés
+                    acquis d'apprentissage visés
                     <ul>
                         <li>
                             <input type="checkbox" class="form-check-input" />

@@ -26,12 +26,12 @@
                             Attention, supprimer une unité d'enseignement a des
                             conséquences ! Cela influe sur l'acquis
                             d'apprentissage terminal et les unités
-                            d'enseignements liés.
+                            d'enseignement liés.
                         </div>
                         <div v-if="ueVise.length">
                             <div>
                                 cette acquis d'apprentissage est un des acquis
-                                d'apprentissage du/des unités d'enseignements
+                                d'apprentissage du/des unités d'enseignement
                                 suivantes
                             </div>
                             <ul class="mt-3">
@@ -43,7 +43,7 @@
                         <div v-if="uePre.length">
                             <div>
                                 cette acquis d'apprentissage est un des
-                                prérequis du/des unités d'enseignements
+                                prérequis du/des unités d'enseignement
                                 suivantes
                             </div>
                             <ul class="mt-3">
@@ -66,7 +66,7 @@
                         <div v-if="aavs.length">
                             <div>
                                 cette unité d'enseignement a des acquis
-                                d'apprentissages visés qui se retrouveront sans
+                                d'apprentissage visés qui se retrouveront sans
                                 unité d'enseignement si celle ci est supprimé
                             </div>
                             <ul class="mt-3">
@@ -89,7 +89,7 @@
                         <div v-if="aavs.length">
                             <div>
                                 cette acquis d'apprentissage terminal a des
-                                acquis d'apprentissages visés qui se
+                                acquis d'apprentissage visés qui se
                                 retrouveront sans acquis d'apprentissage
                                 terminal si celle ci est supprimé
                             </div>
@@ -107,11 +107,11 @@
                                 style="color: crimson; font-size: 24px"
                             ></i>
                             Attention, supprimer un programme a des conséquences
-                            ! Cela influe sur les unités d'apprentissages liés
+                            ! Cela influe sur les unités d'apprentissage liés
                         </div>
                         <div v-if="ues.length">
                             <div>
-                                ce programme a des unités d'enseignements lié
+                                ce programme a des unités d'enseignement lié
                                 qui se retrouveront sans programme si celui ci
                                 est supprimé
                             </div>

@@ -28,7 +28,7 @@
                 >
                 <span v-else>n'a pas assez de crédits attribués.</span>
                 <div class="mb-3">
-                    Voici la liste des unités d'enseignements relié à ce
+                    Voici la liste des unités d'enseignement relié à ce
                     programme :
                 </div>
                 <ul class="px-5">

@@ -70,7 +70,7 @@
                             @click="selectProgram('AAT')"
                         >
                             <h5 class="m-0">
-                                Acquis d'apprentissages terminaux
+                                Acquis d'apprentissage terminaux
                             </h5>
                         </li>
                         <li
@@ -81,7 +81,7 @@
                             style="list-style-type: none; cursor: pointer"
                             @click="selectProgram('AAV')"
                         >
-                            <h5 class="m-0">Acquis d'aprentissages visées</h5>
+                            <h5 class="m-0">Acquis d'aprentissage visées</h5>
                         </li>
                         <li
                             class="p-2 program-item"
@@ -91,7 +91,7 @@
                             style="list-style-type: none; cursor: pointer"
                             @click="selectProgram('PRE')"
                         >
-                            <h5 class="m-0">Prérequis des unités d'enseignements</h5>
+                            <h5 class="m-0">Prérequis des unités d'enseignement</h5>
                         </li>
                         <li
                             class="p-2 program-item"
