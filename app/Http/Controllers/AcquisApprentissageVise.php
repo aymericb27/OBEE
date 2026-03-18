@@ -18,7 +18,7 @@ class AcquisApprentissageVise extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:1000',
             'description' => 'nullable|string|max:2024',
 
             'aat' => 'nullable|array',
@@ -111,7 +111,7 @@ class AcquisApprentissageVise extends Controller
         $validated = $request->validate([
             'id' => ['required', 'integer', 'exists:acquis_apprentissage_vise,id'],
 
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:1000',
             'description' => 'nullable|string|max:2024',
 
             'aats' => 'nullable|array',

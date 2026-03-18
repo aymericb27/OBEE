@@ -244,7 +244,7 @@ class ImportController extends Controller
 
             'links.aavs' => 'nullable|array',
             'links.aavs.*.code' => 'nullable|string|max:50',
-            'links.aavs.*.libelle' => 'nullable|string|max:500',
+            'links.aavs.*.libelle' => 'nullable|string|max:1000',
             'links.aavs.*.AATCode' => 'nullable|string|max:50',
             'links.aavs.*.contribution' => 'nullable|integer|in:1,2,3',
 
@@ -517,7 +517,7 @@ class ImportController extends Controller
 
             'links.aavs' => 'nullable|array',
             'links.aavs.*.code' => 'nullable|string|max:50',
-            'links.aavs.*.libelle' => 'nullable|string|max:500',
+            'links.aavs.*.libelle' => 'nullable|string|max:1000',
         ], $messages, $attributes);
 
         if ($validator->fails()) {
