@@ -47,28 +47,55 @@ class ProgrammeController extends Controller
             ], 404);
         }
 
-        $programme = Programme::findOrFail($validated['programme_id']);
         $maxOrder = (int) DB::table('ue_programme')
             ->where('fk_programme', $validated['programme_id'])
             ->where('fk_semester', $proSemester->id)
             ->where('university_id', $universityId)
             ->max('display_order');
 
-        foreach ($validated['list'] as $ue) {
+        $requestedUeIds = collect($validated['list'])
+            ->pluck('id')
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $existingUeIds = DB::table('ue_programme')
+            ->where('fk_programme', $validated['programme_id'])
+            ->where('fk_semester', $proSemester->id)
+            ->where('university_id', $universityId)
+            ->whereIn('fk_unite_enseignement', $requestedUeIds)
+            ->pluck('fk_unite_enseignement')
+            ->map(fn($id) => (int) $id)
+            ->all();
+
+        $existingLookup = array_flip($existingUeIds);
+        $rows = [];
+
+        foreach ($requestedUeIds as $ueId) {
+            if (isset($existingLookup[$ueId])) {
+                continue;
+            }
+
             $maxOrder++;
-            $programme->ues()->syncWithoutDetaching([
-                $ue['id'] => [
-                    'fk_semester' => $proSemester->id,
-                    'university_id' => $universityId,
-                    'display_order' => $maxOrder,
-                ],
-            ]);
+            $rows[] = [
+                'fk_unite_enseignement' => $ueId,
+                'fk_programme' => $validated['programme_id'],
+                'fk_semester' => $proSemester->id,
+                'university_id' => $universityId,
+                'display_order' => $maxOrder,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (!empty($rows)) {
+            DB::table('ue_programme')->insert($rows);
         }
 
         return response()->json([
             'success' => true,
             'message' => 'UE ajoutées au programme avec succès',
-            'added' => count($validated['list']),
+            'added' => count($rows),
         ]);
     }
 
