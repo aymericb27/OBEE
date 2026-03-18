@@ -47,34 +47,28 @@ class ProgrammeController extends Controller
             ], 404);
         }
 
-        $rows = [];
-
         $programme = Programme::findOrFail($validated['programme_id']);
+        $maxOrder = (int) DB::table('ue_programme')
+            ->where('fk_programme', $validated['programme_id'])
+            ->where('fk_semester', $proSemester->id)
+            ->where('university_id', $universityId)
+            ->max('display_order');
 
         foreach ($validated['list'] as $ue) {
+            $maxOrder++;
             $programme->ues()->syncWithoutDetaching([
                 $ue['id'] => [
                     'fk_semester' => $proSemester->id,
                     'university_id' => $universityId,
+                    'display_order' => $maxOrder,
                 ],
             ]);
-        }
-
-
-        try {
-            // ✅ insertOrIgnore pour respecter l’unicité
-            DB::table('ue_programme')->insertOrIgnore($rows);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de l’ajout des UE',
-            ], 500);
         }
 
         return response()->json([
             'success' => true,
             'message' => 'UE ajoutées au programme avec succès',
-            'added' => count($rows),
+            'added' => count($validated['list']),
         ]);
     }
 
@@ -366,6 +360,7 @@ class ProgrammeController extends Controller
                         'fk_unite_enseignement' => $ueLink->fk_unite_enseignement,
                         'fk_programme' => $newProgramme->id,
                         'fk_semester' => $semesterIdMap[$ueLink->fk_semester],
+                        'display_order' => $ueLink->display_order ?? 0,
                         'university_id' => $universityId,
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -440,7 +435,8 @@ class ProgrammeController extends Controller
             'unite_enseignement.id',
             'unite_enseignement.code',
             'unite_enseignement.name',
-            'unite_enseignement.ects'
+            'unite_enseignement.ects',
+            'ue_programme.display_order'
         )
             ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'unite_enseignement.id')
             ->where('ue_programme.fk_programme', $programmeId)
@@ -448,8 +444,106 @@ class ProgrammeController extends Controller
             ->whereNotIn('unite_enseignement.id', function ($query) {
                 $query->select('fk_ue_child')->from('element_constitutif');
             })
+            ->orderBy('ue_programme.display_order')
+            ->orderBy('ue_programme.id')
             ->with('children')
             ->get();
+    }
+
+    public function reorderUES(Request $request)
+    {
+        $validated = $request->validate([
+            'programme_id' => 'required|integer|exists:programme,id',
+            'semester_id' => 'required|integer|exists:pro_semester,id',
+            'ue_id' => 'required|integer|exists:unite_enseignement,id',
+            'direction' => 'required|in:up,down',
+        ]);
+
+        $universityId = Auth::user()->university_id;
+
+        $semester = DB::table('pro_semester')
+            ->where('id', $validated['semester_id'])
+            ->where('fk_programme', $validated['programme_id'])
+            ->where('university_id', $universityId)
+            ->first();
+
+        if (!$semester) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Semestre introuvable pour ce programme.',
+            ], 404);
+        }
+
+        return DB::transaction(function () use ($validated, $universityId) {
+            $rows = $this->normalizeSemesterOrder(
+                (int) $validated['programme_id'],
+                (int) $validated['semester_id'],
+                (int) $universityId
+            );
+
+            $index = $rows->search(function ($row) use ($validated) {
+                return (int) $row->fk_unite_enseignement === (int) $validated['ue_id'];
+            });
+
+            if ($index === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'UE introuvable dans ce semestre.',
+                ], 404);
+            }
+
+            $neighborIndex = $validated['direction'] === 'up'
+                ? $index - 1
+                : $index + 1;
+
+            if ($neighborIndex < 0 || $neighborIndex >= $rows->count()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Aucun changement d’ordre.',
+                ]);
+            }
+
+            $currentRow = $rows[$index];
+            $neighborRow = $rows[$neighborIndex];
+
+            DB::table('ue_programme')
+                ->where('id', $currentRow->id)
+                ->update(['display_order' => $neighborRow->display_order, 'updated_at' => now()]);
+
+            DB::table('ue_programme')
+                ->where('id', $neighborRow->id)
+                ->update(['display_order' => $currentRow->display_order, 'updated_at' => now()]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Ordre mis à jour avec succès.',
+            ]);
+        });
+    }
+
+    private function normalizeSemesterOrder(int $programmeId, int $semesterId, int $universityId)
+    {
+        $rows = DB::table('ue_programme')
+            ->select('id', 'fk_unite_enseignement', 'display_order')
+            ->where('fk_programme', $programmeId)
+            ->where('fk_semester', $semesterId)
+            ->where('university_id', $universityId)
+            ->orderBy('display_order')
+            ->orderBy('id')
+            ->get()
+            ->values();
+
+        foreach ($rows as $i => $row) {
+            $expected = $i + 1;
+            if ((int) $row->display_order !== $expected) {
+                DB::table('ue_programme')
+                    ->where('id', $row->id)
+                    ->update(['display_order' => $expected, 'updated_at' => now()]);
+                $row->display_order = $expected;
+            }
+        }
+
+        return $rows;
     }
 
 

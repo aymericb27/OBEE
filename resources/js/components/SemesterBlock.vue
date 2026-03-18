@@ -22,7 +22,10 @@
                 {{ semester?.ects ?? "—" }} ECTS
             </span>
             <span v-if="semester.ects !== semester.countECTS"
-                ><i style="color: orange;" class=" fa-solid fa-triangle-exclamation"></i
+                ><i
+                    style="color: orange"
+                    class="fa-solid fa-triangle-exclamation"
+                ></i
             ></span>
             <button
                 @click="openModalUE('UE', null)"
@@ -36,11 +39,32 @@
         <div v-if="isOpen" class="mt-3">
             <div
                 v-if="semester.UES.length !== 0"
-                v-for="UE in semester.UES"
+                v-for="(UE, index) in semester.UES"
                 class="ue-block mb-3"
             >
                 <!-- UE HEADER -->
                 <div class="d-flex align-items-center mb-1">
+                    <span class="d-flex flex-column mr-3">
+                        <button
+                            class="btn btn-sm mb-1 p-0"
+                            :disabled="isReordering || index === 0"
+                            title="Monter"
+                            @click="moveUE(UE, 'up')"
+                        >
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+                        <button
+                            class="btn btn-sm p-0"
+                            :disabled="
+                                isReordering ||
+                                index === semester.UES.length - 1
+                            "
+                            title="Descendre"
+                            @click="moveUE(UE, 'down')"
+                        >
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                    </span>
                     <i
                         v-if="UE.children.length"
                         class="fa-solid"
@@ -68,7 +92,7 @@
                     <span class="badge badge-success ml-2"
                         >{{ UE.ects }} ECTS</span
                     >
-                    <span class="ml-auto">
+                    <span class="ml-auto d-flex align-items-center">
                         <i
                             style="font-size: 24px"
                             @click="openModalDelete(UE)"
@@ -161,6 +185,7 @@ export default {
     props: {
         semester: { type: Object, required: true },
         number: { type: Number, required: true },
+        programId: { type: Number, required: true },
     },
     emits: ["open-ue-modal", "deleteRefresh"],
 
@@ -171,9 +196,49 @@ export default {
             },
             modalDelete: false,
             isOpen: false,
+            isReordering: false,
         };
     },
     methods: {
+        async moveUE(UE, direction) {
+            if (!UE?.id || !this.semester?.id || !this.programId) return;
+
+            const currentIndex = this.semester.UES.findIndex(
+                (item) => item.id === UE.id,
+            );
+            const targetIndex =
+                direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+            if (
+                currentIndex < 0 ||
+                targetIndex < 0 ||
+                targetIndex >= this.semester.UES.length
+            ) {
+                return;
+            }
+
+            this.isReordering = true;
+            try {
+                await axios.post("/programme/ues/reorder", {
+                    programme_id: this.programId,
+                    semester_id: this.semester.id,
+                    ue_id: UE.id,
+                    direction,
+                });
+
+                // Mise a jour dynamique locale sans recharger tout le programme.
+                const next = [...this.semester.UES];
+                [next[currentIndex], next[targetIndex]] = [
+                    next[targetIndex],
+                    next[currentIndex],
+                ];
+                this.semester.UES.splice(0, this.semester.UES.length, ...next);
+            } catch (error) {
+                console.error("Erreur reorder UE :", error);
+            } finally {
+                this.isReordering = false;
+            }
+        },
         async deleteItem() {
             const response = await axios.delete("ue/delete", {
                 params: {

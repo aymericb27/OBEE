@@ -105,6 +105,7 @@
                 <span v-for="semestre in prog.listSemestre">
                     <SemesterBlock
                         :semester="semestre"
+                        :program-id="prog.id"
                         :number="semestre.number"
                         @open-ue-modal="openModalUE"
                         @deleteRefresh="loadProgramDetailed(prog.id)"

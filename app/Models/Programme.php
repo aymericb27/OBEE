@@ -26,7 +26,7 @@ class Programme extends Model
             'ue_programme',
             'fk_programme',
             'fk_unite_enseignement'
-        )->withPivot('fk_semester', 'university_id')
+        )->withPivot('fk_semester', 'university_id', 'display_order')
             ->withTimestamps();
     }
 
