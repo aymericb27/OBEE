@@ -12,7 +12,38 @@ class GenericSingleImportService
 
     public function extract($file, array $config): array
     {
-        $spreadsheet = IOFactory::load($file->getRealPath());
+        if (!$file || !method_exists($file, 'getRealPath')) {
+            throw ValidationException::withMessages([
+                'file' => ["Fichier d'import invalide ou absent."],
+            ]);
+        }
+
+        if (method_exists($file, 'isValid') && !$file->isValid()) {
+            throw ValidationException::withMessages([
+                'file' => ["Le fichier uploadé est invalide (code: {$file->getError()})."],
+            ]);
+        }
+
+        $realPath = $file->getRealPath();
+        if (!$realPath || !is_file($realPath)) {
+            throw ValidationException::withMessages([
+                'file' => ["Le fichier temporaire n'est pas accessible sur le serveur."],
+            ]);
+        }
+
+        if ((int) @filesize($realPath) <= 0) {
+            throw ValidationException::withMessages([
+                'file' => ["Le fichier importé est vide."],
+            ]);
+        }
+
+        try {
+            $spreadsheet = IOFactory::load($realPath);
+        } catch (\Throwable $e) {
+            throw ValidationException::withMessages([
+                'file' => ["Impossible de lire le fichier Excel. Vérifiez qu'il est valide (.xlsx/.xls) et non corrompu."],
+            ]);
+        }
         $this->sheet = $spreadsheet->getActiveSheet();
 
         $type = $config['type'] ?? 'UE';

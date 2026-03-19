@@ -25,12 +25,22 @@ class ImportController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file'   => 'required|file',
+            'file'   => 'required|file|mimes:xlsx,xls|max:20480',
             'config' => 'required|string',
         ]);
 
         $file   = $request->file('file');
         $config = json_decode($request->config, true);
+
+        if (!$file || !$file->isValid()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Le fichier uploadé est invalide.",
+                'errors' => [
+                    'file' => ["Code d'erreur upload: " . ($file?->getError() ?? 'unknown')],
+                ],
+            ], 422);
+        }
 
         if (!isset($config['importMode'])) {
             return response()->json([
@@ -43,7 +53,25 @@ class ImportController extends Controller
 
             case "list":
                 $service = new GenericListImportService();
-                $rows = $service->extract($file, $config);
+                try {
+                    $rows = $service->extract($file, $config);
+                } catch (ValidationException $e) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Le fichier Excel est invalide ou illisible.",
+                        'errors' => $e->errors(),
+                    ], 422);
+                } catch (\Throwable $e) {
+                    Log::error('Import list: lecture du fichier échouée', [
+                        'user_id' => Auth::id(),
+                        'filename' => $file->getClientOriginalName(),
+                        'message' => $e->getMessage(),
+                    ]);
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Erreur lors de la lecture du fichier Excel.",
+                    ], 422);
+                }
 
                 $stored = [];
                 $errors = [];
@@ -121,7 +149,25 @@ class ImportController extends Controller
                 ], empty($errors) ? 200 : 207); // ✅ 207 Multi-Status si partiel
             case "single":
                 $service = new GenericSingleImportService();
-                $data = $service->extract($file, $config);
+                try {
+                    $data = $service->extract($file, $config);
+                } catch (ValidationException $e) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Le fichier Excel est invalide ou illisible.",
+                        'errors' => $e->errors(),
+                    ], 422);
+                } catch (\Throwable $e) {
+                    Log::error('Import single: lecture du fichier échouée', [
+                        'user_id' => Auth::id(),
+                        'filename' => $file->getClientOriginalName(),
+                        'message' => $e->getMessage(),
+                    ]);
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Erreur lors de la lecture du fichier Excel.",
+                    ], 422);
+                }
                 switch ($config['type']) {
                     case 'UE':
                         $stored = $this->storeUE($data);
