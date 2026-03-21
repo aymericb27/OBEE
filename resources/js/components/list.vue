@@ -25,13 +25,13 @@
         <div class="rounded" :class="isResearch ? 'border-top' : 'border'">
             <div class="row m-auto bg-light border-bottom">
                 <div
-                    class="col-md-1 p-2 pl-3"
+                    class="col-md-2 p-2 pl-3"
                     v-if="listColonne.includes('code')"
                 >
                     Code
                 </div>
                 <div
-                    class="col-md-9 p-2 pl-3"
+                    class="col-md-8 p-2 pl-3"
                     v-if="listColonne.includes('name')"
                 >
                     Nom
@@ -75,7 +75,7 @@
                         class="row m-auto"
                     >
                         <div
-                            class="col-md-1 p-3"
+                            class="col-md-2 p-3"
                             v-if="listColonne.includes('code')"
                         >
                             <router-link
@@ -95,7 +95,7 @@
                         </div>
 
                         <div
-                            class="col-md-9 p-3"
+                            class="col-md-8 p-3"
                             v-if="listColonne.includes('name')"
                         >
                             <div class="mb-0">
