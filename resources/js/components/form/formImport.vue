@@ -19,9 +19,17 @@
                     </button>
                 </div>
             </div>
-            <div v-if="missingUELinksMessage" class="alert alert-warning">
+            <div
+                v-if="missingUELinksMessage || importWarnings.length"
+                class="alert alert-warning text-left"
+            >
                 <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                {{ missingUELinksMessage }}
+                <div v-if="missingUELinksMessage">{{ missingUELinksMessage }}</div>
+                <ul v-if="importWarnings.length" class="mb-0 mt-2">
+                    <li v-for="(warn, i) in importWarnings" :key="i">
+                        {{ warn }}
+                    </li>
+                </ul>
             </div>
             <!-- SECTION : Choix du type d'import -->
             <div class="row">
@@ -323,6 +331,7 @@ export default {
             successMessage: "",
             editTarget: null,
             missingUELinksMessage: "",
+            importWarnings: [],
             isLoading: false,
             excelFile: null,
             fullData: [],
@@ -713,12 +722,36 @@ export default {
 
             return out;
         },
+        formatImportWarnings(payload) {
+            const out = [];
+            const list = payload?.warnings;
+            if (!Array.isArray(list)) return out;
+
+            for (const w of list) {
+                if (typeof w === "string") {
+                    out.push(w);
+                    continue;
+                }
+
+                const message = w?.message || "Avertissement";
+                const line = w?.excelRow ?? w?.row?.__row ?? null;
+
+                if (line) {
+                    out.push(`Ligne ${line} : ${message}`);
+                } else {
+                    out.push(message);
+                }
+            }
+
+            return out;
+        },
 
         async sendImport() {
             this.errors = [];
             this.successMessage = "";
             this.editTarget = null;
             this.missingUELinksMessage = "";
+            this.importWarnings = [];
             this.isLoading = true;
 
             if (!this.validateRequiredImportFields()) {
@@ -735,6 +768,8 @@ export default {
 
                 // si le backend renvoie errors même en 200/207
                 const apiErrors = this.formatImportErrors(res.data);
+                const apiWarnings = this.formatImportWarnings(res.data);
+                this.importWarnings = apiWarnings;
 
                 if (apiErrors.length) {
                     this.errors = apiErrors;
@@ -759,6 +794,7 @@ export default {
                     this.errors = apiErrors;
                     this.editTarget = null;
                     this.missingUELinksMessage = "";
+                    this.importWarnings = [];
                     return;
                 }
 
@@ -766,11 +802,13 @@ export default {
                     this.errors = Object.values(data.errors).flat();
                     this.editTarget = null;
                     this.missingUELinksMessage = "";
+                    this.importWarnings = [];
                     return;
                 }
 
                 this.editTarget = null;
                 this.missingUELinksMessage = "";
+                this.importWarnings = [];
                 this.errors.push(data?.message || "Erreur inconnue.");
             } finally {
                 this.isLoading = false;
