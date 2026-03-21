@@ -65,12 +65,7 @@
                     <h2 class="secondary_color mb-1 d-inline-block">
                         {{ prog.name }}
                     </h2>
-                    <!--                     <button
-                        class="btn btn-lg btn-primary float-right ml-auto mb-2"
-                        @click="openSemesterModal"
-                    >
-                        + ajout semestre
-                    </button> -->
+
                     <div class="float-right d-flex flex-column align-items-end">
                         <router-link
                             :to="{
@@ -114,27 +109,7 @@
             </div>
         </div>
     </div>
-    <!-- Modal ajout semestre -->
-    <!--     <div v-if="showSemesterModal" class="modal-backdrop-custom">
-        <div class="modal-custom">
-            <h4 class="mb-3">Confirmation</h4>
 
-            <p>Voulez-vous vraiment rajouter un semestre ?</p>
-
-            <div class="text-right mt-4">
-                <button
-                    class="btn btn-secondary mr-2"
-                    @click="showSemesterModal = false"
-                >
-                    Non
-                </button>
-
-                <button class="btn btn-primary" @click="confirmAddSemester">
-                    Oui, ajouter
-                </button>
-            </div>
-        </div>
-    </div> -->
     <div v-if="showCopyModal" class="modal-backdrop-custom">
         <div class="modal-custom">
             <h4 class="mb-3">Confirmation</h4>
@@ -241,6 +216,18 @@ export default {
     },
 
     methods: {
+        getStoredProgramId() {
+            const raw = sessionStorage.getItem("tree.selectedProgramId");
+            const parsed = Number(raw);
+            return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+        },
+        setStoredProgramId(id) {
+            if (!id) return;
+            sessionStorage.setItem("tree.selectedProgramId", String(id));
+        },
+        clearStoredProgramId() {
+            sessionStorage.removeItem("tree.selectedProgramId");
+        },
         openModalUE(param) {
             this.UEsToExclude = param.semester.UES;
             this.modalTarget = "ue";
@@ -295,8 +282,16 @@ export default {
             const response = await axios.get("pro/get");
             this.progs = response.data;
             if (this.progs.length) {
-                this.selectProgram(this.progs[0].id);
+                const storedId = this.getStoredProgramId();
+                const hasStoredProgram = storedId
+                    ? this.progs.some((p) => p.id === storedId)
+                    : false;
+                const programIdToSelect = hasStoredProgram
+                    ? storedId
+                    : this.progs[0].id;
+                this.selectProgram(programIdToSelect);
             } else {
+                this.clearStoredProgramId();
                 this.isLoadingSEM = false;
             }
             this.isLoadingPRO = false;
@@ -304,6 +299,7 @@ export default {
 
         async selectProgram(id) {
             this.selectedProgramId = id;
+            this.setStoredProgramId(id);
             this.loadProgramDetailed(id);
         },
 
