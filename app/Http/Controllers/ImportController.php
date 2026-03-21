@@ -14,6 +14,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\ErrorHandler\Debug;
@@ -308,6 +309,9 @@ class ImportController extends Controller
             throw new ValidationException($validator);
         }
 
+        DB::beginTransaction();
+        try {
+
         // --------------------------
         // 1) Création UE
         // --------------------------
@@ -505,7 +509,12 @@ class ImportController extends Controller
             }
         }
 
+        DB::commit();
         return $ue;
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
 
@@ -573,6 +582,9 @@ class ImportController extends Controller
         // --------------------------
         // 1) Création AAT
         // --------------------------
+        DB::beginTransaction();
+        try {
+
         $aatCode = trim($main['code'] ?? '');
         $aatName = trim($main['name'] ?? '');
         $aatDesc = $main['description'] ?? null;
@@ -685,6 +697,11 @@ class ImportController extends Controller
             }
         }
 
+        DB::commit();
         return $aat;
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }
