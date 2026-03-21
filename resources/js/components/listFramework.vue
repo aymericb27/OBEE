@@ -127,6 +127,7 @@
                     :typeList="formFilter.displayElement"
                     :paramsRouteGET="formFilter"
                     :listColonne="listColonne"
+                    :sortByCode="true"
                     :isResearch="true"
                 />
             </div>

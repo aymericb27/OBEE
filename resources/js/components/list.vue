@@ -213,6 +213,7 @@ export default {
         isBorder: { type: Boolean, default: false },
         isResearch: { type: Boolean, default: false },
         listColonne: Array,
+        sortByCode: { type: Boolean, default: false },
         paramsRouteGET: {
             type: Object,
             required: false,
@@ -233,14 +234,38 @@ export default {
 
     computed: {
         filteredItems() {
-            if (!this.search) return this.items;
-
             const lower = this.search.toLowerCase();
-            return this.items.filter(
+            const filtered = !this.search
+                ? [...this.items]
+                : this.items.filter(
                 (item) =>
                     (item.code && item.code.toLowerCase().includes(lower)) ||
                     (item.name && item.name.toLowerCase().includes(lower)),
             );
+
+            if (!this.sortByCode) return filtered;
+
+            return filtered.sort((a, b) => {
+                const codeA = a?.code ?? "";
+                const codeB = b?.code ?? "";
+
+                if (codeA && codeB) {
+                    return codeA.localeCompare(codeB, undefined, {
+                        numeric: true,
+                        sensitivity: "base",
+                    });
+                }
+
+                if (codeA) return -1;
+                if (codeB) return 1;
+
+                const nameA = a?.name ?? "";
+                const nameB = b?.name ?? "";
+                return nameA.localeCompare(nameB, undefined, {
+                    numeric: true,
+                    sensitivity: "base",
+                });
+            });
         },
 
         totalPages() {
