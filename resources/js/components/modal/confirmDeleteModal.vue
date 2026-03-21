@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div
         class="modal fade"
         :class="{ show: show }"
@@ -17,42 +17,40 @@
                         Êtes-vous sûr de vouloir supprimer
                         <strong>{{ name }}</strong> ?
                     </p>
+
                     <div v-if="type == 'AAV'" class="alert alert-danger mt-3">
                         <div class="mb-3">
                             <i
                                 class="fa-solid fa-triangle-exclamation"
                                 style="color: crimson; font-size: 24px"
                             ></i>
-                            Attention, supprimer une unité d'enseignement a des
-                            conséquences ! Cela influe sur l'acquis
-                            d'apprentissage terminal et les unités
-                            d'enseignement liés.
+                            Attention, supprimer un acquis d'apprentissage visé a des
+                            conséquences. Cela influe sur les unités d'enseignement liées.
                         </div>
                         <div v-if="ueVise.length">
                             <div>
-                                cette acquis d'apprentissage est un des acquis
-                                d'apprentissage du/des unités d'enseignement
-                                suivantes
+                                cet acquis d'apprentissage est visé par la/les unité(s)
+                                d'enseignement suivante(s)
                             </div>
                             <ul class="mt-3">
-                                <li v-for="ue in ueVise">
+                                <li v-for="ue in ueVise" :key="ue.id">
                                     <strong>{{ ue.name }}</strong>
                                 </li>
                             </ul>
                         </div>
                         <div v-if="uePre.length">
                             <div>
-                                cette acquis d'apprentissage est un des
-                                prérequis du/des unités d'enseignement
-                                suivantes
+                                cet acquis d'apprentissage est un prérequis de la/des unité(s)
+                                d'enseignement suivante(s)
                             </div>
                             <ul class="mt-3">
-                                <li v-for="ue in uePre">
+                                <li v-for="ue in uePre" :key="ue.id">
                                     <strong>{{ ue.name }}</strong>
                                 </li>
                             </ul>
                         </div>
                     </div>
+
                     <div v-if="type == 'UE'" class="alert alert-danger mt-3">
                         <div class="mb-3">
                             <i
@@ -60,63 +58,79 @@
                                 style="color: crimson; font-size: 24px"
                             ></i>
                             Attention, supprimer une unité d'enseignement a des
-                            conséquences ! Cela influe sur le programme et
-                            l'acquis d'apprentissage terminal.
+                            conséquences. Cela influe sur les programmes et les acquis
+                            d'apprentissage terminaux.
+                        </div>
+                        <div v-if="ues.length">
+                            <div>
+                                cette unité d'enseignement est utilisée dans le/les programme(s)
+                                suivant(s)
+                            </div>
+                            <ul class="mt-3">
+                                <li
+                                    v-for="pro in ues"
+                                    :key="`${pro.id}-${pro.semester ?? ''}`"
+                                >
+                                    <strong>{{ pro.code }}</strong> {{ pro.name }}
+                                    <span v-if="pro.semester">
+                                        (semestre {{ pro.semester }})
+                                    </span>
+                                </li>
+                            </ul>
                         </div>
                         <div v-if="aavs.length">
                             <div>
-                                cette unité d'enseignement a des acquis
-                                d'apprentissage visés qui se retrouveront sans
-                                unité d'enseignement si celle ci est supprimé
+                                cette unité d'enseignement a des acquis d'apprentissage visés
+                                qui se retrouveront sans unité d'enseignement si celle-ci est
+                                supprimée
                             </div>
                             <ul class="mt-3">
-                                <li v-for="aav in aavs">
+                                <li v-for="aav in aavs" :key="aav.id">
                                     <strong>{{ aav.name }}</strong>
                                 </li>
                             </ul>
                         </div>
                     </div>
+
                     <div v-if="type == 'AAT'" class="alert alert-danger mt-3">
                         <div class="mb-3">
                             <i
                                 class="fa-solid fa-triangle-exclamation"
                                 style="color: crimson; font-size: 24px"
                             ></i>
-                            Attention, supprimer un acquis d'apprentissage
-                            terminal a des conséquences ! Cela influe sur les
-                            acquis d'apprentissage liés
+                            Attention, supprimer un acquis d'apprentissage terminal a des
+                            conséquences. Cela influe sur les acquis d'apprentissage liés.
                         </div>
                         <div v-if="aavs.length">
                             <div>
-                                cette acquis d'apprentissage terminal a des
-                                acquis d'apprentissage visés qui se
-                                retrouveront sans acquis d'apprentissage
-                                terminal si celle ci est supprimé
+                                cet acquis d'apprentissage terminal a des acquis
+                                d'apprentissage visés qui se retrouveront sans acquis
+                                d'apprentissage terminal si celui-ci est supprimé
                             </div>
                             <ul class="mt-3">
-                                <li v-for="aav in aavs">
+                                <li v-for="aav in aavs" :key="aav.id">
                                     <strong>{{ aav.name }}</strong>
                                 </li>
                             </ul>
                         </div>
                     </div>
+
                     <div v-if="type == 'PRO'" class="alert alert-danger mt-3">
                         <div class="mb-3">
                             <i
                                 class="fa-solid fa-triangle-exclamation"
                                 style="color: crimson; font-size: 24px"
                             ></i>
-                            Attention, supprimer un programme a des conséquences
-                            ! Cela influe sur les unités d'apprentissage liés
+                            Attention, supprimer un programme a des conséquences. Cela influe
+                            sur les unités d'enseignement liées.
                         </div>
                         <div v-if="ues.length">
                             <div>
-                                ce programme a des unités d'enseignement lié
-                                qui se retrouveront sans programme si celui ci
-                                est supprimé
+                                ce programme a des unités d'enseignement liées qui se
+                                retrouveront sans programme si celui-ci est supprimé
                             </div>
                             <ul class="mt-3">
-                                <li v-for="ue in ues">
+                                <li v-for="ue in ues" :key="ue.id">
                                     <strong>{{ ue.name }}</strong>
                                 </li>
                             </ul>
@@ -144,7 +158,6 @@
             </div>
         </div>
 
-        <!-- Backdrop -->
         <div class="modal-backdrop fade show"></div>
     </div>
 </template>
@@ -156,45 +169,56 @@ import axios from "axios";
 const props = defineProps({
     show: Boolean,
     name: String,
-    type: { type: String, default: "GENERAL" }, // UE, AAV, AAT, etc.
-    idToDelete: [String, Number], // id de l'objet à supprimer
+    type: { type: String, default: "GENERAL" },
+    idToDelete: [String, Number],
 });
+
 const ueVise = ref([]);
 const aavs = ref([]);
 const uePre = ref([]);
 const ues = ref([]);
 const loading = ref(false);
+
 defineEmits(["confirm", "cancel"]);
 
 watch(
     () => props.show,
     async (value) => {
-        // Si c'est une UE : appeler les AAV avant suppression
+        if (value) {
+            ueVise.value = [];
+            aavs.value = [];
+            uePre.value = [];
+            ues.value = [];
+        }
+
         if (value && props.type === "AAV") {
             loading.value = true;
             try {
                 const resVise = await axios.get("/aav/UEvise/get", {
                     params: { id: props.idToDelete },
                 });
-                ueVise.value = resVise.data;
+                ueVise.value = Array.isArray(resVise.data) ? resVise.data : [];
+
                 const resPre = await axios.get("/aav/UEPrerequis/get", {
                     params: { id: props.idToDelete },
                 });
-                uePre.value = resPre.data;
+                uePre.value = Array.isArray(resPre.data) ? resPre.data : [];
             } catch (err) {
                 console.error(err);
                 ueVise.value = [];
+                uePre.value = [];
             } finally {
                 loading.value = false;
             }
         }
+
         if (value && props.type === "AAT") {
             loading.value = true;
             try {
                 const res = await axios.get("/aat/aavs/get", {
                     params: { id: props.idToDelete },
                 });
-                aavs.value = res.data;
+                aavs.value = Array.isArray(res.data) ? res.data : [];
             } catch (err) {
                 console.error(err);
                 aavs.value = [];
@@ -202,13 +226,14 @@ watch(
                 loading.value = false;
             }
         }
+
         if (value && props.type === "PRO") {
             loading.value = true;
             try {
                 const res = await axios.get("/pro/ue/get", {
                     params: { id: props.idToDelete },
                 });
-                ues.value = res.data;
+                ues.value = Array.isArray(res.data) ? res.data : [];
             } catch (err) {
                 console.error(err);
                 ues.value = [];
@@ -216,19 +241,35 @@ watch(
                 loading.value = false;
             }
         }
+
         if (value && props.type === "UE") {
             loading.value = true;
             try {
-                const res = await axios.get("/ue/aavvise/get/onlyParent", {
-                    params: { id: props.idToDelete },
-                });
-                aavs.value = res.data;
+                const [resAAV, resPro] = await Promise.all([
+                    axios.get("/ue/aavvise/get/onlyParent", {
+                        params: { id: props.idToDelete },
+                    }),
+                    axios.get("/ue/pro/get", {
+                        params: { id: props.idToDelete },
+                    }),
+                ]);
+
+                aavs.value = Array.isArray(resAAV.data) ? resAAV.data : [];
+                ues.value = Array.isArray(resPro.data) ? resPro.data : [];
             } catch (err) {
                 console.error(err);
                 aavs.value = [];
+                ues.value = [];
             } finally {
                 loading.value = false;
             }
+        }
+
+        if (!value) {
+            ueVise.value = [];
+            aavs.value = [];
+            uePre.value = [];
+            ues.value = [];
         }
     }
 );

@@ -170,8 +170,10 @@
     <ConfirmDeleteModal
         :show="modalDelete"
         :name="ueSelected.name"
+        type="UE"
+        :idToDelete="ueSelected.id"
         @confirm="deleteItem"
-        @cancel="modalDelete = false"
+        @cancel="closeDeleteModal"
     />
 </template>
 
@@ -192,6 +194,7 @@ export default {
     data() {
         return {
             ueSelected: {
+                id: null,
                 name: "",
             },
             modalDelete: false,
@@ -240,17 +243,21 @@ export default {
             }
         },
         async deleteItem() {
-            const response = await axios.delete("ue/delete", {
+            await axios.delete("ue/delete", {
                 params: {
                     id: this.ueSelected.id,
                 },
             });
-            this.modalDelete = false;
+            this.closeDeleteModal();
             this.$emit("deleteRefresh");
         },
         openModalDelete(UE) {
             this.modalDelete = true;
             this.ueSelected = UE;
+        },
+        closeDeleteModal() {
+            this.modalDelete = false;
+            this.ueSelected = { id: null, name: "" };
         },
         openModalUE(type, UE) {
             this.$emit("open-ue-modal", {
