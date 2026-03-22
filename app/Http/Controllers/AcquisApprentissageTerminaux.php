@@ -170,11 +170,21 @@ class AcquisApprentissageTerminaux extends Controller
         })
             ->with(['aats' => function ($q) use ($validated) {
                 $q->where('acquis_apprentissage_terminaux.id', $validated['id']);
+            }, 'aavvise' => function ($q) {
+                $q->select('unite_enseignement.id', 'unite_enseignement.code', 'unite_enseignement.name');
             }])
             ->select('id', 'code', 'name')
             ->get()
             ->map(function ($aav) use ($aat) {
                 $aatPivot = $aav->aats->first()?->pivot;
+                $ues = $aav->aavvise
+                    ->map(fn($ue) => [
+                        'id' => $ue->id,
+                        'code' => $ue->code,
+                        'name' => $ue->name,
+                    ])
+                    ->unique('id')
+                    ->values();
 
                 return [
                     'id' => $aav->id,
@@ -182,6 +192,7 @@ class AcquisApprentissageTerminaux extends Controller
                     'name' => $aav->name,
                     'contribution' => $aatPivot?->contribution,
                     'level_contribution' => $aat->level_contribution,
+                    'ues' => $ues,
                 ];
             });
 

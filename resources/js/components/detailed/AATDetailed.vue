@@ -62,7 +62,7 @@
                         :paramsRouteGET="{ id: aat.id }"
                         linkDetailed="aav-detail"
                         typeList="AAV"
-                        :listColonne="['code', 'name','contribution']"
+                        :listColonne="['code', 'name', 'ues', 'contribution']"
                     />
                 </div>
             </div>

@@ -11,13 +11,19 @@
             />
             <i class="fa fa-search position-absolute search-icon"></i>
         </div>
-        <div class="d-flex justify-content-end align-items-center gap-2 mb-2 mr-2">
+        <div
+            class="d-flex justify-content-end align-items-center gap-2 mb-2 mr-2"
+        >
             <label class="mb-0 small mr-2">Nombre d'élément à afficher</label>
             <select
                 v-model.number="pageSize"
                 class="form-control form-select form-select-sm w-auto"
             >
-                <option v-for="size in pageSizeOptions" :key="size" :value="size">
+                <option
+                    v-for="size in pageSizeOptions"
+                    :key="size"
+                    :value="size"
+                >
                     {{ size }}
                 </option>
             </select>
@@ -31,7 +37,10 @@
                     Code
                 </div>
                 <div
-                    class="col-md-8 p-2 pl-3"
+                    :class="
+                        listColonne.includes('ues') ? 'col-md-6 ' : 'col-md-8 '
+                    "
+                    class="p-2 pl-3"
                     v-if="listColonne.includes('name')"
                 >
                     Nom
@@ -48,6 +57,13 @@
                 >
                     ECTS
                 </div>
+
+                <div
+                    class="col-md-2 p-2 pl-3"
+                    v-if="listColonne.includes('ues')"
+                >
+                    UE liées
+                </div>
                 <div
                     class="col-md-1 p-2 pl-3"
                     v-if="listColonne.includes('contribution')"
@@ -55,7 +71,7 @@
                     contribution
                 </div>
                 <div
-                    class="col-md-2 p-2"
+                    class="col-md-2 p-2 pl-3"
                     v-if="listColonne.includes('element_constitutif_aav')"
                 >
                     Element constitutif
@@ -95,7 +111,11 @@
                         </div>
 
                         <div
-                            class="col-md-8 p-3"
+                            :class="
+                                listColonne.includes('ues')
+                                    ? 'col-md-6 p-3'
+                                    : 'col-md-8 p-3'
+                            "
                             v-if="listColonne.includes('name')"
                         >
                             <div class="mb-0">
@@ -127,7 +147,38 @@
                         >
                             {{ item.ects }}
                         </div>
-
+                        <div
+                            class="col-md-2 p-3"
+                            v-if="listColonne.includes('ues')"
+                        >
+                            <span
+                                v-if="
+                                    Array.isArray(item.ues) && item.ues.length
+                                "
+                            >
+                                <template
+                                    v-for="(ue, ueIndex) in item.ues"
+                                    :key="ue.id"
+                                >
+                                    <router-link
+                                        :to="{
+                                            name: 'ue-detail',
+                                            params: { id: ue.id },
+                                        }"
+                                    >
+                                        <h6
+                                            class="UE mr-1 d-inline-block"
+                                            style="font-size: 1.1em"
+                                            >{{ ue.code }}</h6
+                                        >
+                                    </router-link>
+                                    <span v-if="ueIndex < item.ues.length - 1"
+                                        >,
+                                    </span>
+                                </template>
+                            </span>
+                            <span v-else>-</span>
+                        </div>
                         <div
                             class="col-md-1 p-3 text-center"
                             v-if="listColonne.includes('contribution')"
@@ -143,6 +194,7 @@
                                 {{ item.contribution }}
                             </span>
                         </div>
+
                         <div
                             class="col-md-1 p-3"
                             v-if="
@@ -199,7 +251,7 @@
 </template>
 
 <script>
-import BaseLoader from "./modal/baseLoader.vue"
+import BaseLoader from "./modal/baseLoader.vue";
 
 import axios from "axios";
 
@@ -238,10 +290,12 @@ export default {
             const filtered = !this.search
                 ? [...this.items]
                 : this.items.filter(
-                (item) =>
-                    (item.code && item.code.toLowerCase().includes(lower)) ||
-                    (item.name && item.name.toLowerCase().includes(lower)),
-            );
+                      (item) =>
+                          (item.code &&
+                              item.code.toLowerCase().includes(lower)) ||
+                          (item.name &&
+                              item.name.toLowerCase().includes(lower)),
+                  );
 
             if (!this.sortByCode) return filtered;
 
@@ -367,4 +421,3 @@ export default {
     pointer-events: none; /* évite que l’icône bloque les clics */
 }
 </style>
-
