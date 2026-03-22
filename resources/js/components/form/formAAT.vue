@@ -10,22 +10,32 @@
                 {{ form.id ? "Modification" : "Création" }} d'un acquis
                 d'apprentissage terminal
             </h3>
-            <div class="mb-3">
-                <h5 class="primary_color">
-                    Libellé
-                    <strong class="text-danger">*</strong>
-                </h5>
-                <input
-                    type="text"
-                    v-model="form.name"
-                    class="form-control"
-                    required
-                />
+            <div class="row">
+                <div class="mb-3 col-md-3">
+                    <h5 class="primary_color">Sigle</h5>
+                    <input
+                        type="text"
+                        v-model="form.code"
+                        class="form-control"
+                        placeholder="Ex: AAT001"
+                    />
+                </div>
+                <div class="mb-3 col-md-9">
+                    <h5 class="primary_color">
+                        Libellé
+                        <strong class="text-danger">*</strong>
+                    </h5>
+                    <input
+                        type="text"
+                        v-model="form.name"
+                        class="form-control"
+                        required
+                    />
+                </div>
             </div>
+
             <div class="form-group mb-3">
-                <h5 class="primary_color">
-                    description
-                </h5>
+                <h5 class="primary_color">description</h5>
                 <quill-editor
                     v-model:content="form.description"
                     content-type="html"
@@ -75,6 +85,7 @@ export default {
         return {
             form: {
                 id: null,
+                code: "",
                 name: "",
                 description: "",
                 level_contribution: 3,
@@ -104,7 +115,7 @@ export default {
             const route = this.form.id ? "aat-detail" : "levels";
 
             const response = await axios.post(url, this.form);
-            // ✅ Redirection avec message (query param)
+            // Redirection avec message (query param)
             this.$router.push({
                 name: route,
                 params: { id: response.data.id },

@@ -28,6 +28,7 @@
                     <router-link
                         :to="{
                             name: 'modifyAAT',
+                            params: { id: aat.id },
                         }"
                     >
                         <i

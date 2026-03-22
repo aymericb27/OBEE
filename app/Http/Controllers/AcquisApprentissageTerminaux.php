@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\AcquisApprentissageTerminaux as AAT;
 use App\Models\AcquisApprentissageVise as AAV;
-use App\Models\AcquisApprentissageVise;
 use App\Models\ElementConstitutif;
 use App\Models\UniteEnseignement;
 use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class AcquisApprentissageTerminaux extends Controller
 {
@@ -105,8 +104,18 @@ class AcquisApprentissageTerminaux extends Controller
 
     public function update(Request $request)
     {
+        $universityId = Auth::user()->university_id;
+
         $validated = $request->validate([
             'id' => ['required', 'integer', 'exists:acquis_apprentissage_terminaux,id'],
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('acquis_apprentissage_terminaux', 'code')
+                    ->where(fn($q) => $q->where('university_id', $universityId))
+                    ->ignore($request->input('id')),
+            ],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:2024',
             'level_contribution' => 'required|integer|min:3|max:10',
@@ -125,6 +134,7 @@ class AcquisApprentissageTerminaux extends Controller
      |--------------------------------------------------------------------------
      */
         $aat->update([
+            'code' => $validated['code'],
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'level_contribution' => $validated['level_contribution'],
@@ -132,6 +142,7 @@ class AcquisApprentissageTerminaux extends Controller
 
         return response()->json([
             'success' => true,
+            'id' => $aat->id,
             'message' => 'AAT mis à jour avec succès.',
         ]);
     }
@@ -179,7 +190,16 @@ class AcquisApprentissageTerminaux extends Controller
 
     public function store(Request $request)
     {
+        $universityId = Auth::user()->university_id;
+
         $validated = $request->validate([
+            'code'        => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('acquis_apprentissage_terminaux', 'code')
+                    ->where(fn($q) => $q->where('university_id', $universityId)),
+            ],
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string|max:2024',
             'level_contribution' => 'required|integer|min:3|max:10',
@@ -192,15 +212,16 @@ class AcquisApprentissageTerminaux extends Controller
         if (empty($validated['code'])) {
             $validated['code'] = $this->codeGen->nextAAT();
         }
-        $validated['university_id'] = Auth::user()->university_id;
+        $validated['university_id'] = $universityId;
 
 
         $aav = AAT::create($validated);
 
         return response()->json([
             'success' => true,
+            'id' => $aav->id,
             'aav' => $aav,
-            'message' => "AAV créé avec succès."
+            'message' => "AAT créé avec succès."
         ]);
     }
 }
