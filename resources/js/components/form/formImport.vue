@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="pb-5">
         <div class="m-5 p-5 border bg-white">
             <!-- 🌋 Erreurs -->
@@ -23,8 +23,10 @@
                 v-if="missingUELinksMessage || importWarnings.length"
                 class="alert alert-warning text-left"
             >
-                <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                <div v-if="missingUELinksMessage">{{ missingUELinksMessage }}</div>
+                <div v-if="missingUELinksMessage">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    {{ missingUELinksMessage }}
+                </div>
                 <ul v-if="importWarnings.length" class="mb-0 mt-2">
                     <li v-for="(warn, i) in importWarnings" :key="i">
                         {{ warn }}
@@ -184,6 +186,22 @@
                 class="mt-4"
             >
                 <h5 v-if="config.type == 'UE'">Unité d'enseignement</h5>
+                <div v-if="canChooseProgrammeSemester" class="mb-3">
+                    <button
+                        type="button"
+                        class="primary_color btn btn-link p-0 text-decoration-underline"
+                        @click="openProgramModal"
+                    >
+                        choisir un semestre parmis les programmes
+                    </button>
+
+                    <div v-if="selectedProgrammeLink" class="mt-2">
+                        <h5 class="d-inline-block">Programme</h5>
+                        : {{ selectedProgrammeLink.code }} -
+                        {{ selectedProgrammeLink.name }} | Semestres
+                        {{ selectedProgrammeLink.semesters.join(", ") }}
+                    </div>
+                </div>
 
                 <div
                     class="row mb-2"
@@ -253,6 +271,80 @@
             </div>
         </div>
     </div>
+
+    <modalList
+        type="PRO"
+        v-if="showProgramModal"
+        :visible="showProgramModal"
+        :singleSelect="true"
+        routeGET="/pro/get"
+        title="Choisir un programme"
+        @selected="handleProgramSelected"
+        @close="showProgramModal = false"
+    />
+
+    <div
+        v-if="showSemesterModal"
+        class="modal fade show"
+        tabindex="-1"
+        style="display: block"
+        role="dialog"
+        aria-modal="true"
+        @click.self="closeSemesterModal"
+    >
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Choisir un semestre</h5>
+                </div>
+
+                <div class="modal-body">
+                    <div v-if="!availableSemesters.length" class="text-muted">
+                        Aucun semestre trouvé pour ce programme.
+                    </div>
+
+                    <div
+                        v-for="sem in availableSemesters"
+                        :key="sem.semester"
+                        class="form-check mb-3"
+                    >
+                        <input
+                            :id="`semester-${sem.semester}`"
+                            v-model="selectedSemesters"
+                            class="form-check-input"
+                            type="checkbox"
+                            :value="sem.semester"
+                        />
+                        <label
+                            class="form-check-label mt-0"
+                            :for="`semester-${sem.semester}`"
+                        >
+                            Semestre {{ sem.semester }}
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-secondary"
+                        @click="closeSemesterModal"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        class="btn btn-primary"
+                        :disabled="!selectedSemesters.length"
+                        @click="confirmSemesterSelection"
+                    >
+                        Valider
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showSemesterModal" class="modal-backdrop fade show"></div>
+
     <!-- Modal aide importMode -->
     <div
         v-if="showImportModeHelp"
@@ -318,20 +410,28 @@
 <script>
 import * as XLSX from "xlsx";
 import axios from "axios";
+import modalList from "../modalList.vue";
 const STORAGE_KEY = "import_generic_config_v1";
 
 export default {
+    components: { modalList },
     data() {
         return {
             isDragging: false,
             showImportModeHelp: false,
             isHydrating: true,
+            showProgramModal: false,
+            showSemesterModal: false,
+            selectedProgramDraft: null,
+            selectedSemesters: [],
+            availableSemesters: [],
 
             errors: [],
             successMessage: "",
             editTarget: null,
             missingUELinksMessage: "",
             importWarnings: [],
+            selectedProgrammeLink: null,
             isLoading: false,
             excelFile: null,
             fullData: [],
@@ -503,6 +603,11 @@ export default {
                 ];
             return [];
         },
+        canChooseProgrammeSemester() {
+            return (
+                this.config.importMode === "single" && this.config.type === "UE"
+            );
+        },
     },
     watch: {
         config: {
@@ -510,6 +615,16 @@ export default {
             handler(newVal) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
             },
+        },
+        "config.type"(newType) {
+            if (newType !== "UE") {
+                this.resetProgrammeSemesterSelection();
+            }
+        },
+        "config.importMode"(newMode) {
+            if (newMode !== "single") {
+                this.resetProgrammeSemesterSelection();
+            }
         },
     },
 
@@ -745,6 +860,79 @@ export default {
 
             return out;
         },
+        openProgramModal() {
+            if (!this.canChooseProgrammeSemester) return;
+            this.showProgramModal = true;
+        },
+        async handleProgramSelected(selectedItems) {
+            if (!Array.isArray(selectedItems) || selectedItems.length !== 1) {
+                this.errors = ["Veuillez sélectionner un seul programme."];
+                return;
+            }
+
+            const program = selectedItems[0];
+            if (!program?.id) return;
+
+            this.showProgramModal = false;
+            this.selectedProgramDraft = program;
+            this.selectedSemesters = [];
+            this.availableSemesters = [];
+
+            try {
+                const response = await axios.get("/pro/get/detailed", {
+                    params: { id: program.id },
+                });
+                const semesters = Array.isArray(response.data?.semester)
+                    ? response.data.semester
+                    : [];
+
+                this.availableSemesters = semesters;
+                this.showSemesterModal = true;
+            } catch (error) {
+                this.errors = [
+                    "Impossible de charger les semestres du programme sélectionné.",
+                ];
+                this.selectedProgramDraft = null;
+            }
+        },
+        confirmSemesterSelection() {
+            if (
+                !this.selectedProgramDraft ||
+                !Array.isArray(this.selectedSemesters) ||
+                !this.selectedSemesters.length
+            ) {
+                return;
+            }
+
+            this.selectedProgrammeLink = {
+                id: this.selectedProgramDraft.id,
+                code: this.selectedProgramDraft.code,
+                name: this.selectedProgramDraft.name,
+                semesters: this.selectedSemesters
+                    .map((s) => Number(s))
+                    .filter((s) => Number.isInteger(s) && s > 0)
+                    .sort((a, b) => a - b),
+            };
+
+            this.showSemesterModal = false;
+            this.selectedProgramDraft = null;
+            this.selectedSemesters = [];
+            this.availableSemesters = [];
+        },
+        closeSemesterModal() {
+            this.showSemesterModal = false;
+            this.selectedProgramDraft = null;
+            this.selectedSemesters = [];
+            this.availableSemesters = [];
+        },
+        resetProgrammeSemesterSelection() {
+            this.showProgramModal = false;
+            this.showSemesterModal = false;
+            this.selectedProgramDraft = null;
+            this.selectedSemesters = [];
+            this.availableSemesters = [];
+            this.selectedProgrammeLink = null;
+        },
 
         async sendImport() {
             this.errors = [];
@@ -762,7 +950,18 @@ export default {
 
             const form = new FormData();
             form.append("file", this.excelFile);
-            form.append("config", JSON.stringify(this.config));
+
+            const payloadConfig = JSON.parse(JSON.stringify(this.config));
+            if (this.canChooseProgrammeSemester && this.selectedProgrammeLink) {
+                payloadConfig.selectedProgrammeLink = {
+                    id: this.selectedProgrammeLink.id,
+                    code: this.selectedProgrammeLink.code,
+                    name: this.selectedProgrammeLink.name,
+                    semesters: this.selectedProgrammeLink.semesters,
+                };
+            }
+
+            form.append("config", JSON.stringify(payloadConfig));
             try {
                 const res = await axios.post("/import/generic", form);
 
@@ -869,14 +1068,14 @@ export default {
                 links.aats.some(
                     (row) =>
                         String(row?.code || "").trim() ||
-                        String(row?.libelle || "").trim()
+                        String(row?.libelle || "").trim(),
                 );
             const hasAAV =
                 Array.isArray(links.aavs) &&
                 links.aavs.some(
                     (row) =>
                         String(row?.code || "").trim() ||
-                        String(row?.libelle || "").trim()
+                        String(row?.libelle || "").trim(),
                 );
 
             if (!hasAAV && !hasAAT) {
@@ -951,4 +1150,3 @@ label {
     margin-top: 0.5rem;
 }
 </style>
-

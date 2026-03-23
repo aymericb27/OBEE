@@ -49,10 +49,24 @@
                         >
                             <div class="col-md-1 text-right p-2">
                                 <input
-                                    type="checkbox"
                                     class="form-check-input"
-                                    v-model="selectedIds"
-                                    :value="item.id"
+                                    :type="singleSelect ? 'radio' : 'checkbox'"
+                                    :name="
+                                        singleSelect
+                                            ? 'modal-list-single'
+                                            : undefined
+                                    "
+                                    :checked="
+                                        singleSelect
+                                            ? selectedId === item.id
+                                            : selectedIds.includes(item.id)
+                                    "
+                                    @change="
+                                        toggleSelection(
+                                            item.id,
+                                            $event.target.checked
+                                        )
+                                    "
                                 />
                             </div>
                             <div class="col-md-2 p-2" :class="type">
@@ -166,11 +180,13 @@ export default {
         visible: { type: Boolean, default: false },
         type: { type: String, default: "" },
         listToExclude: { type: Array, default: () => [] },
+        singleSelect: { type: Boolean, default: false },
     },
     data() {
         return {
             list: [],
             selectedIds: [],
+            selectedId: null,
             loading: false,
             currentPage: 1,
             itemsPerPage: 10,
@@ -227,16 +243,34 @@ export default {
         close() {
             this.$emit("close");
             this.selectedIds = [];
+            this.selectedId = null;
             this.currentPage = 1;
             this.searchQuery = "";
         },
 
         confirmSelection() {
-            const selectedItems = this.list.filter((item) =>
-                this.selectedIds.includes(item.id)
-            );
+            const selectedItems = this.singleSelect
+                ? this.list.filter((item) => item.id === this.selectedId)
+                : this.list.filter((item) => this.selectedIds.includes(item.id));
             this.$emit("selected", selectedItems);
             this.close();
+        },
+        toggleSelection(id, isChecked) {
+            if (this.singleSelect) {
+                this.selectedId = isChecked ? id : null;
+                return;
+            }
+
+            if (isChecked) {
+                if (!this.selectedIds.includes(id)) {
+                    this.selectedIds.push(id);
+                }
+                return;
+            }
+
+            this.selectedIds = this.selectedIds.filter(
+                (selectedId) => selectedId !== id
+            );
         },
         emitBtnModal() {
             this.$emit("close");

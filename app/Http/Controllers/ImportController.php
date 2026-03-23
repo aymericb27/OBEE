@@ -189,6 +189,64 @@ class ImportController extends Controller
                         'message' => "Erreur lors de la lecture du fichier Excel.",
                     ], 422);
                 }
+
+                if (($config['type'] ?? null) === 'UE' && !empty($config['selectedProgrammeLink']) && is_array($config['selectedProgrammeLink'])) {
+                    $selectedProgramme = $config['selectedProgrammeLink'];
+                    $selectedCode = trim((string) ($selectedProgramme['code'] ?? ''));
+                    $selectedLabel = trim((string) ($selectedProgramme['name'] ?? $selectedProgramme['libelle'] ?? ''));
+                    $selectedSemesters = [];
+
+                    if (!empty($selectedProgramme['semesters']) && is_array($selectedProgramme['semesters'])) {
+                        foreach ($selectedProgramme['semesters'] as $sem) {
+                            if (is_numeric($sem)) {
+                                $semValue = (int) $sem;
+                                if ($semValue > 0) {
+                                    $selectedSemesters[] = $semValue;
+                                }
+                            }
+                        }
+                    } elseif (isset($selectedProgramme['semester']) && is_numeric($selectedProgramme['semester'])) {
+                        $semValue = (int) $selectedProgramme['semester'];
+                        if ($semValue > 0) {
+                            $selectedSemesters[] = $semValue;
+                        }
+                    }
+
+                    $selectedSemesters = array_values(array_unique($selectedSemesters));
+
+                    if (!empty($selectedSemesters) && ($selectedCode !== '' || $selectedLabel !== '')) {
+                        $data['links']['programmes'] = $data['links']['programmes'] ?? [];
+
+                        foreach ($selectedSemesters as $selectedSemester) {
+                            $alreadyExists = false;
+                            foreach ($data['links']['programmes'] as $programme) {
+                                $programmeCode = trim((string) ($programme['code'] ?? ''));
+                                $programmeLabel = trim((string) ($programme['libelle'] ?? ''));
+                                $programmeSemester = isset($programme['semestre']) && is_numeric($programme['semestre'])
+                                    ? (int) $programme['semestre']
+                                    : null;
+
+                                if (
+                                    $programmeSemester === $selectedSemester &&
+                                    $programmeCode === $selectedCode &&
+                                    $programmeLabel === $selectedLabel
+                                ) {
+                                    $alreadyExists = true;
+                                    break;
+                                }
+                            }
+
+                            if (!$alreadyExists) {
+                                $data['links']['programmes'][] = [
+                                    'code' => $selectedCode !== '' ? $selectedCode : null,
+                                    'libelle' => $selectedLabel !== '' ? $selectedLabel : null,
+                                    'semestre' => $selectedSemester,
+                                ];
+                            }
+                        }
+                    }
+                }
+
                 $warnings = [];
                 switch ($config['type']) {
                     case 'UE':
@@ -464,11 +522,28 @@ class ImportController extends Controller
                         $pro->save();
                     }
 
-                    $pivot = ['university_id' => $uid];
-                    if ($sem !== null) $pivot['semester'] = $sem;
+                    if ($sem === null) {
+                        $warnings[] = "Aucun semestre fourni pour le programme \"$code\". Le lien UE-programme n'a pas ete importe.";
+                        continue;
+                    }
+
+                    $proSemester = DB::table('pro_semester')
+                        ->where('fk_programme', $pro->id)
+                        ->where('semester', $sem)
+                        ->first(['id']);
+
+                    if (!$proSemester) {
+                        $warnings[] = "Semestre $sem introuvable pour le programme \"$code\". Le lien UE-programme n'a pas ete importe.";
+                        continue;
+                    }
+
+                    $pivot = [
+                        'university_id' => $uid,
+                        'fk_semester' => (int) $proSemester->id,
+                    ];
 
                     $ue->pro()->syncWithoutDetaching([
-                        $pro->id => $pivot
+                        $pro->id => $pivot,
                     ]);
                 }
             }
