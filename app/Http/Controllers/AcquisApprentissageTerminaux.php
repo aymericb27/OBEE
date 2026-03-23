@@ -45,26 +45,30 @@ class AcquisApprentissageTerminaux extends Controller
 
         $aat = AAT::findOrFail($aatId);
 
-        // 1) UEs "racines" liées à cet AAT (et pas des enfants)
+        // 1) Toutes les UEs liées directement à cet AAT
         $ues = UniteEnseignement::query()
             ->select('unite_enseignement.id', 'unite_enseignement.code', 'unite_enseignement.name', 'unite_enseignement.ects')
-            ->whereHas('aavvise.aats', function ($q) use ($aatId) {
+            ->whereHas('aat', function ($q) use ($aatId) {
                 $q->where('acquis_apprentissage_terminaux.id', $aatId);
-            })
-            ->whereNotIn('unite_enseignement.id', function ($query) {
-                $query->select('fk_ue_child')->from('element_constitutif');
             })
             ->orderBy('unite_enseignement.code')
             ->get();
 
-        // 2) Pour chaque UE, on ajoute ses AAV (UE + EC)
+        // 2) Pour chaque UE, on garde les EC et les AAV (UE + EC) qui contribuent à l'AAT demandé
         $ues->each(function ($ue) use ($aatId) {
+            $children = UniteEnseignement::query()
+                ->select(
+                    'unite_enseignement.id',
+                    'unite_enseignement.code',
+                    'unite_enseignement.name',
+                    'element_constitutif.contribution'
+                )
+                ->join('element_constitutif', 'element_constitutif.fk_ue_child', '=', 'unite_enseignement.id')
+                ->where('element_constitutif.fk_ue_parent', $ue->id)
+                ->orderBy('unite_enseignement.code')
+                ->get();
 
-            // ids EC directs
-            $childIds = ElementConstitutif::where('fk_ue_parent', $ue->id)
-                ->pluck('fk_ue_child')
-                ->toArray();
-
+            $childIds = $children->pluck('id')->toArray();
             $ueIds = array_unique(array_merge([$ue->id], $childIds));
 
             // AAV venant de l'UE ou de ses EC, filtrés sur l'AAT demandé
@@ -74,7 +78,6 @@ class AcquisApprentissageTerminaux extends Controller
                     'acquis_apprentissage_vise.code as code',
                     'acquis_apprentissage_vise.name as name',
                     'aav_aat.contribution as contribution',
-
                     'ue_source.id as ue_source_id',
                     'ue_source.code as ue_source_code',
                     'ue_source.name as ue_source_name'
@@ -88,13 +91,13 @@ class AcquisApprentissageTerminaux extends Controller
                 ->orderBy('acquis_apprentissage_vise.code')
                 ->get();
 
-            // optionnel : marquer si ça vient d'un EC
             $aavs->each(function ($row) use ($ue) {
                 $row->origine_type = ((int) $row->ue_source_id === (int) $ue->id) ? 'UE' : 'EC';
             });
 
-            // on attache au modèle (pas besoin que ce soit une vraie relation)
+            $ue->setAttribute('children', $children);
             $ue->setAttribute('aavvise', $aavs);
+            $ue->setAttribute('has_aav_for_selected_aat', $aavs->isNotEmpty());
         });
 
         $aat->setAttribute('ues', $ues);

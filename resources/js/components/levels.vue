@@ -116,6 +116,17 @@
                                 {{ ue.name }}
                             </h5>
                         </div>
+                        <div
+                            class="ml-4 mt-2 p-3 rounded bg-warning-soft warning-no-aav"
+                            v-if="!ue.aavvise || !ue.aavvise.length"
+                        >
+                            <i
+                                class="fa-solid fa-triangle-exclamation me-2 text-warning"
+                            ></i>
+                            cette unité d'enseignement n'a pas d'acquis
+                            d'apprentissage visés qui contribue à cette acquis
+                            d'apprentissage terminal.
+                        </div>
                         <div class="ml-4 mt-2" v-for="aav in ue.aavvise">
                             <div class="p-4 rounded bg-grey">
                                 <div class="row">
@@ -323,5 +334,12 @@ export default {
 }
 .bg-grey {
     background-color: #f5f5f5 !important;
+}
+.bg-warning-soft {
+    background-color: #fff8e1 !important;
+}
+.warning-no-aav {
+    border-left: 4px solid #ffc107;
+    color: #7a5a00;
 }
 </style>
