@@ -385,10 +385,7 @@ class UniteEnseignement extends Controller
             ->orderBy('acquis_apprentissage_vise.code')
             ->get();
 
-        return $response;
-
-
-        return $response;
+        return $this->appendAATContributions($response, $ueId);
     }
 
     public function getAAVviseOnlyParent(Request $request)
@@ -411,12 +408,59 @@ class UniteEnseignement extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
+        $ueId = (int) $validated['id'];
+
         $response = AAV::select('acquis_apprentissage_vise.id', 'name', 'code')
             ->join('aavue_prerequis', 'fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise.id')
-            ->where('aavue_prerequis.fk_unite_enseignement', $validated['id'])
+            ->where('aavue_prerequis.fk_unite_enseignement', $ueId)
             ->get();
 
-        return $response;
+        return $this->appendAATContributions($response, $ueId);
+    }
+
+    private function appendAATContributions($aavs, int $ueId)
+    {
+        $ueAATIds = DB::table('ue_aat')
+            ->where('fk_ue', $ueId)
+            ->pluck('fk_aat')
+            ->values();
+
+        if ($ueAATIds->isEmpty()) {
+            return $aavs->map(function ($aav) {
+                $aav->aat_contributions = [];
+                return $aav;
+            });
+        }
+
+        $aavIds = $aavs->pluck('id')->unique()->values();
+
+        $contributionsByAav = DB::table('aav_aat')
+            ->join('acquis_apprentissage_terminaux as aat', 'aat.id', '=', 'aav_aat.fk_aat')
+            ->whereIn('aav_aat.fk_aav', $aavIds)
+            ->whereIn('aav_aat.fk_aat', $ueAATIds)
+            ->select(
+                'aav_aat.fk_aav as aav_id',
+                'aat.id as aat_id',
+                'aat.code as aat_code',
+                'aat.level_contribution as aat_level_contribution',
+                'aav_aat.contribution as contribution'
+            )
+            ->orderBy('aat.code')
+            ->get()
+            ->groupBy('aav_id');
+
+        return $aavs->map(function ($aav) use ($contributionsByAav) {
+            $aav->aat_contributions = collect($contributionsByAav->get($aav->id, []))
+                ->map(fn($row) => [
+                    'aat_id' => (int) $row->aat_id,
+                    'aat_code' => $row->aat_code,
+                    'aat_level_contribution' => (int) $row->aat_level_contribution,
+                    'contribution' => (int) $row->contribution,
+                ])
+                ->values();
+
+            return $aav;
+        });
     }
 
     public function getDetailed(Request $request)

@@ -80,6 +80,18 @@
                 >
                     Element constitutif
                 </div>
+                <div
+                    class="col-md-2 p-2 pl-3"
+                    v-if="listColonne.includes('aat_contributions')"
+                >
+                    AAT
+                </div>
+                <div
+                    class="col-md-2 p-2 pl-3"
+                    v-if="listColonne.includes('aat_contributions')"
+                >
+                    Contribution
+                </div>
             </div>
 
             <div>
@@ -212,7 +224,7 @@
                         </div>
 
                         <div
-                            class="col-md-1 p-3"
+                            class="col-md-2 p-3"
                             v-if="
                                 listColonne.includes(
                                     'element_constitutif_aav',
@@ -227,6 +239,79 @@
                             >
                                 <h5 class="UE">{{ item.ue_source_code }}</h5>
                             </router-link>
+                        </div>
+
+                        <div
+                            class="col-md-2 p-3"
+                            v-if="listColonne.includes('aat_contributions')"
+                        >
+                            <template
+                                v-if="
+                                    Array.isArray(item.aat_contributions) &&
+                                    item.aat_contributions.length
+                                "
+                            >
+                                <template
+                                    v-for="(aat, aatIndex) in item.aat_contributions"
+                                    :key="`${item.id}-aat-${aat.aat_id}-${aatIndex}`"
+                                >
+                                    <router-link
+                                        :to="{
+                                            name: 'aat-detail',
+                                            params: { id: aat.aat_id },
+                                        }"
+                                    >
+                                        <h6 style="font-size: 1.1em;" class="AAT d-inline-block mr-1">{{
+                                            aat.aat_code
+                                        }}</h6>
+                                    </router-link>
+                                    <span
+                                        v-if="
+                                            aatIndex <
+                                            item.aat_contributions.length - 1
+                                        "
+                                    >
+                                        ,
+                                    </span>
+                                </template>
+                            </template>
+                            <span v-else>-</span>
+                        </div>
+                        <div
+                            class="col-md-2 p-3"
+                            v-if="listColonne.includes('aat_contributions')"
+                        >
+                            <template
+                                v-if="
+                                    Array.isArray(item.aat_contributions) &&
+                                    item.aat_contributions.length
+                                "
+                            >
+                                <template
+                                    v-for="(aat, aatIndex) in item.aat_contributions"
+                                    :key="`${item.id}-aat-contrib-${aat.aat_id}-${aatIndex}`"
+                                >
+                                    <span
+                                        :class="
+                                            contributionClass(
+                                                aat.contribution,
+                                                aat.aat_level_contribution,
+                                            )
+                                        "
+                                    >
+                                        {{ aat.contribution }}
+                                    </span>
+                                    <span
+                                        v-if="
+                                            aatIndex <
+                                            item.aat_contributions.length - 1
+                                        "
+                                    >
+                                        ,
+                                    </span>
+                                </template>
+                            </template>
+                            <span v-else>-</span>
                         </div>
                     </div>
 
@@ -386,13 +471,28 @@ export default {
         nameColumnClass() {
             const hasUes = this.listColonne.includes("ues");
             const hasProgramme = this.listColonne.includes("programme");
+            const hasElementConstitutif = this.listColonne.includes(
+                "element_constitutif_aav",
+            );
+            const hasAATContributions =
+                this.listColonne.includes("aat_contributions");
+            if (
+                hasAATContributions &&
+                hasElementConstitutif &&
+                !hasUes &&
+                !hasProgramme
+            )
+                return "col-md-4";
+            if (hasAATContributions && !hasUes && !hasProgramme)
+                return "col-md-6";
             if (hasUes && hasProgramme) return "col-md-4";
             if (hasUes || hasProgramme) return "col-md-6";
             return "col-md-8";
         },
         contributionClass(value, max) {
-            const oneThird = Math.ceil(max / 3);
-            const twoThirds = Math.ceil((max * 2) / 3);
+            const safeMax = Number(max) > 0 ? Number(max) : 10;
+            const oneThird = Math.ceil(safeMax / 3);
+            const twoThirds = Math.ceil((safeMax * 2) / 3);
             if (value == 10) return "strong_mapping strong_ten_mapping";
             if (value > twoThirds) return "strong_mapping";
             if (value > oneThird) return "medium_mapping";

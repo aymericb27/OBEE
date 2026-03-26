@@ -127,6 +127,7 @@
                         :listColonne="[
                             'code',
                             'name',
+                            'aat_contributions',
                             ...(ue.children && ue.children.length
                                 ? ['element_constitutif_aav']
                                 : []),
@@ -149,7 +150,7 @@
                         :paramsRouteGET="{ id: ue.id }"
                         linkDetailed="aav-detail"
                         typeList="PRE"
-                        :listColonne="['code', 'name']"
+                        :listColonne="['code', 'name', 'aat_contributions']"
                     />
                 </div>
                 <div class="listComponent mb-4">
