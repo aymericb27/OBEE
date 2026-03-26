@@ -95,8 +95,8 @@
                     <span class="ml-auto d-flex align-items-center">
                         <i
                             style="font-size: 24px"
-                            @click="openModalDelete(UE)"
-                            class="fa-regular fa-trash-can mr-3 deleteBtn"
+                            @click="openModalUnlink(UE)"
+                            class="fa-solid fa-link-slash mr-3 unlinkBtn"
                         ></i>
                         <router-link
                             :to="{
@@ -171,8 +171,10 @@
         :show="modalDelete"
         :name="ueSelected.name"
         type="UE"
+        :actionType="modalAction"
+        :semesterNumber="semester.number"
         :idToDelete="ueSelected.id"
-        @confirm="deleteItem"
+        @confirm="confirmModalAction"
         @cancel="closeDeleteModal"
     />
 </template>
@@ -197,6 +199,7 @@ export default {
                 id: null,
                 name: "",
             },
+            modalAction: "delete",
             modalDelete: false,
             isOpen: false,
             isReordering: false,
@@ -242,6 +245,30 @@ export default {
                 this.isReordering = false;
             }
         },
+        async confirmModalAction() {
+            if (this.modalAction === "unlink") {
+                await this.unlinkItem();
+                return;
+            }
+
+            await this.deleteItem();
+        },
+        async unlinkItem() {
+            const response = await axios.delete("/programme/ues/unlink", {
+                params: {
+                    programme_id: this.programId,
+                    semester_id: this.semester.id,
+                    ue_id: this.ueSelected.id,
+                },
+            });
+            this.closeDeleteModal();
+            this.$router.replace({
+                query: {
+                    message: response.data.message,
+                },
+            });
+            this.$emit("deleteRefresh");
+        },
         async deleteItem() {
             await axios.delete("ue/delete", {
                 params: {
@@ -251,12 +278,19 @@ export default {
             this.closeDeleteModal();
             this.$emit("deleteRefresh");
         },
+        openModalUnlink(UE) {
+            this.modalAction = "unlink";
+            this.modalDelete = true;
+            this.ueSelected = UE;
+        },
         openModalDelete(UE) {
+            this.modalAction = "delete";
             this.modalDelete = true;
             this.ueSelected = UE;
         },
         closeDeleteModal() {
             this.modalDelete = false;
+            this.modalAction = "delete";
             this.ueSelected = { id: null, name: "" };
         },
         openModalUE(type, UE) {
@@ -269,3 +303,9 @@ export default {
     },
 };
 </script>
+<style scoped>
+.unlinkBtn {
+    color: #b82b00;
+    cursor: pointer;
+}
+</style>

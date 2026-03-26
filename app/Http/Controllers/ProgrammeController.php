@@ -548,6 +548,57 @@ class ProgrammeController extends Controller
         });
     }
 
+    public function unlinkUE(Request $request)
+    {
+        $validated = $request->validate([
+            'programme_id' => 'required|integer|exists:programme,id',
+            'semester_id' => 'required|integer|exists:pro_semester,id',
+            'ue_id' => 'required|integer|exists:unite_enseignement,id',
+        ]);
+
+        $universityId = Auth::user()->university_id;
+
+        $semester = DB::table('pro_semester')
+            ->where('id', $validated['semester_id'])
+            ->where('fk_programme', $validated['programme_id'])
+            ->where('university_id', $universityId)
+            ->first();
+
+        if (!$semester) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Semestre introuvable pour ce programme.',
+            ], 404);
+        }
+
+        return DB::transaction(function () use ($validated, $universityId) {
+            $deleted = DB::table('ue_programme')
+                ->where('fk_programme', $validated['programme_id'])
+                ->where('fk_semester', $validated['semester_id'])
+                ->where('fk_unite_enseignement', $validated['ue_id'])
+                ->where('university_id', $universityId)
+                ->delete();
+
+            if (!$deleted) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "L'UE n'est pas liée à ce semestre.",
+                ], 404);
+            }
+
+            $this->normalizeSemesterOrder(
+                (int) $validated['programme_id'],
+                (int) $validated['semester_id'],
+                (int) $universityId
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "UE retirée du semestre avec succès.",
+            ]);
+        });
+    }
+
     private function normalizeSemesterOrder(int $programmeId, int $semesterId, int $universityId)
     {
         $rows = DB::table('ue_programme')

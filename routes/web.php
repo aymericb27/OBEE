@@ -64,6 +64,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::post('/programme/update', [ProgrammeController::class, 'update'])->name('pro.update');
     Route::post('/programme/ues/add', [ProgrammeController::class, 'addUES'])->name('pro.add.ues');
     Route::post('/programme/ues/reorder', [ProgrammeController::class, 'reorderUES'])->name('pro.reorder.ues');
+    Route::delete('/programme/ues/unlink', [ProgrammeController::class, 'unlinkUE'])->name('pro.unlink.ue');
 
     // AAT
     Route::get('/aat/get', [AcquisApprentissageTerminaux::class, 'get']);

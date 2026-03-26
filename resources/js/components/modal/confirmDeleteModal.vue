@@ -14,8 +14,18 @@
 
                 <div class="modal-body">
                     <p>
-                        Êtes-vous sûr de vouloir supprimer
+                        <span v-if="type === 'UE' && actionType === 'unlink'">
+                            Êtes-vous sûr de vouloir retirer
+                        </span>
+                        <span v-else>Êtes-vous sûr de vouloir supprimer</span>
                         <strong>{{ name }}</strong> ?
+                    </p>
+                    <p
+                        v-if="type === 'UE' && actionType === 'unlink'"
+                        class="text-muted"
+                    >
+                        Cette action enlève uniquement l'UE du semestre
+                        <strong>{{ semesterNumber }}</strong>.
                     </p>
 
                     <div v-if="type == 'AAV'" class="alert alert-danger mt-3">
@@ -51,7 +61,10 @@
                         </div>
                     </div>
 
-                    <div v-if="type == 'UE'" class="alert alert-danger mt-3">
+                    <div
+                        v-if="type == 'UE' && actionType !== 'unlink'"
+                        class="alert alert-danger mt-3"
+                    >
                         <div class="mb-3">
                             <i
                                 class="fa-solid fa-triangle-exclamation"
@@ -89,6 +102,19 @@
                                     <strong>{{ aav.name }}</strong>
                                 </li>
                             </ul>
+                        </div>
+                    </div>
+                    <div
+                        v-if="type == 'UE' && actionType === 'unlink'"
+                        class="alert alert-warning mt-3"
+                    >
+                        <div class="mb-0">
+                            <i
+                                class="fa-solid fa-link-slash"
+                                style="color: #b86200; font-size: 24px"
+                            ></i>
+                            Cette action ne supprime pas l'unité d'enseignement du
+                            logiciel. Elle est seulement retirée du semestre actuel.
                         </div>
                     </div>
 
@@ -149,10 +175,15 @@
 
                     <button
                         type="button"
-                        class="btn btn-danger"
+                        :class="
+                            actionType === 'unlink'
+                                ? 'btn btn-warning'
+                                : 'btn btn-danger'
+                        "
                         @click="$emit('confirm')"
                     >
-                        Supprimer
+                        <span v-if="actionType === 'unlink'">Délier</span>
+                        <span v-else>Supprimer</span>
                     </button>
                 </div>
             </div>
@@ -170,6 +201,8 @@ const props = defineProps({
     show: Boolean,
     name: String,
     type: { type: String, default: "GENERAL" },
+    actionType: { type: String, default: "delete" },
+    semesterNumber: [String, Number],
     idToDelete: [String, Number],
 });
 
@@ -242,7 +275,7 @@ watch(
             }
         }
 
-        if (value && props.type === "UE") {
+        if (value && props.type === "UE" && props.actionType !== "unlink") {
             loading.value = true;
             try {
                 const [resAAV, resPro] = await Promise.all([
