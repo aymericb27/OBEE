@@ -72,14 +72,16 @@
                     class="listComponent mb-4"
                     v-if="ue.children && ue.children.length"
                 >
-                    <div class="mb-2">
+                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('children')">
                         <h5 class="d-inline-block primary_color">
                             liste des éléments constitutifs
                         </h5>
+                        <i class="fa-solid primary_color" :class="isExpanded('children') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                     </div>
                     <list
                         :key="`${ue.id}`"
                         v-if="ue.id"
+                        v-show="isExpanded('children')"
                         routeGET="/ue/ecs/get"
                         :paramsRouteGET="{ id: ue.id }"
                         linkDetailed="ue-detail"
@@ -88,15 +90,17 @@
                     />
                 </div>
                 <div class="listComponent mb-4">
-                    <div class="mb-2">
+                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('programs')">
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-scroll"></i> Faisant partie
                             du/des programme(s)
                         </h5>
+                        <i class="fa-solid primary_color" :class="isExpanded('programs') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                     </div>
                     <list
                         :key="`${ue.id}`"
                         v-if="ue.id"
+                        v-show="isExpanded('programs')"
                         routeGET="/ue/pro/get"
                         :paramsRouteGET="{ id: ue.id }"
                         linkDetailed="pro-detail"
@@ -105,15 +109,17 @@
                     />
                 </div>
                 <div class="listComponent mb-4">
-                    <div class="mb-2">
+                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('aavVise')">
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-brands fa-google-scholar"></i>
                             Liste des acquis d'apprentissage visé
                         </h5>
+                        <i class="fa-solid primary_color" :class="isExpanded('aavVise') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                     </div>
                     <list
                         :key="`${ue.id}`"
                         v-if="ue.id"
+                        v-show="isExpanded('aavVise')"
                         routeGET="/ue/aavvise/get"
                         :paramsRouteGET="{ id: ue.id }"
                         linkDetailed="aav-detail"
@@ -128,15 +134,17 @@
                     />
                 </div>
                 <div class="listComponent mb-4">
-                    <div class="mb-2">
+                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('prerequis')">
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-key"></i>
                             Liste des prérequis
                         </h5>
+                        <i class="fa-solid primary_color" :class="isExpanded('prerequis') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                     </div>
                     <list
                         :key="`${ue.id}`"
                         v-if="ue.id"
+                        v-show="isExpanded('prerequis')"
                         routeGET="/ue/aavprerequis/get"
                         :paramsRouteGET="{ id: ue.id }"
                         linkDetailed="aav-detail"
@@ -145,15 +153,17 @@
                     />
                 </div>
                 <div class="listComponent mb-4">
-                    <div class="mb-2">
+                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('aat')">
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-graduation-cap"></i>
                             Liste des acquis d'apprentissage terminaux
                         </h5>
+                        <i class="fa-solid primary_color" :class="isExpanded('aat') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                     </div>
                     <list
                         :key="`${ue.id}`"
                         v-if="ue.id"
+                        v-show="isExpanded('aat')"
                         routeGET="/ue/aat/get"
                         :paramsRouteGET="{ id: ue.id }"
                         linkDetailed="aat-detail"
@@ -209,9 +219,22 @@ export default {
                 errorsShedule: [],
                 isError: false,
             },
+            expandedSections: {
+                children: true,
+                programs: true,
+                aavVise: true,
+                prerequis: true,
+                aat: true,
+            },
         };
     },
     methods: {
+        toggleSection(section) {
+            this.expandedSections[section] = !this.expandedSections[section];
+        },
+        isExpanded(section) {
+            return this.expandedSections[section] !== false;
+        },
         async exportUE(ueId) {
             try {
                 const response = await axios.get(`/export/ue/${ueId}`, {
@@ -281,3 +304,7 @@ export default {
     },
 };
 </script>
+
+
+
+

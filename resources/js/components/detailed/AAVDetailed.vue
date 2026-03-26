@@ -45,15 +45,16 @@
 
             <div class="mb-4" v-html="aav.description"></div>
             <div class="listComponent mb-4">
-                <div class="mb-2">
+                <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('aats')">
                     <h5 class="d-inline-block primary_color">
                         <i class="fa-solid fa-graduation-cap"></i>
 
                         acquis d'apprentissage terminaux lié(s)
                     </h5>
+                    <i class="fa-solid primary_color" :class="isExpanded('aats') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                 </div>
 
-                <div>
+                <div v-if="isExpanded('aats')">
                     <div class="border rounded" v-if="aav.id">
                         <div class="row m-auto bg-light border-bottom">
                             <div class="col-md-2 p-2 pl-3">Code</div>
@@ -141,18 +142,20 @@
                 </div>
             </div>
             <div class="listComponent mb-4" v-if="isPrerequisPro">
-                <div class="mb-2">
+                <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('prerequisPro')">
                     <h5 class="d-inline-block primary_color">
                         <i class="fa-solid fa-key"></i>
 
                         prérequis pour les programmes
                     </h5>
+                    <i class="fa-solid primary_color" :class="isExpanded('prerequisPro') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                 </div>
 
                 <div>
                     <list
                         :isBorder="true"
                         v-if="aav.id"
+                        v-show="isExpanded('prerequisPro')"
                         routeGET="/aav/PROPrerequis/get"
                         :paramsRouteGET="{ id: aav.id }"
                         linkDetailed="pro-detail"
@@ -163,18 +166,20 @@
             </div>
             <div v-else>
                 <div class="listComponent mb-4">
-                    <div class="mb-2">
+                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('prerequisUE')">
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-key"></i>
 
                             prérequis pour les unités d'enseignement
                         </h5>
+                        <i class="fa-solid primary_color" :class="isExpanded('prerequisUE') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                     </div>
 
                     <div>
                         <list
                             :isBorder="true"
                             v-if="aav.id"
+                        v-show="isExpanded('prerequisUE')"
                             routeGET="/aav/UEPrerequis/get"
                             :paramsRouteGET="{ id: aav.id }"
                             linkDetailed="ue-detail"
@@ -184,19 +189,21 @@
                     </div>
                 </div>
                 <div class="listComponent mb-4">
-                    <div class="mb-2">
+                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('viseUE')">
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-brands fa-google-scholar"></i>
 
                             acquis d'apprentissage visé pour les unités
                             d'enseignement
                         </h5>
+                        <i class="fa-solid primary_color" :class="isExpanded('viseUE') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                     </div>
 
                     <div>
                         <list
                             :isBorder="true"
                             v-if="aav.id"
+                        v-show="isExpanded('viseUE')"
                             routeGET="/aav/UEvise/get"
                             :paramsRouteGET="{ id: aav.id }"
                             linkDetailed="ue-detail"
@@ -237,6 +244,12 @@ export default {
     data() {
         return {
             openModalDelete: false,
+            expandedSections: {
+                aats: true,
+                prerequisPro: true,
+                prerequisUE: true,
+                viseUE: true,
+            },
             isPrerequisPro: false,
             aats: [],
             aav: {
@@ -247,6 +260,12 @@ export default {
         };
     },
     methods: {
+        toggleSection(section) {
+            this.expandedSections[section] = !this.expandedSections[section];
+        },
+        isExpanded(section) {
+            return this.expandedSections[section] !== false;
+        },
         contributionClass(value, max) {
             const oneThird = Math.ceil(max / 3);
             const twoThirds = Math.ceil((max * 2) / 3);
@@ -324,3 +343,7 @@ export default {
     },
 };
 </script>
+
+
+
+

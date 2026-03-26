@@ -43,15 +43,17 @@
                 </span>
             </div>
             <div class="listComponent mb-4">
-                <div class="mb-2">
+                <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('ues')">
                     <h5 class="d-inline-block primary_color">
                         <i class="fa-solid fa-book-open"></i>
                         Liste des unités d'enseignement
                     </h5>
+                    <i class="fa-solid primary_color" :class="isExpanded('ues') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                 </div>
                 <list
                     :isBorder="true"
                     v-if="pro.id"
+                        v-show="isExpanded('ues')"
                     routeGET="/pro/ue/get"
                     :paramsRouteGET="{ id: pro.id }"
                     linkDetailed="ue-detail"
@@ -60,15 +62,17 @@
                 />
             </div>
             <div class="listComponent mb-4">
-                <div class="mb-2">
+                <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('prerequis')">
                     <h5 class="d-inline-block primary_color">
                         <i class="fa-solid fa-key"></i>
                         Liste des prérequis
                     </h5>
+                    <i class="fa-solid primary_color" :class="isExpanded('prerequis') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                 </div>
                 <list
                     :isBorder="true"
                     v-if="pro.id"
+                        v-show="isExpanded('prerequis')"
                     routeGET="/pro/pre/get"
                     :paramsRouteGET="{ id: pro.id }"
                     linkDetailed="aav-detail"
@@ -106,6 +110,10 @@ export default {
     data() {
         return {
             openModalDelete: false,
+            expandedSections: {
+                ues: true,
+                prerequis: true,
+            },
             pro: {
                 name: "",
                 code: "",
@@ -113,6 +121,12 @@ export default {
         };
     },
     methods: {
+        toggleSection(section) {
+            this.expandedSections[section] = !this.expandedSections[section];
+        },
+        isExpanded(section) {
+            return this.expandedSections[section] !== false;
+        },
         async deleteItem() {
             const response = await axios.delete("/pro/delete", {
                 params: {
@@ -168,3 +182,7 @@ export default {
     },
 };
 </script>
+
+
+
+

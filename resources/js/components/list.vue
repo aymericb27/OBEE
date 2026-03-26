@@ -301,6 +301,9 @@ export default {
     },
 
     computed: {
+        paramsSignature() {
+            return JSON.stringify(this.paramsRouteGET || {});
+        },
         filteredItems() {
             const lower = this.search.toLowerCase();
             const filtered = !this.search
@@ -370,12 +373,9 @@ export default {
             this.currentPage = 1;
         },
 
-        // ✅ si les params changent, on reload
-        paramsRouteGET: {
-            deep: true,
-            handler() {
-                this.loadItems();
-            },
+        // ✅ on reload uniquement si la valeur des params change réellement
+        paramsSignature() {
+            this.loadItems();
         },
         routeGET() {
             this.loadItems();

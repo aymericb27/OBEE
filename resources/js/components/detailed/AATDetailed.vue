@@ -46,18 +46,20 @@
             <div class="mb-4" v-html="aat.description"></div>
 			<div class="mb-4"><h5 class="d-inline-block primary_color">Contribution Maximum :</h5> <span class="strong_mapping">{{ aat.level_contribution }}</span></div>
             <div class="listComponent mb-4">
-                <div class="mb-2">
+                <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('aavLinked')">
                     <h5 class="d-inline-block primary_color">
                         <i class="fa-brands fa-google-scholar"></i>
 
                         acquis d'apprentissage visés liés
                     </h5>
+                    <i class="fa-solid primary_color" :class="isExpanded('aavLinked') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
                 </div>
 
                 <div>
                     <list
                         :isBorder="true"
                         v-if="aat.id"
+                        v-show="isExpanded('aavLinked')"
                         routeGET="/aat/aavs/get"
                         :paramsRouteGET="{ id: aat.id }"
                         linkDetailed="aav-detail"
@@ -95,6 +97,9 @@ export default {
     data() {
         return {
             openModalDelete: false,
+            expandedSections: {
+                aavLinked: true,
+            },
             aat: {
                 name: "",
                 description: "",
@@ -103,6 +108,12 @@ export default {
         };
     },
     methods: {
+        toggleSection(section) {
+            this.expandedSections[section] = !this.expandedSections[section];
+        },
+        isExpanded(section) {
+            return this.expandedSections[section] !== false;
+        },
         async deleteItem() {
             const response = await axios.delete("/aat/delete", {
                 params: {
@@ -159,3 +170,7 @@ export default {
     },
 };
 </script>
+
+
+
+
