@@ -32,26 +32,39 @@
         <h1 class="title">OBEE-tool</h1>
 
         <div class="userBtn m-3">
-            <div v-if="currentProgram.id" class="current-program mr-3">
+            <div class="current-program mr-3">
                 <span class="label">Programme courant</span>
-                <strong>
-                    <router-link
-                        :to="{
-                            name: 'pro-detail',
-                            params: { id: currentProgram.id },
-                        }"
-                        class="PRO current-program-link"
-                    >
-                        {{ currentProgram.code || currentProgram.name }}
-                    </router-link>
+                <div class="d-flex align-items-center">
+                    <strong>
+                        <router-link
+                            v-if="currentProgram.id"
+                            :to="{
+                                name: 'pro-detail',
+                                params: { id: currentProgram.id },
+                            }"
+                            class="PRO current-program-link"
+                        >
+                            {{ currentProgram.code || currentProgram.name }}
+                        </router-link>
 
-                    <span
-                        v-if="currentProgram.code && currentProgram.name"
-                        class="name"
+                        <span
+                            v-if="currentProgram.code && currentProgram.name"
+                            class="name"
+                        >
+                            - {{ currentProgram.name }}
+                        </span>
+                        <span v-else class="name">tous</span>
+                    </strong>
+                    <button
+                        v-if="currentProgram.id"
+                        class="btn btn-link text-danger p-0 ml-2"
+                        type="button"
+                        title="Retirer le programme courant"
+                        @click="clearCurrentProgramSelection"
                     >
-                        - {{ currentProgram.name }}
-                    </span>
-                </strong>
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
             </div>
             <router-link v-if="isAdmin" to="/admin/users">
                 <button class="btn ml-1 btn_fa">
@@ -69,7 +82,10 @@
 
 <script>
 import axios from "axios";
-import { currentProgramState } from "./stores/currentProgram";
+import {
+    clearCurrentProgram,
+    currentProgramState,
+} from "./stores/currentProgram";
 
 export default {
     computed: {
@@ -88,6 +104,9 @@ export default {
             } catch (e) {
                 console.error("Logout failed", e);
             }
+        },
+        clearCurrentProgramSelection() {
+            clearCurrentProgram();
         },
     },
 };
