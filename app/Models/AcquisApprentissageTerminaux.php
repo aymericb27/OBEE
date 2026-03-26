@@ -29,7 +29,7 @@ class AcquisApprentissageTerminaux extends Model
             'aav_aat',
             'fk_aat', // clé pivot vers AAT (ce modèle)
             'fk_aav'  // clé pivot vers AAV (related)
-        )->withPivot('contribution')
+        )->withPivot('contribution', 'fk_programme')
             ->withTimestamps();
     }
 }

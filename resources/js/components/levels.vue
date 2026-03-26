@@ -4,9 +4,12 @@
         <div v-else>
             <h5 class="d-inline-block">Niveau de contribution :</h5>
             <span
-                ><span class="strong_mapping ml-2 mr-1" :class="{strong_ten_mapping : aat.level_contribution === 10}">{{
-                    aat.level_contribution
-                }}</span
+                ><span
+                    class="strong_mapping ml-2 mr-1"
+                    :class="{
+                        strong_ten_mapping: aat.level_contribution === 10,
+                    }"
+                    >{{ aat.level_contribution }}</span
                 >forte
             </span>
             <span
@@ -163,7 +166,34 @@
                                                 }} </router-link
                                             >)</span
                                         >
+
                                         {{ aav.name }}
+                                        <span
+                                            v-if="showProgrammeForAav(ue, aav)"
+                                        >
+                                            (
+                                            <router-link
+                                                :to="{
+                                                    name: 'pro-detail',
+                                                    params: {
+                                                        id: aav.fk_programme,
+                                                    },
+                                                }"
+                                            >
+                                                <h6
+                                                    class="PRO m-0 d-inline-block"
+                                                    style="font-size: 1.1em"
+                                                >
+                                                    {{ aav.programme_code }}
+                                                </h6>
+                                            </router-link>
+                                            {{
+                                                aav.programme_code
+                                                    ? `${aav.programme_name ? " - " + aav.programme_name : ""}`
+                                                    : "sans programme"
+                                            }}
+                                            )
+                                        </span>
                                     </h5>
                                     <div class="col-md-1">
                                         <span
@@ -242,7 +272,7 @@ export default {
             selectedAATId: "",
             selectedList: "UE",
             aat: {
-				level_contribution: 3,
+                level_contribution: 3,
                 ues: [],
                 aavs: [],
             },
@@ -250,10 +280,14 @@ export default {
     },
 
     methods: {
+        showProgrammeForAav(ue, aav) {
+            if (!ue?.aavvise?.length) return false;
+            return ue.aavvise.filter((item) => item.id === aav.id).length > 1;
+        },
         contributionClass(value, max) {
             const oneThird = Math.ceil(max / 3);
             const twoThirds = Math.ceil((max * 2) / 3);
-			if(value == 10) return "strong_mapping strong_ten_mapping";
+            if (value == 10) return "strong_mapping strong_ten_mapping";
             if (value > twoThirds) return "strong_mapping";
             if (value > oneThird) return "medium_mapping";
             return "weak_mapping";

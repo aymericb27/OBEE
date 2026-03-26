@@ -10,6 +10,8 @@ use App\Models\UniteEnseignement as UE;
 use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AcquisApprentissageVise extends Controller
 {
@@ -17,6 +19,8 @@ class AcquisApprentissageVise extends Controller
 
     public function store(Request $request)
     {
+        $universityId = Auth::user()->university_id;
+
         $validated = $request->validate([
             'name' => 'required|string|max:1000',
             'description' => 'nullable|string|max:2024',
@@ -24,54 +28,60 @@ class AcquisApprentissageVise extends Controller
             'aat' => 'nullable|array',
             'aat.*.id' => 'nullable|integer|exists:acquis_apprentissage_terminaux,id',
             'aat.*.contribution' => 'nullable|integer|min:1|max:10',
+            'aat.*.fk_programme' => 'nullable|integer|exists:programme,id',
         ]);
+
+        $aatRows = $validated['aat'] ?? [];
+        $this->assertUniqueAatProgrammePairs($aatRows, 'aat');
 
         /*
      |--------------------------------------------------------------------------
-     | Génération du code AAVxxx
+     | Generation du code AAVxxx
      |--------------------------------------------------------------------------
      */
         $validated['code'] = $this->codeGen->nextAAV();
         /*
      |--------------------------------------------------------------------------
-     | Création de l’AAV
+     | Creation de l'AAV
      |--------------------------------------------------------------------------
      */
         $aav = AAV::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'code' => $validated['code'],
-            "university_id" => Auth::user()->university_id,
+            'university_id' => $universityId,
         ]);
 
         /*
      |--------------------------------------------------------------------------
-     | Préparation des données pivot
+     | Preparation des donnees pivot
      |--------------------------------------------------------------------------
      */
-        $pivotData = [];
+        $pivotRows = [];
 
-        foreach ($validated['aat'] as $aat) {
-            $pivotData[$aat['id']] = [
+        foreach ($aatRows as $aat) {
+            $pivotRows[] = [
+                'fk_aav' => $aav->id,
+                'fk_aat' => $aat['id'],
+                'fk_programme' => $aat['fk_programme'] ?? null,
                 'contribution' => $aat['contribution'],
-                "university_id" => Auth::user()->university_id,
-
+                'university_id' => $universityId,
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
         }
 
-        /*
-     |--------------------------------------------------------------------------
-     | Sync AAV ↔ AAT
-     |--------------------------------------------------------------------------
-     */
-        $aav->aats()->sync($pivotData);
+        if (!empty($pivotRows)) {
+            DB::table('aav_aat')->insert($pivotRows);
+        }
 
         return response()->json([
             'success' => true,
             'aav' => $aav->load('aats'),
-            'message' => "AAV créé avec succès."
+            'message' => "AAV cree avec succes."
         ], 201);
     }
+
     public function delete(Request $request)
     {
         $validated = $request->validate([
@@ -81,7 +91,7 @@ class AcquisApprentissageVise extends Controller
         $aav->delete();
         return response()->json([
             'success' => true,
-            'message' => "Acquis d'apprentissage visé supprimé avec succès.",
+            'message' => "Acquis d'apprentissage vise supprime avec succes.",
         ]);
     }
 
@@ -108,6 +118,8 @@ class AcquisApprentissageVise extends Controller
 
     public function update(Request $request)
     {
+        $universityId = Auth::user()->university_id;
+
         $validated = $request->validate([
             'id' => ['required', 'integer', 'exists:acquis_apprentissage_vise,id'],
 
@@ -117,50 +129,56 @@ class AcquisApprentissageVise extends Controller
             'aats' => 'nullable|array',
             'aats.*.id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
             'aats.*.contribution' => 'required|integer|min:1|max:10',
+            'aats.*.fk_programme' => 'nullable|integer|exists:programme,id',
         ]);
+
+        $aatRows = $validated['aats'] ?? [];
+        $this->assertUniqueAatProgrammePairs($aatRows, 'aats');
 
         /*
      |--------------------------------------------------------------------------
-     | Récupération AAV
+     | Recuperation AAV
      |--------------------------------------------------------------------------
      */
         $aav = AAV::findOrFail($validated['id']);
 
-        /*
-     |--------------------------------------------------------------------------
-     | Mise à jour AAV
-     |--------------------------------------------------------------------------
-     */
-        $aav->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-        ]);
+        DB::transaction(function () use ($aav, $validated, $aatRows, $universityId) {
+            /*
+         |--------------------------------------------------------------------------
+         | Mise a jour AAV
+         |--------------------------------------------------------------------------
+         */
+            $aav->update([
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? null,
+            ]);
 
-        /*
-     |--------------------------------------------------------------------------
-     | Préparation pivot AAV ↔ AAT
-     |--------------------------------------------------------------------------
-     */
-        $pivotData = [];
+            DB::table('aav_aat')
+                ->where('fk_aav', $aav->id)
+                ->where('university_id', $universityId)
+                ->delete();
 
-        foreach ($validated['aats'] as $aat) {
-            $pivotData[$aat['id']] = [
-                'contribution' => $aat['contribution'],
-                'university_id' => Auth::user()->university_id,
+            $pivotRows = [];
+            foreach ($aatRows as $aat) {
+                $pivotRows[] = [
+                    'fk_aav' => $aav->id,
+                    'fk_aat' => $aat['id'],
+                    'fk_programme' => $aat['fk_programme'] ?? null,
+                    'contribution' => $aat['contribution'],
+                    'university_id' => $universityId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
 
-            ];
-        }
-
-        /*
-     |--------------------------------------------------------------------------
-     | Sync pivot (insert / update / delete)
-     |--------------------------------------------------------------------------
-     */
-        $aav->aats()->sync($pivotData);
+            if (!empty($pivotRows)) {
+                DB::table('aav_aat')->insert($pivotRows);
+            }
+        });
 
         return response()->json([
             'success' => true,
-            'message' => 'AAV mis à jour avec succès.',
+            'message' => 'AAV mis a jour avec succes.',
             'aav' => $aav->load('aats')
         ]);
     }
@@ -177,6 +195,7 @@ class AcquisApprentissageVise extends Controller
 
         return $response;
     }
+
     public function getUEvise(Request $request)
     {
         $validated = $request->validate([
@@ -206,8 +225,6 @@ class AcquisApprentissageVise extends Controller
     public function getPrerequis()
     {
         $response = AAV::prerequis();
-        //$response = AAV::innerJoin('aavue_prerequis', 'fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise.id')
-        //    ->get();
         return $response;
     }
 
@@ -217,24 +234,29 @@ class AcquisApprentissageVise extends Controller
             'id' => 'required|integer|exists:acquis_apprentissage_vise,id',
         ]);
 
-        $aav = AAV::with(['aats' => function ($query) {
-            $query->select(
+        $response = DB::table('aav_aat')
+            ->join(
+                'acquis_apprentissage_terminaux',
+                'acquis_apprentissage_terminaux.id',
+                '=',
+                'aav_aat.fk_aat'
+            )
+            ->leftJoin('programme', 'programme.id', '=', 'aav_aat.fk_programme')
+            ->where('aav_aat.fk_aav', $validated['id'])
+            ->select(
+                'aav_aat.id as row_key',
                 'acquis_apprentissage_terminaux.id',
                 'acquis_apprentissage_terminaux.code',
                 'acquis_apprentissage_terminaux.name',
                 'acquis_apprentissage_terminaux.level_contribution',
-            );
-        }])->findOrFail($validated['id']);
-
-        $response = $aav->aats->map(function ($aat) {
-            return [
-                'id' => $aat->id,
-                'code' => $aat->code,
-                'name' => $aat->name,
-                'contribution' => $aat->pivot->contribution,
-                'level_contribution' => $aat->level_contribution,
-            ];
-        });
+                'aav_aat.contribution',
+                'aav_aat.fk_programme',
+                'programme.code as programme_code',
+                'programme.name as programme_name',
+            )
+            ->orderBy('acquis_apprentissage_terminaux.code')
+            ->orderBy('programme.code')
+            ->get();
 
         return response()->json($response);
     }
@@ -263,5 +285,27 @@ class AcquisApprentissageVise extends Controller
             ->get();
 
         return $response;
+    }
+
+    private function assertUniqueAatProgrammePairs(array $rows, string $field): void
+    {
+        $seen = [];
+
+        foreach ($rows as $idx => $row) {
+            $aatId = (int) ($row['id'] ?? 0);
+            $programmeId = array_key_exists('fk_programme', $row) && $row['fk_programme'] !== null
+                ? (int) $row['fk_programme']
+                : null;
+
+            $pairKey = $aatId . '|' . ($programmeId === null ? 'null' : $programmeId);
+
+            if (isset($seen[$pairKey])) {
+                throw ValidationException::withMessages([
+                    $field . '.' . $idx . '.fk_programme' => "Un AAV ne peut pas lier plusieurs fois le meme AAT pour le meme programme.",
+                ]);
+            }
+
+            $seen[$pairKey] = true;
+        }
     }
 }

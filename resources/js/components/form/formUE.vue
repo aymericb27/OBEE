@@ -349,25 +349,30 @@
                                 v-for="aat in listAAT"
                                 :key="aat.id"
                                 :value="aat.id"
-                                :disabled="isAATAlreadySelected(aat.id)"
                             >
                                 {{ aat.name }}
                             </option>
                         </select>
                     </div>
                     <div v-if="aavForm.aatSelected.length" class="mt-4">
-                        <h6 class="mb-3">AAT sélectionnés</h6>
+                        <h6 class="mb-3 primary_color">AAT sélectionnés</h6>
+                        <div class="d-flex align-items-center rounded p-2 bg-light border mb-2">
+                            <div style="width: 44px"></div>
+                            <div class="flex-grow-1 font-weight-bold">AAT</div>
+                            <div class="font-weight-bold mr-2" style="width: 38%">Programme</div>
+                            <div class="font-weight-bold" style="width: 26%">Contribution</div>
+                        </div>
 
                         <div
                             :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
                             v-for="(aat, index) in aavForm.aatSelected"
-                            :key="aat.id"
+                            :key="aat.rowKey"
                             class="d-flex align-items-center rounded p-2"
                         >
                             <!-- SUPPRIMER -->
                             <button
                                 class="btn btn-sm me-3"
-                                @click="removeAAT(aat.id)"
+                                @click="removeAAT(aat.rowKey)"
                             >
                                 <i
                                     class="text-danger fa fa-close pr-0"
@@ -379,9 +384,25 @@
                             <div class="flex-grow-1">
                                 {{ aat.name }}
                             </div>
+                            <!-- PROGRAMME -->
+                            <select
+                                class="form-control ms-3 mr-2"
+                                style="width: 38%"
+                                v-model="aat.fk_programme"
+                            >
+                                <option :value="null">- aucun programme -</option>
+                                <option
+                                    v-for="pro in ue.pro"
+                                    :key="pro.id"
+                                    :value="pro.id"
+                                >
+                                    {{ pro.code }} - {{ pro.name }}
+                                </option>
+                            </select>
                             <!-- CONTRIBUTION -->
                             <select
-                                class="form-control w-25 ms-3"
+                                class="form-control ms-3"
+                                style="width: 26%"
                                 v-model="aat.contribution"
                             >
                                 <option
@@ -533,7 +554,7 @@ export default {
             if (!this.aavForm.selectedAATId) return;
 
             const aat = this.listAAT.find(
-                (a) => a.id === this.aavForm.selectedAATId,
+                (a) => a.id === Number(this.aavForm.selectedAATId),
             );
 
             if (!aat) return;
@@ -543,19 +564,33 @@ export default {
                 name: aat.name,
                 contribution: 1, // valeur par défaut
                 level_contribution: aat.level_contribution,
+                fk_programme: this.getDefaultProgramIdForAAV(),
+                rowKey: `${aat.id}-${Date.now()}-${Math.random()}`,
             });
 
             this.aavForm.selectedAATId = "";
         },
 
-        removeAAT(id) {
+        removeAAT(rowKey) {
             this.aavForm.aatSelected = this.aavForm.aatSelected.filter(
-                (a) => a.id !== id,
+                (a) => a.rowKey !== rowKey,
             );
         },
 
         isAATAlreadySelected(id) {
             return this.aavForm.aatSelected.some((a) => a.id === id);
+        },
+        getDefaultProgramIdForAAV() {
+            const routeProgramId = Number(this.$route.query.programID);
+            if (Number.isInteger(routeProgramId) && routeProgramId > 0) {
+                return routeProgramId;
+            }
+
+            if (this.ue.pro.length === 1) {
+                return this.ue.pro[0].id;
+            }
+
+            return null;
         },
         handleNewAAV() {
             this.loadAAT();
@@ -704,12 +739,25 @@ export default {
                 this.formAAvErrors = "Le champs libellé doit être présent";
                 return;
             }
+
+            const seenPairs = new Set();
+            for (const row of this.aavForm.aatSelected) {
+                const pairKey = `${row.id}|${row.fk_programme ?? "null"}`;
+                if (seenPairs.has(pairKey)) {
+                    this.formAAvErrors =
+                        "Un même AAT ne peut être ajouté qu'une seule fois pour un même programme.";
+                    return;
+                }
+                seenPairs.add(pairKey);
+            }
+
             const payload = {
                 name: this.aavForm.name,
                 description: this.aavForm.description,
                 aat: this.aavForm.aatSelected.map((a) => ({
                     id: a.id,
                     contribution: a.contribution,
+                    fk_programme: a.fk_programme ?? null,
                 })),
             };
             try {

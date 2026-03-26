@@ -9,6 +9,7 @@ use App\Models\UniteEnseignement;
 use App\Services\CodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AcquisApprentissageTerminaux extends Controller
@@ -78,12 +79,16 @@ class AcquisApprentissageTerminaux extends Controller
                     'acquis_apprentissage_vise.code as code',
                     'acquis_apprentissage_vise.name as name',
                     'aav_aat.contribution as contribution',
+                    'aav_aat.fk_programme as fk_programme',
+                    'programme.code as programme_code',
+                    'programme.name as programme_name',
                     'ue_source.id as ue_source_id',
                     'ue_source.code as ue_source_code',
                     'ue_source.name as ue_source_name'
                 )
                 ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
                 ->join('aav_aat', 'aav_aat.fk_aav', '=', 'acquis_apprentissage_vise.id')
+                ->leftJoin('programme', 'programme.id', '=', 'aav_aat.fk_programme')
                 ->join('unite_enseignement as ue_source', 'ue_source.id', '=', 'aavue_vise.fk_unite_enseignement')
                 ->where('aav_aat.fk_aat', $aatId)
                 ->whereIn('aavue_vise.fk_unite_enseignement', $ueIds)
@@ -168,36 +173,61 @@ class AcquisApprentissageTerminaux extends Controller
 
         $aat = AAT::select('id', 'level_contribution')->findOrFail($validated['id']);
 
-        $aavs = AAV::whereHas('aats', function ($q) use ($validated) {
-            $q->where('acquis_apprentissage_terminaux.id', $validated['id']);
-        })
-            ->with(['aats' => function ($q) use ($validated) {
-                $q->where('acquis_apprentissage_terminaux.id', $validated['id']);
-            }, 'aavvise' => function ($q) {
-                $q->select('unite_enseignement.id', 'unite_enseignement.code', 'unite_enseignement.name');
-            }])
-            ->select('id', 'code', 'name')
-            ->get()
-            ->map(function ($aav) use ($aat) {
-                $aatPivot = $aav->aats->first()?->pivot;
-                $ues = $aav->aavvise
-                    ->map(fn($ue) => [
-                        'id' => $ue->id,
-                        'code' => $ue->code,
-                        'name' => $ue->name,
-                    ])
-                    ->unique('id')
-                    ->values();
+        $rows = DB::table('aav_aat')
+            ->join('acquis_apprentissage_vise', 'acquis_apprentissage_vise.id', '=', 'aav_aat.fk_aav')
+            ->leftJoin('programme', 'programme.id', '=', 'aav_aat.fk_programme')
+            ->where('aav_aat.fk_aat', $validated['id'])
+            ->select(
+                'aav_aat.id as row_key',
+                'acquis_apprentissage_vise.id',
+                'acquis_apprentissage_vise.code',
+                'acquis_apprentissage_vise.name',
+                'aav_aat.contribution',
+                'aav_aat.fk_programme',
+                'programme.code as programme_code',
+                'programme.name as programme_name'
+            )
+            ->orderBy('acquis_apprentissage_vise.code')
+            ->orderBy('programme.code')
+            ->orderBy('aav_aat.id')
+            ->get();
 
-                return [
-                    'id' => $aav->id,
-                    'code' => $aav->code,
-                    'name' => $aav->name,
-                    'contribution' => $aatPivot?->contribution,
-                    'level_contribution' => $aat->level_contribution,
-                    'ues' => $ues,
-                ];
-            });
+        $aavIds = $rows->pluck('id')->unique()->values();
+        $ueRows = DB::table('aavue_vise')
+            ->join('unite_enseignement', 'unite_enseignement.id', '=', 'aavue_vise.fk_unite_enseignement')
+            ->whereIn('aavue_vise.fk_acquis_apprentissage_vise', $aavIds)
+            ->select(
+                'aavue_vise.fk_acquis_apprentissage_vise as aav_id',
+                'unite_enseignement.id',
+                'unite_enseignement.code',
+                'unite_enseignement.name'
+            )
+            ->orderBy('unite_enseignement.code')
+            ->get()
+            ->groupBy('aav_id');
+
+        $aavs = $rows->map(function ($row) use ($aat, $ueRows) {
+            $ues = collect($ueRows->get($row->id, []))
+                ->map(fn($ue) => [
+                    'id' => $ue->id,
+                    'code' => $ue->code,
+                    'name' => $ue->name,
+                ])
+                ->values();
+
+            return [
+                'row_key' => $row->row_key,
+                'id' => $row->id,
+                'code' => $row->code,
+                'name' => $row->name,
+                'contribution' => $row->contribution,
+                'fk_programme' => $row->fk_programme,
+                'programme_code' => $row->programme_code,
+                'programme_name' => $row->programme_name,
+                'level_contribution' => $aat->level_contribution,
+                'ues' => $ues,
+            ];
+        });
 
         return response()->json($aavs);
     }

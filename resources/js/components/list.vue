@@ -37,9 +37,7 @@
                     Code
                 </div>
                 <div
-                    :class="
-                        listColonne.includes('ues') ? 'col-md-6 ' : 'col-md-8 '
-                    "
+                    :class="nameColumnClass()"
                     class="p-2 pl-3"
                     v-if="listColonne.includes('name')"
                 >
@@ -65,6 +63,12 @@
                     UE liées
                 </div>
                 <div
+                    class="col-md-2 p-2 pl-3"
+                    v-if="listColonne.includes('programme')"
+                >
+                    Programme
+                </div>
+                <div
                     class="col-md-1 p-2 pl-3"
                     v-if="listColonne.includes('contribution')"
                 >
@@ -82,7 +86,7 @@
                 <div v-if="filteredItems.length">
                     <div
                         v-for="(item, index) in paginatedItems"
-                        :key="item.id"
+                        :key="item.row_key ?? `${item.id}-${index}`"
                         :class="[
                             index != paginatedItems.length - 1
                                 ? 'border-bottom'
@@ -111,11 +115,7 @@
                         </div>
 
                         <div
-                            :class="
-                                listColonne.includes('ues')
-                                    ? 'col-md-6 p-3'
-                                    : 'col-md-8 p-3'
-                            "
+                            :class="`${nameColumnClass()} p-3`"
                             v-if="listColonne.includes('name')"
                         >
                             <div class="mb-0">
@@ -169,8 +169,9 @@
                                         <h6
                                             class="UE mr-1 d-inline-block"
                                             style="font-size: 1.1em"
-                                            >{{ ue.code }}</h6
                                         >
+                                            {{ ue.code }}
+                                        </h6>
                                     </router-link>
                                     <span v-if="ueIndex < item.ues.length - 1"
                                         >,
@@ -178,6 +179,21 @@
                                 </template>
                             </span>
                             <span v-else>-</span>
+                        </div>
+                        <div
+                            class="col-md-2 p-3"
+                            v-if="listColonne.includes('programme')"
+                        >
+                            <router-link
+                                :to="{
+                                    name: 'pro-detail',
+                                    params: { id: item.fk_programme },
+                                }"
+                            >
+                                <h6 class="PRO m-0" style="font-size: 1.1em">
+                                    {{ item.programme_code }}
+                                </h6>
+                            </router-link>
                         </div>
                         <div
                             class="col-md-1 p-3 text-center"
@@ -367,6 +383,13 @@ export default {
     },
 
     methods: {
+        nameColumnClass() {
+            const hasUes = this.listColonne.includes("ues");
+            const hasProgramme = this.listColonne.includes("programme");
+            if (hasUes && hasProgramme) return "col-md-4";
+            if (hasUes || hasProgramme) return "col-md-6";
+            return "col-md-8";
+        },
         contributionClass(value, max) {
             const oneThird = Math.ceil(max / 3);
             const twoThirds = Math.ceil((max * 2) / 3);

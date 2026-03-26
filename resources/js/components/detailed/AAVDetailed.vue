@@ -54,15 +54,90 @@
                 </div>
 
                 <div>
-                    <list
-                        :isBorder="true"
-                        v-if="aav.id"
-                        routeGET="/aav/aats/get"
-                        :paramsRouteGET="{ id: aav.id }"
-                        linkDetailed="aat-detail"
-                        typeList="AAT"
-                        :listColonne="['code', 'name']"
-                    />
+                    <div class="border rounded" v-if="aav.id">
+                        <div class="row m-auto bg-light border-bottom">
+                            <div class="col-md-2 p-2 pl-3">Code</div>
+                            <div class="col-md-5 p-2 pl-3">Nom</div>
+                            <div class="col-md-3 p-2 pl-3">Programme</div>
+                            <div class="col-md-2 p-2 pl-3">Contribution</div>
+                        </div>
+
+                        <div v-if="aats.length">
+                            <div
+                                v-for="(item, index) in aats"
+                                :key="item.row_key ?? `${item.id}-${index}`"
+                                class="row m-auto"
+                                :class="[
+                                    index != aats.length - 1
+                                        ? 'border-bottom'
+                                        : '',
+                                ]"
+                            >
+                                <div class="col-md-2 p-3">
+                                    <router-link
+                                        :to="{
+                                            name: 'aat-detail',
+                                            params: { id: item.id },
+                                        }"
+                                    >
+                                        <h6
+                                            class="AAT m-0"
+                                            style="font-size: 1.1em"
+                                        >
+                                            {{ item.code }}
+                                        </h6>
+                                    </router-link>
+                                </div>
+                                <div class="col-md-5 p-3">
+                                    <h6
+                                        class="secondary_color mb-0"
+                                        style="font-size: 1.1em"
+                                    >
+                                        {{ item.name }}
+                                    </h6>
+                                </div>
+                                <div class="col-md-3 p-3">
+                                    <router-link
+                                        :to="{
+                                            name: 'pro-detail',
+                                            params: { id: item.fk_programme },
+                                        }"
+                                    >
+                                        <h6
+                                            class="PRO m-0"
+                                            style="font-size: 1.1em"
+                                        >
+                                            {{ item.programme_code }}
+                                        </h6>
+                                    </router-link>
+                                    {{ item.programme_name }}
+                                </div>
+                                <div class="col-md-2 p-3">
+                                    <span
+                                        v-if="
+                                            item.contribution !== null &&
+                                            item.contribution !== undefined
+                                        "
+                                        :class="
+                                            contributionClass(
+                                                item.contribution,
+                                                item.level_contribution,
+                                            )
+                                        "
+                                    >
+                                        {{ item.contribution }}
+                                    </span>
+                                    <span v-else>-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-else>
+                            <p class="p-2 text-center mb-0">
+                                Aucune donnée à afficher
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="listComponent mb-4" v-if="isPrerequisPro">
@@ -163,6 +238,7 @@ export default {
         return {
             openModalDelete: false,
             isPrerequisPro: false,
+            aats: [],
             aav: {
                 name: "",
                 description: "",
@@ -171,6 +247,14 @@ export default {
         };
     },
     methods: {
+        contributionClass(value, max) {
+            const oneThird = Math.ceil(max / 3);
+            const twoThirds = Math.ceil((max * 2) / 3);
+            if (value == 10) return "strong_mapping strong_ten_mapping";
+            if (value > twoThirds) return "strong_mapping";
+            if (value > oneThird) return "medium_mapping";
+            return "weak_mapping";
+        },
         async deleteItem() {
             const response = await axios.delete("/aav/delete", {
                 params: {
@@ -191,12 +275,19 @@ export default {
                     },
                 });
                 this.aav = response.data;
+                const responseAATs = await axios.get("/aav/aats/get", {
+                    params: {
+                        id: this.id,
+                    },
+                });
+                this.aats = Array.isArray(responseAATs.data)
+                    ? responseAATs.data
+                    : [];
                 const proPrerequis = await axios.get("/aav/PROPrerequis/get", {
                     params: {
                         id: this.id,
                     },
                 });
-				console.log(proPrerequis);
                 this.isPrerequisPro = proPrerequis.data.length !== 0;
             } catch (error) {
                 console.log(error);

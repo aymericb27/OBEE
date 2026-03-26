@@ -11,7 +11,7 @@
             </h3>
             <div class="mb-3">
                 <input
-                    placeholder="Libellé de l'acquis d'apprentissage terminal"
+                    placeholder="Libellé de l'acquis d'apprentissage visé"
                     type="text"
                     v-model="form.name"
                     class="form-control"
@@ -44,7 +44,8 @@
                 <div class="row border-bottom">
                     <div class="col-md-1"></div>
                     <div class="col-md-1 p-2">Code</div>
-                    <div class="col-md-8 p-2">Nom</div>
+                    <div class="col-md-5 p-2">Nom</div>
+                    <div class="col-md-3 p-2">Programme</div>
                     <div class="col-md-2 p-2">Contribution</div>
                 </div>
                 <div
@@ -56,23 +57,33 @@
 
                 <div
                     v-for="(aat, index) in form.aats"
+                    :key="aat.rowKey"
                     class="row"
                     :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
                 >
                     <div class="col-md-1 text-right p-2">
                         <i
-                            @click="removeAAT(aat.id)"
+                            @click="removeAAT(aat.rowKey)"
                             class="text-danger fa fa-close pr-0"
                             style="cursor: pointer"
                         ></i>
                     </div>
                     <div class="col-md-1 p-2 AAT">{{ aat.code }}</div>
-                    <div class="col-md-8 p-2">{{ aat.name }}</div>
+                    <div class="col-md-5 p-2">{{ aat.name }}</div>
+                    <div class="col-md-3 p-2">
+                        <select class="form form-control" v-model="aat.fk_programme">
+                            <option :value="null">- aucun programme -</option>
+                            <option
+                                v-for="pro in listProgramme"
+                                :key="pro.id"
+                                :value="pro.id"
+                            >
+                                {{ pro.code }} - {{ pro.name }}
+                            </option>
+                        </select>
+                    </div>
                     <div class="col-md-2 p-2">
-                        <select
-                            class="form form-control"
-                            v-model="aat.contribution"
-                        >
+                        <select class="form form-control" v-model="aat.contribution">
                             <option
                                 v-for="level in aat.level_contribution"
                                 :key="level"
@@ -102,7 +113,6 @@
 </template>
 <script>
 import axios from "axios";
-import list from "../list.vue";
 import { QuillEditor } from "@vueup/vue-quill";
 import modalList from "../modalList.vue";
 
@@ -112,7 +122,7 @@ export default {
             type: [String, Number],
         },
     },
-    components: { list, modalList },
+    components: { modalList },
 
     data() {
         return {
@@ -121,6 +131,7 @@ export default {
             modalRoute: "",
             modalTitle: "",
             aatToExclude: [],
+            listProgramme: [],
             form: {
                 id: null,
                 name: "",
@@ -131,30 +142,53 @@ export default {
     },
 
     mounted() {
+        this.loadProgrammes();
         this.loadAAV();
-        // mode édition
-        if (this.AATToEdit) {
-            this.form = { ...this.AATToEdit };
-        }
     },
 
     methods: {
+        buildRowKey(id) {
+            return `${id}-${Date.now()}-${Math.random()}`;
+        },
         handleSelectedAAT(selectedItems) {
             const itemsWithContribution = selectedItems.map((item) => ({
                 ...item,
                 contribution: 1,
+                fk_programme: this.getDefaultProgramIdForAAV(),
+                rowKey: this.buildRowKey(item.id),
             }));
             this.form.aats.push(...itemsWithContribution);
         },
-        removeAAT(id) {
-            this.form.aats = this.form.aats.filter((a) => a.id !== id);
+        removeAAT(rowKey) {
+            this.form.aats = this.form.aats.filter((a) => a.rowKey !== rowKey);
+        },
+        getDefaultProgramIdForAAV() {
+            const routeProgramId = Number(this.$route.query.programID);
+            if (Number.isInteger(routeProgramId) && routeProgramId > 0) {
+                return routeProgramId;
+            }
+
+            if (this.listProgramme.length === 1) {
+                return this.listProgramme[0].id;
+            }
+
+            return null;
         },
         openModalTerminal() {
             this.modalTarget = "aat";
             this.modalRoute = "/aat/get";
-            this.modalTitle = "Ajouter des acquis d’apprentissage terminaux";
-            this.aatToExclude = this.form.aats;
+            this.modalTitle = "Ajouter des acquis d'apprentissage terminaux";
+            this.aatToExclude = [];
             this.showModalAAT = true;
+        },
+        async loadProgrammes() {
+            try {
+                const response = await axios.get("/pro/get");
+                this.listProgramme = response.data || [];
+            } catch (error) {
+                console.log(error);
+                this.listProgramme = [];
+            }
         },
         async loadAAV() {
             try {
@@ -169,19 +203,43 @@ export default {
                         id: this.id,
                     },
                 });
-                this.form.aats = responseAATS.data;
+                this.form.aats = (responseAATS.data || []).map((row) => ({
+                    ...row,
+                    rowKey: this.buildRowKey(row.id),
+                }));
                 this.form.id = this.id;
-                console.log(this.form);
             } catch (error) {
                 console.log(error);
             }
         },
         async saveProgram() {
-            const response = await axios.post("/aav/update", this.form);
-            // ✅ Redirection avec message (query param)
+            const seenPairs = new Set();
+            for (const row of this.form.aats) {
+                const pairKey = `${row.id}|${row.fk_programme ?? "null"}`;
+                if (seenPairs.has(pairKey)) {
+                    alert(
+                        "Un meme AAT ne peut etre ajoute qu'une seule fois pour un meme programme.",
+                    );
+                    return;
+                }
+                seenPairs.add(pairKey);
+            }
+
+            const payload = {
+                id: this.form.id,
+                name: this.form.name,
+                description: this.form.description,
+                aats: this.form.aats.map((aat) => ({
+                    id: aat.id,
+                    contribution: aat.contribution,
+                    fk_programme: aat.fk_programme ?? null,
+                })),
+            };
+
+            const response = await axios.post("/aav/update", payload);
             this.$router.push({
                 name: "aav-detail",
-                params: { id: response.data.id },
+                params: { id: this.form.id },
                 query: { message: response.data.message },
             });
         },

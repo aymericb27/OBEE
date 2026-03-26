@@ -27,7 +27,7 @@ class AcquisApprentissageVise extends Model
             'aav_aat',
             'fk_aav',
             'fk_aat'
-        )->withPivot('contribution')
+        )->withPivot('contribution', 'fk_programme')
             ->withTimestamps();
     }
 
