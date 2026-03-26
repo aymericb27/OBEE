@@ -177,7 +177,10 @@ export default {
         openModalTerminal() {
             this.modalTarget = "aat";
             this.modalRoute = "/aat/get";
-            this.modalTitle = "Ajouter des acquis d'apprentissage terminaux";
+            const aavName = (this.form.name || "").trim();
+            this.modalTitle = aavName
+                ? `Ajouter des acquis d'apprentissage terminaux pour : ${aavName}`
+                : "Ajouter des acquis d'apprentissage terminaux";
             this.aatToExclude = [];
             this.showModalAAT = true;
         },
