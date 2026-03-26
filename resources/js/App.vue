@@ -32,6 +32,27 @@
         <h1 class="title">OBEE-tool</h1>
 
         <div class="userBtn m-3">
+            <div v-if="currentProgram.id" class="current-program mr-3">
+                <span class="label">Programme courant</span>
+                <strong>
+                    <router-link
+                        :to="{
+                            name: 'pro-detail',
+                            params: { id: currentProgram.id },
+                        }"
+                        class="PRO current-program-link"
+                    >
+                        {{ currentProgram.code || currentProgram.name }}
+                    </router-link>
+
+                    <span
+                        v-if="currentProgram.code && currentProgram.name"
+                        class="name"
+                    >
+                        - {{ currentProgram.name }}
+                    </span>
+                </strong>
+            </div>
             <router-link v-if="isAdmin" to="/admin/users">
                 <button class="btn ml-1 btn_fa">
                     <i class="fa-solid fa-users-gear"></i>
@@ -48,11 +69,15 @@
 
 <script>
 import axios from "axios";
+import { currentProgramState } from "./stores/currentProgram";
 
 export default {
     computed: {
         isAdmin() {
             return window.__USER__ && window.__USER__.role === "admin";
+        },
+        currentProgram() {
+            return currentProgramState;
         },
     },
     methods: {
@@ -82,6 +107,22 @@ export default {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+}
+
+.current-program {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.1;
+}
+
+.current-program .label {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.current-program .name {
+    font-weight: 400;
 }
 
 .listBtn {

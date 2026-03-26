@@ -261,15 +261,32 @@ class AcquisApprentissageVise extends Controller
         return response()->json($response);
     }
 
-    public function get()
+    public function get(Request $request)
     {
-        $result = AAV::select('id', 'code', 'name')
-            ->get();
+        $validated = $request->validate([
+            'program_id' => 'nullable|integer|exists:programme,id',
+        ]);
+
+        $result = AAV::query()
+            ->select('acquis_apprentissage_vise.id', 'acquis_apprentissage_vise.code', 'acquis_apprentissage_vise.name');
+
+        if (!empty($validated['program_id'])) {
+            $result->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
+                ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'aavue_vise.fk_unite_enseignement')
+                ->where('ue_programme.fk_programme', (int) $validated['program_id'])
+                ->distinct();
+        }
+
+        $result = $result->get();
         return $result;
     }
 
-    public function getOnlyPrerequis()
+    public function getOnlyPrerequis(Request $request)
     {
+        $validated = $request->validate([
+            'program_id' => 'nullable|integer|exists:programme,id',
+        ]);
+
         $response = AAV::select(
             'acquis_apprentissage_vise.id',
             'acquis_apprentissage_vise.code',
@@ -281,8 +298,14 @@ class AcquisApprentissageVise extends Controller
                 '=',
                 'acquis_apprentissage_vise.id'
             )
-            ->distinct()
-            ->get();
+            ->distinct();
+
+        if (!empty($validated['program_id'])) {
+            $response->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'aavue_prerequis.fk_unite_enseignement')
+                ->where('ue_programme.fk_programme', (int) $validated['program_id']);
+        }
+
+        $response = $response->get();
 
         return $response;
     }

@@ -16,10 +16,44 @@ class AcquisApprentissageTerminaux extends Controller
 {
     public function __construct(private CodeGeneratorService $codeGen) {}
 
-    public function get()
+    public function get(Request $request)
     {
-        $result = AAT::select('id', 'code', 'name', 'description', 'level_contribution')
-            ->get();
+        $validated = $request->validate([
+            'program_id' => 'nullable|integer|exists:programme,id',
+        ]);
+
+        $result = AAT::query()
+            ->select('id', 'code', 'name', 'description', 'level_contribution');
+
+        if (!empty($validated['program_id'])) {
+            $programId = (int) $validated['program_id'];
+
+            $result->where(function ($query) use ($programId) {
+                // Chemin 1: AAT -> UE -> PRO
+                $query->whereExists(function ($sub) use ($programId) {
+                    $sub->select(DB::raw(1))
+                        ->from('ue_aat')
+                        ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'ue_aat.fk_ue')
+                        ->whereColumn('ue_aat.fk_aat', 'acquis_apprentissage_terminaux.id')
+                        ->where('ue_programme.fk_programme', $programId);
+                })
+                    // Chemin 2: AAT -> AAV -> UE -> PRO
+                    ->orWhereExists(function ($sub) use ($programId) {
+                        $sub->select(DB::raw(1))
+                            ->from('aav_aat')
+                            ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'aav_aat.fk_aav')
+                            ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'aavue_vise.fk_unite_enseignement')
+                            ->whereColumn('aav_aat.fk_aat', 'acquis_apprentissage_terminaux.id')
+                            ->where('ue_programme.fk_programme', $programId)
+                            ->where(function ($aavProgram) use ($programId) {
+                                $aavProgram->whereNull('aav_aat.fk_programme')
+                                    ->orWhere('aav_aat.fk_programme', $programId);
+                            });
+                    });
+            });
+        }
+
+        $result = $result->get();
         return $result;
     }
 

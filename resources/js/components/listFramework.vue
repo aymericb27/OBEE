@@ -144,7 +144,20 @@
 import axios from "axios";
 import list from "./list.vue";
 import modalExport from "./modalExport.vue";
+import { currentProgramState } from "../stores/currentProgram";
 export default {
+    computed: {
+        currentProgram() {
+            return currentProgramState;
+        },
+    },
+    watch: {
+        "currentProgram.id"(newId, oldId) {
+            if (newId === oldId) return;
+            this.syncCurrentProgramFilter();
+            this.reloadKey++;
+        },
+    },
     data() {
         return {
             errorsInProgram: false,
@@ -157,6 +170,7 @@ export default {
             formFilter: {
                 displayElement: "UE",
                 program: "",
+                program_id: "",
                 semestre: "",
             },
 
@@ -168,10 +182,16 @@ export default {
         modalExport,
     },
     methods: {
+        syncCurrentProgramFilter() {
+            const programId = this.currentProgram.id || "";
+            this.formFilter.program_id = programId;
+            this.formFilter.program = programId;
+        },
         selectProgram(element) {
             this.listColonne = ["code", "name"];
 
             this.formFilter.displayElement = element;
+            this.syncCurrentProgramFilter();
             if (element === "UE") {
                 this.routeGET = "/ues/get";
                 this.linkDetailed = "ue-detail";
@@ -227,7 +247,13 @@ export default {
     mounted() {
         //this.loadErrorInProgram();
         this.loadProgram();
+        this.syncCurrentProgramFilter();
         this.selectProgram("UE");
     },
 };
 </script>
+<style>
+.current-program-banner {
+    font-size: 0.95rem;
+}
+</style>

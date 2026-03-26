@@ -181,6 +181,11 @@ import list from "./list.vue";
 import SemesterBlock from "./SemesterBlock.vue";
 import modalList from "./modalList.vue";
 import BaseLoader from "./modal/baseLoader.vue";
+import {
+    clearCurrentProgram,
+    currentProgramState,
+    setCurrentProgram,
+} from "../stores/currentProgram";
 
 export default {
     data() {
@@ -217,16 +222,10 @@ export default {
 
     methods: {
         getStoredProgramId() {
-            const raw = sessionStorage.getItem("tree.selectedProgramId");
-            const parsed = Number(raw);
-            return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-        },
-        setStoredProgramId(id) {
-            if (!id) return;
-            sessionStorage.setItem("tree.selectedProgramId", String(id));
+            return currentProgramState.id;
         },
         clearStoredProgramId() {
-            sessionStorage.removeItem("tree.selectedProgramId");
+            clearCurrentProgram();
         },
         openModalUE(param) {
             this.UEsToExclude = param.semester.UES;
@@ -299,7 +298,12 @@ export default {
 
         async selectProgram(id) {
             this.selectedProgramId = id;
-            this.setStoredProgramId(id);
+            const selectedProgram = this.progs.find((program) => program.id === id);
+            if (selectedProgram) {
+                setCurrentProgram(selectedProgram);
+            } else {
+                setCurrentProgram({ id });
+            }
             this.loadProgramDetailed(id);
         },
 
@@ -310,6 +314,7 @@ export default {
             });
             console.log(this.prog);
             this.prog = response.data;
+            setCurrentProgram(this.prog);
             this.isLoadingSEM = false;
         },
         openCopyModal(programId) {

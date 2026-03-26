@@ -260,9 +260,21 @@
 <script>
 import axios from "axios";
 import BaseLoader from "./modal/baseLoader.vue";
+import { currentProgramState } from "../stores/currentProgram";
 
 export default {
     components: { BaseLoader },
+    computed: {
+        currentProgram() {
+            return currentProgramState;
+        },
+    },
+    watch: {
+        "currentProgram.id"(newId, oldId) {
+            if (newId === oldId) return;
+            this.loadAAT();
+        },
+    },
 
     data() {
         return {
@@ -306,7 +318,12 @@ export default {
             this.isLoadingTree = false;
         },
         async loadAAT() {
-            const responseAAT = await axios.get("aat/get");
+            const params = {};
+            if (this.currentProgram.id) {
+                params.program_id = this.currentProgram.id;
+            }
+
+            const responseAAT = await axios.get("aat/get", { params });
             this.aats = responseAAT.data;
             if (this.aats.length > 0 && this.aats[0]?.id) {
                 this.selectAAT(this.aats[0].id);
@@ -375,5 +392,8 @@ export default {
 .warning-no-aav {
     border-left: 4px solid #ffc107;
     color: #7a5a00;
+}
+.current-program {
+    font-size: 0.95rem;
 }
 </style>

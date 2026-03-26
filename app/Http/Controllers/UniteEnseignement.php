@@ -489,6 +489,9 @@ class UniteEnseignement extends Controller
 
     public function get(Request $request)
     {
+        $validated = $request->validate([
+            'program_id' => 'nullable|integer|exists:programme,id',
+        ]);
         /*         // Convertir onlyErrors en bool si présent
         if ($request->has('onlyErrors')) {
             $request->merge([
@@ -501,6 +504,11 @@ class UniteEnseignement extends Controller
         ]); */
 
         $ues = UE::select('unite_enseignement.id', 'code', 'name', 'ects');
+        if (!empty($validated['program_id'])) {
+            $ues->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'unite_enseignement.id')
+                ->where('ue_programme.fk_programme', (int) $validated['program_id'])
+                ->distinct();
+        }
 
         /*         // ✔ programme filtré seulement si fourni
         if (!empty($validated['program'])) {
@@ -530,3 +538,5 @@ class UniteEnseignement extends Controller
         return $ues;
     }
 }
+
+
