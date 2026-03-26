@@ -2,14 +2,21 @@
     <BaseLoader v-if="isLoading" text="Chargement..." size="md" />
 
     <div v-else>
-        <div v-if="isResearch" class="col-md-6 position-relative my-2">
-            <input
-                type="text"
-                class="form-control ps-4"
-                placeholder="Recherche..."
-                v-model="search"
-            />
-            <i class="fa fa-search position-absolute search-icon"></i>
+        <div v-if="isResearch" class="d-flex align-items-center my-2 px-2">
+            <div class="search-wrapper position-relative flex-grow-1 mr-2">
+                <input
+                    type="text"
+                    class="form-control ps-4"
+                    placeholder="Recherche..."
+                    v-model="search"
+                />
+                <i class="fa fa-search position-absolute search-icon"></i>
+            </div>
+            <router-link v-if="actionButton?.to" :to="actionButton.to">
+                <button class="btn btn-primary">
+                    {{ actionButton.label }}
+                </button>
+            </router-link>
         </div>
         <div
             class="d-flex justify-content-end align-items-center gap-2 mb-2 mr-2"
@@ -372,6 +379,11 @@ export default {
             required: false,
             default: () => ({}),
         },
+        actionButton: {
+            type: Object,
+            required: false,
+            default: () => null,
+        },
     },
 
     data() {
@@ -537,7 +549,7 @@ export default {
 
 <style>
 .search-icon {
-    right: 20px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: darkgray;

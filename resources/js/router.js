@@ -125,6 +125,12 @@ const routes = [
         component: FormAAT,
     },
     {
+        path: "/createAAV",
+        name: "createAAV",
+        component: FormAAV,
+        props: true,
+    },
+    {
         path: "/exportPanel",
         name: "exportPanel",
         component: ExportPanel,

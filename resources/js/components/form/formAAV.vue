@@ -7,7 +7,11 @@
     <div class="container">
         <form @submit.prevent="saveProgram" class="border p-4 rounded bg-white">
             <h3 class="primary_color mb-4">
-                Modification d'un acquis d'apprentissage visé
+                {{
+                    form.id
+                        ? "Modification d'un acquis d'apprentissage visé"
+                        : "Création d'un acquis d'apprentissage visé"
+                }}
             </h3>
             <div class="mb-3">
                 <input
@@ -71,7 +75,10 @@
                     <div class="col-md-1 p-2 AAT">{{ aat.code }}</div>
                     <div class="col-md-5 p-2">{{ aat.name }}</div>
                     <div class="col-md-3 p-2">
-                        <select class="form form-control" v-model="aat.fk_programme">
+                        <select
+                            class="form form-control"
+                            v-model="aat.fk_programme"
+                        >
                             <option :value="null">- aucun programme -</option>
                             <option
                                 v-for="pro in listProgramme"
@@ -83,7 +90,10 @@
                         </select>
                     </div>
                     <div class="col-md-2 p-2">
-                        <select class="form form-control" v-model="aat.contribution">
+                        <select
+                            class="form form-control"
+                            v-model="aat.contribution"
+                        >
                             <option
                                 v-for="level in aat.level_contribution"
                                 :key="level"
@@ -96,7 +106,11 @@
                 </div>
             </div>
             <button class="btn btn-primary" type="submit">
-                Modifier l'acquis d'apprentissage visé
+                {{
+                    form.id
+                        ? "Modifier l'acquis d'apprentissage visé"
+                        : "Créer l'acquis d'apprentissage visé"
+                }}
             </button>
         </form>
     </div>
@@ -143,7 +157,9 @@ export default {
 
     mounted() {
         this.loadProgrammes();
-        this.loadAAV();
+        if (this.id) {
+            this.loadAAV();
+        }
     },
 
     methods: {
@@ -228,24 +244,49 @@ export default {
                 seenPairs.add(pairKey);
             }
 
+            if (this.form.id) {
+                const payload = {
+                    id: this.form.id,
+                    name: this.form.name,
+                    description: this.form.description,
+                    aats: this.form.aats.map((aat) => ({
+                        id: aat.id,
+                        contribution: aat.contribution,
+                        fk_programme: aat.fk_programme ?? null,
+                    })),
+                };
+
+                const response = await axios.post("/aav/update", payload);
+                this.$router.push({
+                    name: "aav-detail",
+                    params: { id: this.form.id },
+                    query: { message: response.data.message },
+                });
+                return;
+            }
+
             const payload = {
-                id: this.form.id,
                 name: this.form.name,
                 description: this.form.description,
-                aats: this.form.aats.map((aat) => ({
+                aat: this.form.aats.map((aat) => ({
                     id: aat.id,
                     contribution: aat.contribution,
                     fk_programme: aat.fk_programme ?? null,
                 })),
             };
 
-            const response = await axios.post("/aav/update", payload);
+            const response = await axios.post("/aav/store", payload);
+            const createdId = response?.data?.id ?? response?.data?.aav?.id;
+            if (!createdId) return;
+
             this.$router.push({
                 name: "aav-detail",
-                params: { id: this.form.id },
+                params: { id: createdId },
                 query: { message: response.data.message },
             });
         },
     },
 };
 </script>
+
+

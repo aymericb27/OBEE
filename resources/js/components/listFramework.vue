@@ -129,6 +129,7 @@
                     :listColonne="listColonne"
                     :sortByCode="true"
                     :isResearch="true"
+                    :actionButton="listActionButton"
                 />
             </div>
         </div>
@@ -167,6 +168,7 @@ export default {
             linkDetailed: "",
             routeGET: "",
             listColonne: [],
+            listActionButton: null,
             formFilter: {
                 displayElement: "UE",
                 program: "",
@@ -189,6 +191,7 @@ export default {
         },
         selectProgram(element) {
             this.listColonne = ["code", "name"];
+            this.listActionButton = null;
 
             this.formFilter.displayElement = element;
             this.syncCurrentProgramFilter();
@@ -196,12 +199,39 @@ export default {
                 this.routeGET = "/ues/get";
                 this.linkDetailed = "ue-detail";
                 this.listColonne = ["code", "name", "ects"];
+                this.listActionButton = {
+                    label: "+ ajout UE",
+                    to: {
+                        name: "createUE",
+                        query: this.currentProgram.id
+                            ? { programID: this.currentProgram.id }
+                            : {},
+                    },
+                };
             } else if (element === "AAT") {
                 this.routeGET = "/aat/get";
                 this.linkDetailed = "aat-detail";
+                this.listActionButton = {
+                    label: "+ ajout AAT",
+                    to: {
+                        name: "createAAT",
+                        query: this.currentProgram.id
+                            ? { programID: this.currentProgram.id }
+                            : {},
+                    },
+                };
             } else if (element === "AAV") {
                 this.routeGET = "/aav/get";
                 this.linkDetailed = "aav-detail";
+                this.listActionButton = {
+                    label: "+ ajout AAV",
+                    to: {
+                        name: "createAAV",
+                        query: this.currentProgram.id
+                            ? { programID: this.currentProgram.id }
+                            : {},
+                    },
+                };
             } else if (element === "PRO") {
                 this.routeGET = "/pro/get";
                 this.linkDetailed = "pro-detail";
