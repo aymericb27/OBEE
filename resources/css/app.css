@@ -105,6 +105,16 @@ textarea {
 .modal {
     position: fixed !important;
     z-index: 1055 !important; /* plus haut que le backdrop */
+    overflow-x: hidden;
+    overflow-y: auto;
+} 
+
+.modal-content {
+    max-height: calc(100vh - 3.5rem);
+}
+
+.modal-body {
+    overflow-y: auto;
 }
 
 .page-item.active .page-link {
