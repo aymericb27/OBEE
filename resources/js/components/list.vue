@@ -137,13 +137,17 @@
                             :class="`${nameColumnClass()} p-3`"
                             v-if="listColonne.includes('name')"
                         >
-                            <div class="mb-0">
+                            <div class="mb-0 d-flex align-items-center">
                                 <h6
-                                    class="secondary_color"
+                                    class="secondary_color mb-0"
                                     style="font-size: 1.1em"
                                 >
                                     {{ item.name }}
                                 </h6>
+                                <AnomalyBadge
+                                    class="ml-2"
+                                    :summary="item.anomaly_summary"
+                                />
                                 <span v-if="item.error" class="h-100 p-2">
                                     <i
                                         class="fa-solid fa-triangle-exclamation"
@@ -192,6 +196,10 @@
                                             {{ ue.code }}
                                         </h6>
                                     </router-link>
+                                    <AnomalyBadge
+                                        class="mr-1"
+                                        :summary="ue.anomaly_summary"
+                                    />
                                     <span v-if="ueIndex < item.ues.length - 1"
                                         >,
                                     </span>
@@ -360,11 +368,12 @@
 
 <script>
 import BaseLoader from "./modal/baseLoader.vue";
+import AnomalyBadge from "./common/AnomalyBadge.vue";
 
 import axios from "axios";
 
 export default {
-    components: { BaseLoader },
+    components: { BaseLoader, AnomalyBadge },
 
     props: {
         routeGET: String,

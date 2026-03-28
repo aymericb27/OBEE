@@ -32,6 +32,24 @@
         <h1 class="title">OBEE-tool</h1>
 
         <div class="userBtn m-3">
+            <div class="mr-3">
+                <button
+                    class="btn btn-outline-warning btn-sm"
+                    :disabled="isRefreshingAnomalies"
+                    @click="refreshAnomalies"
+                    title="Recalculer toutes les anomalies"
+                >
+                    <i
+                        class="fa-solid fa-rotate-right mr-1"
+                        :class="{ 'fa-spin': isRefreshingAnomalies }"
+                    ></i>
+                    {{
+                        isRefreshingAnomalies
+                            ? "Mise à jour..."
+                            : "Refresh anomalies"
+                    }}
+                </button>
+            </div>
             <div class="current-program mr-3">
                 <span class="label">Programme courant</span>
                 <div class="d-flex align-items-center">
@@ -78,6 +96,13 @@
     </header>
 
     <router-view />
+    <div
+        v-if="refreshMessage"
+        class="anomaly-refresh-toast"
+        :class="refreshMessageType === 'error' ? 'error' : 'success'"
+    >
+        {{ refreshMessage }}
+    </div>
 </template>
 
 <script>
@@ -88,6 +113,13 @@ import {
 } from "./stores/currentProgram";
 
 export default {
+    data() {
+        return {
+            isRefreshingAnomalies: false,
+            refreshMessage: "",
+            refreshMessageType: "success",
+        };
+    },
     computed: {
         isAdmin() {
             return window.__USER__ && window.__USER__.role === "admin";
@@ -97,6 +129,31 @@ export default {
         },
     },
     methods: {
+        async refreshAnomalies() {
+            this.isRefreshingAnomalies = true;
+            this.refreshMessage = "";
+            try {
+                const response = await axios.post("/anomalies/refresh");
+                const payload = response?.data?.data;
+                this.refreshMessage =
+                    response?.data?.message ||
+                    "Anomalies recalculées avec succès.";
+                if (payload && typeof payload.ues === "number") {
+                    this.refreshMessage += ` (${payload.ues} UE, ${payload.anomalies} anomalies)`;
+                }
+                this.refreshMessageType = "success";
+                setTimeout(() => {
+                    this.refreshMessage = "";
+                }, 3500);
+            } catch (e) {
+                this.refreshMessageType = "error";
+                this.refreshMessage =
+                    e?.response?.data?.message ||
+                    "Erreur lors du recalcul des anomalies.";
+            } finally {
+                this.isRefreshingAnomalies = false;
+            }
+        },
         async logout() {
             try {
                 await axios.post("/logout");
@@ -146,5 +203,28 @@ export default {
 
 .listBtn {
     left: 0px;
+}
+
+.anomaly-refresh-toast {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 9999;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.anomaly-refresh-toast.success {
+    background: #ecfdf3;
+    color: #0f5132;
+    border: 1px solid #b7ebc9;
+}
+
+.anomaly-refresh-toast.error {
+    background: #fff2f0;
+    color: #842029;
+    border: 1px solid #f5c2c7;
 }
 </style>

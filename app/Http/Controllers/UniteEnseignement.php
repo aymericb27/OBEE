@@ -9,6 +9,7 @@ use App\Models\AcquisApprentissageTerminaux;
 use App\Models\ElementConstitutif;
 use App\Models\Programme;
 use App\Services\CodeGeneratorService;
+use App\Services\UEAnomalyService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,10 @@ use Illuminate\Validation\ValidationException;
 
 class UniteEnseignement extends Controller
 {
-    public function __construct(private CodeGeneratorService $codeGen) {}
+    public function __construct(
+        private CodeGeneratorService $codeGen,
+        private UEAnomalyService $ueAnomalyService
+    ) {}
 
     public function store(Request $request)
     {
@@ -116,21 +120,26 @@ class UniteEnseignement extends Controller
 
             foreach ($validated['pro'] as $item) {
                 $programmeId = (int) $item['id'];
-                $semesterNumber = (int) $item['semester'];
+                $semesterNumber = isset($item['semester']) && $item['semester'] !== null && $item['semester'] !== ''
+                    ? (int) $item['semester']
+                    : null;
 
-                $key = $programmeId . '-' . $semesterNumber;
-
-                if (!isset($map[$key])) {
-                    // semestre invalide pour ce programme
-                    throw \Illuminate\Validation\ValidationException::withMessages([
-                        'pro' => ["Semestre $semesterNumber introuvable pour le programme ID $programmeId."]
-                    ]);
+                $semesterId = null;
+                if ($semesterNumber !== null) {
+                    $key = $programmeId . '-' . $semesterNumber;
+                    if (!isset($map[$key])) {
+                        // semestre invalide pour ce programme
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'pro' => ["Semestre $semesterNumber introuvable pour le programme ID $programmeId."]
+                        ]);
+                    }
+                    $semesterId = (int) $map[$key];
                 }
 
                 $rows[] = [
                     'fk_unite_enseignement' => $ue->id,
                     'fk_programme' => $programmeId,
-                    'fk_semester' => $map[$key], // ✅ pro_semester.id
+                    'fk_semester' => $semesterId,
                     'university_id' => $universityId,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -150,6 +159,7 @@ class UniteEnseignement extends Controller
 
             ]);
         }
+        $this->ueAnomalyService->recomputeForUE((int) $ue->id);
         return response()->json([
             'success' => true,
             'id' => $ue->id,
@@ -239,20 +249,25 @@ class UniteEnseignement extends Controller
             $rows = [];
             foreach ($validated['pro'] as $item) {
                 $programmeId = (int) $item['id'];
-                $semesterNumber = (int) $item['semester'];
+                $semesterNumber = isset($item['semester']) && $item['semester'] !== null && $item['semester'] !== ''
+                    ? (int) $item['semester']
+                    : null;
 
-                $key = $programmeId . '-' . $semesterNumber;
-
-                if (!isset($map[$key])) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
-                        'pro' => ["Semestre $semesterNumber introuvable pour le programme ID $programmeId."]
-                    ]);
+                $semesterId = null;
+                if ($semesterNumber !== null) {
+                    $key = $programmeId . '-' . $semesterNumber;
+                    if (!isset($map[$key])) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'pro' => ["Semestre $semesterNumber introuvable pour le programme ID $programmeId."]
+                        ]);
+                    }
+                    $semesterId = (int) $map[$key];
                 }
 
                 $rows[] = [
                     'fk_unite_enseignement' => $ue->id,
                     'fk_programme' => $programmeId,
-                    'fk_semester' => $map[$key],
+                    'fk_semester' => $semesterId,
                     'university_id' => $universityId,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -278,6 +293,7 @@ class UniteEnseignement extends Controller
             // ajoute tous les liens pivot d'un coup
             $ue->aat()->sync($pivotData);
         }
+        $this->ueAnomalyService->recomputeForUE((int) $ue->id);
         return response()->json([
             'success' => true,
             'message' => "Unité d'enseignement mise à jour avec succès.",
@@ -297,7 +313,7 @@ class UniteEnseignement extends Controller
             'pro_semester.semester'
         )
             ->join('ue_programme', 'ue_programme.fk_programme', '=', 'programme.id')
-            ->join('pro_semester', 'pro_semester.id', '=', 'ue_programme.fk_semester')
+            ->leftJoin('pro_semester', 'pro_semester.id', '=', 'ue_programme.fk_semester')
             ->where('ue_programme.fk_unite_enseignement', $validated['id'])
             ->get();
 
@@ -347,6 +363,19 @@ class UniteEnseignement extends Controller
             ->where('element_constitutif.fk_ue_parent', $validated['id'])
             ->orderBy('unite_enseignement.code')
             ->get();
+
+        $summaryMap = $this->ueAnomalyService->getSummaryForUEIds(
+            $ues->pluck('id')->map(fn($id) => (int) $id)->all(),
+            (int) Auth::user()->university_id
+        );
+
+        $ues->each(function ($ue) use ($summaryMap) {
+            $ue->anomaly_summary = $summaryMap->get((int) $ue->id, [
+                'has_anomaly' => false,
+                'count' => 0,
+                'severity' => 'info',
+            ]);
+        });
 
         return $ues;
     }
@@ -471,6 +500,37 @@ class UniteEnseignement extends Controller
         $response = UE::where('unite_enseignement.id', $validated['id'])
             ->with(['parent', 'children'])
             ->first();
+
+        if (!$response) {
+            return $response;
+        }
+
+        $universityId = (int) Auth::user()->university_id;
+        $allUeIds = collect([$response->id])
+            ->merge(collect($response->children ?? [])->pluck('id'))
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $summaryMap = $this->ueAnomalyService->getSummaryForUEIds($allUeIds, $universityId);
+        $response->anomaly_summary = $summaryMap->get((int) $response->id, [
+            'has_anomaly' => false,
+            'count' => 0,
+            'severity' => 'info',
+        ]);
+        $response->anomalies = $this->ueAnomalyService->getDetailsForUE((int) $response->id, $universityId);
+
+        if (!empty($response->children)) {
+            foreach ($response->children as $child) {
+                $child->anomaly_summary = $summaryMap->get((int) $child->id, [
+                    'has_anomaly' => false,
+                    'count' => 0,
+                    'severity' => 'info',
+                ]);
+            }
+        }
+
         return $response;
     }
 
@@ -480,7 +540,28 @@ class UniteEnseignement extends Controller
             'id' => 'required|integer',
         ]);
         $ue = UE::findOrFail($validated['id']);
+        $universityId = (int) Auth::user()->university_id;
+        $ueId = (int) $ue->id;
+        $programIds = DB::table('ue_programme')
+            ->where('university_id', $universityId)
+            ->where('fk_unite_enseignement', $ueId)
+            ->pluck('fk_programme')
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
         $ue->delete();
+
+        DB::table('anomalies')
+            ->where('university_id', $universityId)
+            ->where('ue_id', $ueId)
+            ->delete();
+
+        foreach ($programIds as $programId) {
+            $this->ueAnomalyService->recomputeForProgram((int) $programId, $universityId);
+        }
+
         return response()->json([
             'success' => true,
             'message' => "Unité d'enseignement supprimé avec succès.",
@@ -522,6 +603,17 @@ class UniteEnseignement extends Controller
         } */
 
         $ues = $ues->get();
+        $summaryMap = $this->ueAnomalyService->getSummaryForUEIds(
+            $ues->pluck('id')->map(fn($id) => (int) $id)->all(),
+            (int) Auth::user()->university_id
+        );
+        $ues->each(function ($ue) use ($summaryMap) {
+            $ue->anomaly_summary = $summaryMap->get((int) $ue->id, [
+                'has_anomaly' => false,
+                'count' => 0,
+                'severity' => 'info',
+            ]);
+        });
 
         // Analyse d'erreurs
         /*  $EC = new ErrorController;
@@ -536,6 +628,18 @@ class UniteEnseignement extends Controller
         }
  */
         return $ues;
+    }
+
+    public function refreshAnomalies()
+    {
+        $universityId = (int) Auth::user()->university_id;
+        $result = $this->ueAnomalyService->recomputeForUniversity($universityId);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Anomalies recalculées avec succès.',
+            'data' => $result,
+        ]);
     }
 }
 

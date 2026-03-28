@@ -10,6 +10,7 @@ use App\Models\UniteEnseignement;
 use App\Services\CodeGeneratorService;
 use App\Services\GenericListImportService;
 use App\Services\GenericSingleImportService;
+use App\Services\UEAnomalyService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
@@ -21,7 +22,10 @@ use Symfony\Component\ErrorHandler\Debug;
 
 class ImportController extends Controller
 {
-    public function __construct(private CodeGeneratorService $codeGen) {}
+    public function __construct(
+        private CodeGeneratorService $codeGen,
+        private UEAnomalyService $ueAnomalyService
+    ) {}
 
     public function import(Request $request)
     {
@@ -522,24 +526,25 @@ class ImportController extends Controller
                         $pro->save();
                     }
 
+                    $proSemesterId = null;
                     if ($sem === null) {
-                        $warnings[] = "Aucun semestre fourni pour le programme \"$code\". Le lien UE-programme n'a pas ete importe.";
-                        continue;
-                    }
+                        $warnings[] = "Aucun semestre fourni pour le programme \"$code\". Le lien UE-programme est importe avec un semestre vide.";
+                    } else {
+                        $proSemester = DB::table('pro_semester')
+                            ->where('fk_programme', $pro->id)
+                            ->where('semester', $sem)
+                            ->first(['id']);
 
-                    $proSemester = DB::table('pro_semester')
-                        ->where('fk_programme', $pro->id)
-                        ->where('semester', $sem)
-                        ->first(['id']);
-
-                    if (!$proSemester) {
-                        $warnings[] = "Semestre $sem introuvable pour le programme \"$code\". Le lien UE-programme n'a pas ete importe.";
-                        continue;
+                        if (!$proSemester) {
+                            $warnings[] = "Semestre $sem introuvable pour le programme \"$code\". Le lien UE-programme est importe avec un semestre vide.";
+                        } else {
+                            $proSemesterId = (int) $proSemester->id;
+                        }
                     }
 
                     $pivot = [
                         'university_id' => $uid,
-                        'fk_semester' => (int) $proSemester->id,
+                        'fk_semester' => $proSemesterId,
                     ];
 
                     $ue->pro()->syncWithoutDetaching([
@@ -625,6 +630,9 @@ class ImportController extends Controller
             }
 
             DB::commit();
+
+            $this->ueAnomalyService->recomputeForUE((int) $ue->id);
+
             return $ue;
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -813,6 +821,9 @@ class ImportController extends Controller
             }
 
             DB::commit();
+
+            $this->ueAnomalyService->recomputeForAAT((int) $aat->id, (int) $uid);
+
             return $aat;
         } catch (\Throwable $e) {
             DB::rollBack();

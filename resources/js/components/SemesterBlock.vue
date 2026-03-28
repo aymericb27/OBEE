@@ -18,15 +18,28 @@
             <span class="badge badge-success text-white ml-2">
                 {{ semester?.countECTS ?? "—" }} ECTS
             </span>
+
             <span class="badge bg-light text-dark ml-2 border">
                 {{ semester?.ects ?? "—" }} ECTS
             </span>
             <span v-if="semester.ects !== semester.countECTS"
                 ><i
+                    title="Le nombre de crédit n'est pas cohérent"
                     style="color: orange"
-                    class="fa-solid fa-triangle-exclamation"
+                    class="ml-1 fa-solid fa-triangle-exclamation"
                 ></i
             ></span>
+            <AnomalyBadge
+                class=" semester-empty-anomaly-badge"
+                :summary="semester?.anomaly_summary"
+                tooltip="Aucune UE dans ce semestre"
+            />
+            <i
+                v-if="hasUEAnomalyInSemester"
+                class="fa-solid fa-triangle-exclamation ml-2 semester-ue-anomaly-warning"
+                title="Une ou plusieurs UE de ce semestre comportent des anomalies"
+            ></i>
+
             <button
                 @click="openModalUE('UE', null)"
                 class="btn btn-lg btn-primary ml-auto"
@@ -88,6 +101,7 @@
                             }}</span> </router-link
                         >{{ UE.name }}
                     </h5>
+                    <AnomalyBadge class="ml-2" :summary="UE.anomaly_summary" />
 
                     <span class="badge badge-success ml-2"
                         >{{ UE.ects }} ECTS</span
@@ -137,6 +151,10 @@
                             </router-link>
                             {{ EC.name }}
                         </h5>
+                        <AnomalyBadge
+                            class="ml-2"
+                            :summary="EC.anomaly_summary"
+                        />
 
                         <span class="badge badge-success ml-2"
                             >{{ EC.ects }} ECTS</span
@@ -182,9 +200,10 @@
 <script>
 import axios from "axios";
 import ConfirmDeleteModal from "./modal/confirmDeleteModal.vue";
+import AnomalyBadge from "./common/AnomalyBadge.vue";
 
 export default {
-    components: { ConfirmDeleteModal },
+    components: { ConfirmDeleteModal, AnomalyBadge },
 
     props: {
         semester: { type: Object, required: true },
@@ -204,6 +223,20 @@ export default {
             isOpen: false,
             isReordering: false,
         };
+    },
+    computed: {
+        hasUEAnomalyInSemester() {
+            const ues = Array.isArray(this.semester?.UES) ? this.semester.UES : [];
+
+            return ues.some((ue) => {
+                const ueHasAnomaly = Boolean(ue?.anomaly_summary?.has_anomaly);
+                const children = Array.isArray(ue?.children) ? ue.children : [];
+                const childHasAnomaly = children.some((ec) =>
+                    Boolean(ec?.anomaly_summary?.has_anomaly),
+                );
+                return ueHasAnomaly || childHasAnomaly;
+            });
+        },
     },
     methods: {
         async moveUE(UE, direction) {
@@ -307,5 +340,16 @@ export default {
 .unlinkBtn {
     color: #b82b00;
     cursor: pointer;
+}
+
+:deep(.semester-empty-anomaly-badge.severity-error) {
+    color: #dc3545;}
+
+:deep(.semester-empty-anomaly-badge.severity-warning) {
+    color: #dc3545;
+}
+
+.semester-ue-anomaly-warning {
+    color: #92429d;
 }
 </style>

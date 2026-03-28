@@ -51,6 +51,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::post('/ue/store', [UniteEnseignement::class, 'store'])->name('ue.store');
     Route::delete('/ue/delete', [UniteEnseignement::class, 'delete']);
     Route::post('/ues/add/EC', [UniteEnseignement::class, 'addEC']);
+    Route::post('/anomalies/refresh', [UniteEnseignement::class, 'refreshAnomalies']);
 
     // Programme
     Route::get('/pro/get', [ProgrammeController::class, 'get'])->name('pro.get');

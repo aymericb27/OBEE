@@ -23,6 +23,10 @@
                         <span>
                             {{ ue.name }}
                         </span>
+                        <AnomalyBadge
+                            class="ml-2"
+                            :summary="displayedAnomalySummary"
+                        />
                     </h3>
                     <span class="col-md-2 text-right">
                         <i
@@ -65,6 +69,82 @@
                             </router-link>
                             {{ ue.parent[0].name }}
                         </strong>
+                    </div>
+                </div>
+
+                <div class="listComponent mb-4">
+                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('anomalies')">
+                        <h5 class="d-inline-block primary_color">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            Anomalies détectées
+                        </h5>
+                        <i class="fa-solid primary_color" :class="isExpanded('anomalies') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                    </div>
+                    <div
+                        v-show="isExpanded('anomalies')"
+                        class="border rounded p-3 bg-light"
+                    >
+                        <div
+                            v-if="groupedAnomalies.length"
+                            v-for="(anom, anomIndex) in groupedAnomalies"
+                            :key="anom.key"
+                            :class="[
+                                'mb-2',
+                                'pb-2',
+                                anomIndex < groupedAnomalies.length - 1
+                                    ? 'border-bottom'
+                                    : '',
+                            ]"
+                        >
+                            <div class="d-flex align-items-center">
+                                <AnomalyBadge
+                                    :summary="{
+                                        has_anomaly: true,
+                                        count: 1,
+                                        severity: anom.severity || 'warning',
+                                    }"
+                                    :showCount="false"
+                                />
+                                <strong class="ml-2">{{ anomalyTypeText(anom) }}</strong>
+                            </div>
+                            <div class="mt-1">
+                                <ul class="mb-0 anomaly-bullet-list">
+                                    <li
+                                        v-for="item in anomalyListItems(anom)"
+                                        :key="item.key"
+                                    >
+                                        <template v-if="item.text">
+                                            {{ item.text }}
+                                        </template>
+                                        <template v-else>
+                                            <span v-if="item.prefix">{{ item.prefix }}</span>
+                                            <router-link
+                                                v-if="item.routeName && item.id"
+                                                :to="{
+                                                    name: item.routeName,
+                                                    params: { id: item.id },
+                                                }"
+                                            >
+                                                <span style="font-size: 1.1em;" :class="item.codeClass">
+                                                    {{ item.codeText }}
+                                                </span>
+                                            </router-link>
+                                            <span v-else :class="item.codeClass">
+                                                {{ item.codeText }}
+                                            </span>
+                                            <span v-if="item.labelText">{{ item.labelText }}</span>
+                                            <span v-if="item.suffix">{{ item.suffix }}</span>
+                                        </template>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                {{ anomalyActionText(anom) }}
+                            </div>
+                        </div>
+                        <div v-else class="text-muted">
+                            Aucune anomalie détectée pour cette UE.
+                        </div>
                     </div>
                 </div>
 
@@ -194,6 +274,7 @@ import { onMounted, watch } from "vue";
 
 import errorShedule from "../error/ErrUEShedule.vue";
 import ConfirmDeleteModal from "../modal/confirmDeleteModal.vue";
+import AnomalyBadge from "../common/AnomalyBadge.vue";
 
 export default {
     props: {
@@ -202,7 +283,69 @@ export default {
             required: true,
         },
     },
-    components: { list, errorShedule, ConfirmDeleteModal },
+    components: { list, errorShedule, ConfirmDeleteModal, AnomalyBadge },
+    computed: {
+        displayedAnomalySummary() {
+            const groupedCount = this.groupedAnomalies.length;
+            const base = this.ue?.anomaly_summary || {};
+            const groupedSeverity = this.groupedAnomalies.reduce(
+                (acc, item) => {
+                    const weight = { info: 1, warning: 2, error: 3 };
+                    const current = item?.severity || "warning";
+                    return (weight[current] || 1) > (weight[acc] || 1)
+                        ? current
+                        : acc;
+                },
+                "info",
+            );
+            return {
+                has_anomaly: groupedCount > 0,
+                count: groupedCount,
+                severity:
+                    groupedCount > 0
+                        ? groupedSeverity
+                        : base.severity || "warning",
+            };
+        },
+        groupedAnomalies() {
+            const anomalies = Array.isArray(this.ue?.anomalies)
+                ? this.ue.anomalies
+                : [];
+            const map = new Map();
+
+            anomalies.forEach((anom) => {
+                if (!anom || anom.code === "UE_ANOM_01") return;
+                const key = `${anom.code || ""}|${anom.message || ""}`;
+                if (!map.has(key)) {
+                    map.set(key, {
+                        key,
+                        code: anom.code,
+                        message: anom.message,
+                        count: 1,
+                        severity: anom.severity || "warning",
+                        details: anom.details || {},
+                        entries: [anom],
+                    });
+                    return;
+                }
+
+                const current = map.get(key);
+                current.count += 1;
+                current.entries.push(anom);
+                if (!current.details || !Object.keys(current.details).length) {
+                    current.details = anom.details || {};
+                }
+                if (
+                    (anom.severity === "error" && current.severity !== "error") ||
+                    (anom.severity === "warning" && current.severity === "info")
+                ) {
+                    current.severity = anom.severity;
+                }
+            });
+
+            return Array.from(map.values());
+        },
+    },
     data() {
         return {
             openModalDelete: false,
@@ -221,6 +364,7 @@ export default {
                 isError: false,
             },
             expandedSections: {
+                anomalies: true,
                 children: true,
                 programs: true,
                 aavVise: true,
@@ -230,6 +374,172 @@ export default {
         };
     },
     methods: {
+        routeNameByType(type) {
+            if (type === "UE") return "ue-detail";
+            if (type === "PRO") return "pro-detail";
+            if (type === "AAV") return "aav-detail";
+            if (type === "AAT") return "aat-detail";
+            return null;
+        },
+        anomalyListItems(anom) {
+            const code = anom?.code || "";
+            const details = anom?.details || {};
+            const entries = Array.isArray(anom?.entries) ? anom.entries : [];
+            const items = [];
+
+            const pushLinked = (
+                key,
+                type,
+                id,
+                codeText,
+                labelText = "",
+                prefix = "",
+                suffix = "",
+            ) => {
+                items.push({
+                    key,
+                    routeName: this.routeNameByType(type),
+                    id: id ?? null,
+                    codeClass: type,
+                    codeText: codeText || "-",
+                    labelText,
+                    prefix,
+                    suffix,
+                });
+            };
+
+            if (code === "UE_ANOM_03") {
+                const prereqs = Array.isArray(details?.impacted_prereqs)
+                    ? details.impacted_prereqs
+                    : [];
+                prereqs.forEach((p, idx) => {
+                    pushLinked(
+                        `pre-${idx}-${p?.prereq_id ?? idx}`,
+                        "AAV",
+                        p?.prereq_id ?? null,
+                        p?.prereq_code || `AAV#${p?.prereq_id ?? "?"}`,
+                        p?.prereq_name ? ` - ${p.prereq_name}` : "",
+                    );
+                });
+            } else if (code === "UE_ANOM_07") {
+                const missingAavs = Array.isArray(details?.missing_aavs)
+                    ? details.missing_aavs
+                    : [];
+                missingAavs.forEach((a, idx) => {
+                    pushLinked(
+                        `aav-miss-${idx}-${a?.aav_id ?? idx}`,
+                        "AAV",
+                        a?.aav_id ?? null,
+                        a?.aav_code || `AAV#${a?.aav_id ?? "?"}`,
+                        a?.aav_name ? ` - ${a.aav_name}` : "",
+                    );
+                });
+            } else if (code === "UE_ANOM_06") {
+                const semesters = Array.isArray(details?.impacted_semesters)
+                    ? details.impacted_semesters
+                    : [];
+                semesters.forEach((s, idx) => {
+                    const suffix = s?.semester_number
+                        ? ` (S${s.semester_number})`
+                        : "";
+                    pushLinked(
+                        `sem-miss-${idx}-${s?.program_id ?? idx}`,
+                        "PRO",
+                        s?.program_id ?? null,
+                        s?.program_code || `PRO#${s?.program_id ?? "?"}`,
+                        s?.program_name ? ` - ${s.program_name}` : "",
+                        "",
+                        suffix,
+                    );
+                });
+            } else if (code === "UE_ANOM_09") {
+                const allCases = []
+                    .concat(
+                        Array.isArray(details?.declared_ue_but_no_aav_cases)
+                            ? details.declared_ue_but_no_aav_cases
+                            : [],
+                    )
+                    .concat(
+                        Array.isArray(details?.aav_to_aat_not_declared_in_ue_cases)
+                            ? details.aav_to_aat_not_declared_in_ue_cases
+                            : [],
+                    );
+                const seen = new Set();
+                allCases.forEach((c, idx) => {
+                    const aatId = c?.aat_id ?? null;
+                    const key = String(aatId ?? `x-${idx}`);
+                    if (seen.has(key)) return;
+                    seen.add(key);
+                    pushLinked(
+                        `inc-aat-${key}`,
+                        "AAT",
+                        aatId,
+                        c?.aat_code || `AAT#${aatId ?? "?"}`,
+                        c?.aat_name ? ` - ${c.aat_name}` : "",
+                    );
+                });
+            } else if (code === "UE_ANOM_08") {
+                const detailsEntries = entries.length ? entries : [anom];
+                detailsEntries.forEach((entry, idx) => {
+                    const d = entry?.details || {};
+                    if (!d?.aav_id && !d?.aat_id) return;
+                    items.push({
+                        key: `lvl-${idx}`,
+                        text: `AAV ${d?.aav_code || d?.aav_id || "?"} -> AAT ${d?.aat_id || "?"}`,
+                    });
+                });
+            } else if (code === "UE_ANOM_02") {
+                const detailsEntries = entries.length ? entries : [anom];
+                detailsEntries.forEach((entry, idx) => {
+                    const d = entry?.details || {};
+                    const ues = Array.isArray(d?.matching_ues) ? d.matching_ues : [];
+                    if (!ues.length) return;
+                    ues.forEach((u, uidx) => {
+                        pushLinked(
+                            `ue-match-${idx}-${uidx}-${u?.id ?? uidx}`,
+                            "UE",
+                            u?.id ?? null,
+                            u?.code || `UE#${u?.id ?? "?"}`,
+                            u?.name ? ` - ${u.name}` : "",
+                            `Correspondance prerequis ${d?.prereq_code || ""}: `,
+                        );
+                    });
+                });
+            }
+
+            if (!items.length) {
+                items.push({
+                    key: `fallback-${code || "anom"}`,
+                    text: anom?.message || "Anomalie detectee.",
+                });
+            }
+
+            return items;
+        },
+        anomalyTypeText(anom) {
+            const code = anom?.code || "";
+            if (code === "UE_ANOM_02") return "Erreur de prérequis (UE)";
+            if (code === "UE_ANOM_03") return "Erreur de prérequis";
+            if (code === "UE_ANOM_04") return "Erreur de données (liste des AAV vide)";
+            if (code === "UE_ANOM_05") return "Erreur de données (crédits manquants)";
+            if (code === "UE_ANOM_06") return "Erreur d'affectation de semestre";
+            if (code === "UE_ANOM_07") return "Erreur de contribution";
+            if (code === "UE_ANOM_08") return "Erreur de niveau de contribution";
+            if (code === "UE_ANOM_09") return "Erreur de cohérence de contribution";
+            return "Anomalie";
+        },
+        anomalyActionText(anom) {
+            const code = anom?.code || "";
+            if (code === "UE_ANOM_04") return "Ajouter des AAV visés à cette UE.";
+            if (code === "UE_ANOM_05") return "Renseigner les crédits (ECTS) de cette UE.";
+            if (code === "UE_ANOM_06") return "Certains semestres sont sans UE. vérifier l'affectation de semestre dans le(s) programme(s).";
+            if (code === "UE_ANOM_07") return "Compléter les contributions AAV -> AAT manquantes.";
+            if (code === "UE_ANOM_08") return "Renseigner le niveau de contribution du AAT concerné.";
+            if (code === "UE_ANOM_09") return "L'UE declare contribuer a un AAT mais aucun AAV de l'UE ne contribue a cet AAT pour ce programme. Aligner la matrice UE -> AAT avec les contributions des AAV.";
+            if (code === "UE_ANOM_03") return "Un ou des prérequis ne fait pas partie des acquis d'apprentissages visées des semestres precedents. Vérifier que le prérequis appartient aux AAV autorisés.";
+            if (code === "UE_ANOM_02") return "Remplacer ce prérequis par une liste d'AAV explicite.";
+            return "Action: corriger la donnée source puis sauvegarder.";
+        },
         toggleSection(section) {
             this.expandedSections[section] = !this.expandedSections[section];
         },
@@ -309,3 +619,13 @@ export default {
 
 
 
+
+<style scoped>
+.anomaly-bullet-list {
+    padding-left: 1.1rem;
+}
+
+.anomaly-bullet-list li {
+    margin-bottom: 0.25rem;
+}
+</style>

@@ -117,6 +117,10 @@
                                     {{ ue.code }}
                                 </router-link>
                                 {{ ue.name }}
+                                <AnomalyBadge
+                                    class="ml-2"
+                                    :summary="ue.anomaly_summary"
+                                />
                             </h5>
                         </div>
                         <div
@@ -229,6 +233,10 @@
                                             {{ child.code }}
                                         </router-link>
                                         {{ child.name }}
+                                        <AnomalyBadge
+                                            class="ml-2"
+                                            :summary="child.anomaly_summary"
+                                        />
                                     </h5>
                                     <span
                                         :class="
@@ -260,10 +268,11 @@
 <script>
 import axios from "axios";
 import BaseLoader from "./modal/baseLoader.vue";
+import AnomalyBadge from "./common/AnomalyBadge.vue";
 import { currentProgramState } from "../stores/currentProgram";
 
 export default {
-    components: { BaseLoader },
+    components: { BaseLoader, AnomalyBadge },
     computed: {
         currentProgram() {
             return currentProgramState;

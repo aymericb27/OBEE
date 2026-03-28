@@ -7,13 +7,17 @@ use App\Models\Pro_semester;
 use App\Models\Programme;
 use App\Models\UniteEnseignement;
 use App\Services\CodeGeneratorService;
+use App\Services\UEAnomalyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ProgrammeController extends Controller
 {
-    public function __construct(private CodeGeneratorService $codeGen) {}
+    public function __construct(
+        private CodeGeneratorService $codeGen,
+        private UEAnomalyService $ueAnomalyService
+    ) {}
 
     public function get(Request $request = null)
     {
@@ -90,7 +94,11 @@ class ProgrammeController extends Controller
 
         if (!empty($rows)) {
             DB::table('ue_programme')->insert($rows);
+            $this->ueAnomalyService->recomputeForUEIds(
+                collect($rows)->pluck('fk_unite_enseignement')->map(fn($id) => (int) $id)->all()
+            );
         }
+        $this->ueAnomalyService->recomputeEmptySemesterAnomaliesForUniversity((int) $universityId);
 
         return response()->json([
             'success' => true,
@@ -128,7 +136,7 @@ class ProgrammeController extends Controller
 
         $validated['university_id'] = Auth::user()->university_id;
 
-        return DB::transaction(function () use ($validated) {
+        $response = DB::transaction(function () use ($validated) {
             // ----- Création du programme -----
             $programme = Programme::create([
                 'name' => $validated['name'],
@@ -165,6 +173,10 @@ class ProgrammeController extends Controller
                 'id' => $programme->id,
             ]);
         });
+
+        $this->ueAnomalyService->recomputeEmptySemesterAnomaliesForUniversity((int) $validated['university_id']);
+
+        return $response;
     }
 
 
@@ -173,35 +185,27 @@ class ProgrammeController extends Controller
         $validated = $request->validate([
             'id' => 'required|integer|exists:programme,id',
         ]);
+        $universityId = (int) Auth::user()->university_id;
+        $impactedUeIds = DB::table('ue_programme')
+            ->where('university_id', $universityId)
+            ->where('fk_programme', (int) $validated['id'])
+            ->pluck('fk_unite_enseignement')
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
         $pro = Programme::findOrFail($validated['id']);
         $pro->delete();
+
+        $this->ueAnomalyService->recomputeForUEIds($impactedUeIds);
+        $this->ueAnomalyService->recomputeEmptySemesterAnomaliesForUniversity($universityId);
+
         return response()->json([
             'success' => true,
             'message' => "Programme supprimé avec succès.",
         ]);
     }
-/* 
-    public function addSemestre(Request $request)
-    {
-        $validated = $request->validate([
-            'id' => 'required|integer|exists:programme,id',
-        ]);
-
-        // Récupération du programme
-        $programme = Programme::findOrFail($validated['id']);
-
-        // Incrémentation du nombre de semestres
-        $programme->semestre = $programme->semestre + 1;
-        $programme->save();
-
-        // Retourne le programme mis à jour avec la nouvelle structure de semestres
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Le semestre a été crée correctement',
-            'id' => $programme->id
-        ]);
-    } */
     /**
      * Update an existing programme
      */
@@ -237,7 +241,16 @@ class ProgrammeController extends Controller
             ], 422);
         }
 
-        return DB::transaction(function () use ($validated, $programme, $universityId) {
+        $impactedUeIdsBefore = DB::table('ue_programme')
+            ->where('university_id', $universityId)
+            ->where('fk_programme', (int) $programme->id)
+            ->pluck('fk_unite_enseignement')
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $response = DB::transaction(function () use ($validated, $programme, $universityId) {
 
             // ✅ update programme (sans semestre)
             $programme->update([
@@ -299,6 +312,23 @@ class ProgrammeController extends Controller
                 'id' => $programme->id,
             ]);
         });
+
+        $impactedUeIdsAfter = DB::table('ue_programme')
+            ->where('university_id', $universityId)
+            ->where('fk_programme', (int) $programme->id)
+            ->pluck('fk_unite_enseignement')
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $this->ueAnomalyService->recomputeForUEIds(array_values(array_unique(array_merge(
+            $impactedUeIdsBefore,
+            $impactedUeIdsAfter
+        ))));
+        $this->ueAnomalyService->recomputeEmptySemesterAnomaliesForUniversity((int) $universityId);
+
+        return $response;
     }
 
     public function copy(Request $request)
@@ -311,7 +341,9 @@ class ProgrammeController extends Controller
 
         $universityId = Auth::user()->university_id;
 
-        return DB::transaction(function () use ($validated, $universityId) {
+        $copiedUeIds = [];
+
+        $response = DB::transaction(function () use ($validated, $universityId, &$copiedUeIds) {
             $sourceProgramme = Programme::where('id', $validated['source_id'])
                 ->where('university_id', $universityId)
                 ->firstOrFail();
@@ -396,6 +428,12 @@ class ProgrammeController extends Controller
 
                 if (!empty($ueRows)) {
                     DB::table('ue_programme')->insert($ueRows);
+                    $copiedUeIds = collect($ueRows)
+                        ->pluck('fk_unite_enseignement')
+                        ->map(fn($id) => (int) $id)
+                        ->unique()
+                        ->values()
+                        ->all();
                 }
             }
 
@@ -405,6 +443,13 @@ class ProgrammeController extends Controller
                 'id' => $newProgramme->id,
             ]);
         });
+
+        if (!empty($copiedUeIds)) {
+            $this->ueAnomalyService->recomputeForUEIds($copiedUeIds);
+        }
+        $this->ueAnomalyService->recomputeEmptySemesterAnomaliesForUniversity((int) $universityId);
+
+        return $response;
     }
 
 
@@ -413,7 +458,20 @@ class ProgrammeController extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
-        $ues = UniteEnseignement::join('ue_programme', 'fk_unite_enseignement', '=', 'unite_enseignement.id')->where('fk_programme', $validated['id'])->get();
+        $ues = UniteEnseignement::select(
+            'unite_enseignement.id',
+            'unite_enseignement.code',
+            'unite_enseignement.name',
+            'unite_enseignement.ects',
+            'unite_enseignement.university_id',
+            'unite_enseignement.created_at',
+            'unite_enseignement.updated_at'
+        )
+            ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'unite_enseignement.id')
+            ->where('ue_programme.fk_programme', $validated['id'])
+            ->distinct()
+            ->get();
+        $this->attachAnomalySummaryToUes($ues, (int) Auth::user()->university_id);
         return $ues;
     }
 
@@ -433,6 +491,11 @@ class ProgrammeController extends Controller
             ->get();
 
         $listSemestre = [];
+        $semesterIds = $semesters->pluck('id')->map(fn($id) => (int) $id)->all();
+        $semesterAnomalyMap = $this->ueAnomalyService->getSummaryForSemesterIds(
+            $semesterIds,
+            (int) Auth::user()->university_id
+        );
 
         foreach ($semesters as $sem) {
             $ues = $this->getUEBySemester($programme->id, $sem->id);
@@ -443,8 +506,18 @@ class ProgrammeController extends Controller
                 'ects' => $sem->ects,
                 'UES' => $ues,
                 'countECTS' => $ues->sum('ects'),
+                'anomaly_summary' => $semesterAnomalyMap->get((int) $sem->id, [
+                    'has_anomaly' => false,
+                    'count' => 0,
+                    'severity' => 'info',
+                ]),
             ];
         }
+
+        $allUes = collect($listSemestre)->flatMap(function ($sem) {
+            return collect($sem['UES'] ?? []);
+        });
+        $this->attachAnomalySummaryToUes($allUes, (int) Auth::user()->university_id, true);
 
         // ✅ retourne un array (pas mutation d'attribut dynamique)
         return response()->json([
@@ -592,6 +665,9 @@ class ProgrammeController extends Controller
                 (int) $universityId
             );
 
+            $this->ueAnomalyService->recomputeForUE((int) $validated['ue_id']);
+            $this->ueAnomalyService->recomputeEmptySemesterAnomaliesForUniversity((int) $universityId);
+
             return response()->json([
                 'success' => true,
                 'message' => "UE retirée du semestre avec succès.",
@@ -624,6 +700,45 @@ class ProgrammeController extends Controller
         return $rows;
     }
 
+    private function attachAnomalySummaryToUes($ues, int $universityId, bool $includeChildren = false): void
+    {
+        $collection = collect($ues);
+        if ($collection->isEmpty()) {
+            return;
+        }
+
+        $ids = $collection->pluck('id')->map(fn($id) => (int) $id);
+        if ($includeChildren) {
+            $childIds = $collection
+                ->flatMap(fn($ue) => collect($ue->children ?? [])->pluck('id'))
+                ->map(fn($id) => (int) $id);
+            $ids = $ids->merge($childIds);
+        }
+
+        $summaryMap = $this->ueAnomalyService->getSummaryForUEIds(
+            $ids->unique()->values()->all(),
+            $universityId
+        );
+
+        foreach ($collection as $ue) {
+            $ue->anomaly_summary = $summaryMap->get((int) $ue->id, [
+                'has_anomaly' => false,
+                'count' => 0,
+                'severity' => 'info',
+            ]);
+
+            if ($includeChildren && !empty($ue->children)) {
+                foreach ($ue->children as $child) {
+                    $child->anomaly_summary = $summaryMap->get((int) $child->id, [
+                        'has_anomaly' => false,
+                        'count' => 0,
+                        'severity' => 'info',
+                    ]);
+                }
+            }
+        }
+    }
+
 
     public function getDetailed(Request $request)
     {
@@ -641,3 +756,4 @@ class ProgrammeController extends Controller
         return $response;
     }
 }
+

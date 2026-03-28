@@ -8,6 +8,7 @@ use App\Models\AcquisApprentissageVise as ModelsAcquisApprentissageVise;
 use App\Models\Programme;
 use App\Models\UniteEnseignement as UE;
 use App\Services\CodeGeneratorService;
+use App\Services\UEAnomalyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,10 @@ use Illuminate\Validation\ValidationException;
 
 class AcquisApprentissageVise extends Controller
 {
-    public function __construct(private CodeGeneratorService $codeGen) {}
+    public function __construct(
+        private CodeGeneratorService $codeGen,
+        private UEAnomalyService $ueAnomalyService
+    ) {}
 
     public function store(Request $request)
     {
@@ -75,6 +79,8 @@ class AcquisApprentissageVise extends Controller
             DB::table('aav_aat')->insert($pivotRows);
         }
 
+        $this->ueAnomalyService->recomputeForAAV((int) $aav->id, $universityId);
+
         return response()->json([
             'success' => true,
             'aav' => $aav->load('aats'),
@@ -87,8 +93,28 @@ class AcquisApprentissageVise extends Controller
         $validated = $request->validate([
             'id' => 'required|integer|exists:acquis_apprentissage_vise,id',
         ]);
+        $aavId = (int) $validated['id'];
+        $universityId = (int) Auth::user()->university_id;
+        $impactedUeIds = DB::table('aavue_vise')
+            ->where('university_id', $universityId)
+            ->where('fk_acquis_apprentissage_vise', $aavId)
+            ->pluck('fk_unite_enseignement')
+            ->merge(
+                DB::table('aavue_prerequis')
+                    ->where('university_id', $universityId)
+                    ->where('fk_acquis_apprentissage_prerequis', $aavId)
+                    ->pluck('fk_unite_enseignement')
+            )
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
         $aav = AAV::findOrFail($validated['id']);
         $aav->delete();
+
+        $this->ueAnomalyService->recomputeForUEIds($impactedUeIds);
+
         return response()->json([
             'success' => true,
             'message' => "Acquis d'apprentissage vise supprime avec succes.",
@@ -176,6 +202,8 @@ class AcquisApprentissageVise extends Controller
             }
         });
 
+        $this->ueAnomalyService->recomputeForAAV((int) $aav->id, $universityId);
+
         return response()->json([
             'success' => true,
             'message' => 'AAV mis a jour avec succes.',
@@ -206,6 +234,18 @@ class AcquisApprentissageVise extends Controller
             ->where('fk_acquis_apprentissage_vise', $validated['id'])
             ->get();
 
+        $summaryMap = $this->ueAnomalyService->getSummaryForUEIds(
+            $response->pluck('id')->map(fn($id) => (int) $id)->all(),
+            (int) Auth::user()->university_id
+        );
+        $response->each(function ($ue) use ($summaryMap) {
+            $ue->anomaly_summary = $summaryMap->get((int) $ue->id, [
+                'has_anomaly' => false,
+                'count' => 0,
+                'severity' => 'info',
+            ]);
+        });
+
         return $response;
     }
 
@@ -218,6 +258,18 @@ class AcquisApprentissageVise extends Controller
             ->join('aavue_prerequis', 'fk_unite_enseignement', '=', 'unite_enseignement.id')
             ->where('fk_acquis_apprentissage_prerequis', $validated['id'])
             ->get();
+
+        $summaryMap = $this->ueAnomalyService->getSummaryForUEIds(
+            $response->pluck('id')->map(fn($id) => (int) $id)->all(),
+            (int) Auth::user()->university_id
+        );
+        $response->each(function ($ue) use ($summaryMap) {
+            $ue->anomaly_summary = $summaryMap->get((int) $ue->id, [
+                'has_anomaly' => false,
+                'count' => 0,
+                'severity' => 'info',
+            ]);
+        });
 
         return $response;
     }

@@ -7,6 +7,7 @@ use App\Models\AcquisApprentissageVise as AAV;
 use App\Models\ElementConstitutif;
 use App\Models\UniteEnseignement;
 use App\Services\CodeGeneratorService;
+use App\Services\UEAnomalyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,10 @@ use Illuminate\Validation\Rule;
 
 class AcquisApprentissageTerminaux extends Controller
 {
-    public function __construct(private CodeGeneratorService $codeGen) {}
+    public function __construct(
+        private CodeGeneratorService $codeGen,
+        private UEAnomalyService $ueAnomalyService
+    ) {}
 
     public function get(Request $request)
     {
@@ -62,8 +66,35 @@ class AcquisApprentissageTerminaux extends Controller
         $validated = $request->validate([
             'id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
         ]);
+        $aatId = (int) $validated['id'];
+        $universityId = (int) Auth::user()->university_id;
+
+        $directUeIds = DB::table('ue_aat')
+            ->where('university_id', $universityId)
+            ->where('fk_aat', $aatId)
+            ->pluck('fk_ue');
+
+        $viaAavUeIds = DB::table('aav_aat as aa')
+            ->join('aavue_vise as av', function ($join) use ($universityId) {
+                $join->on('av.fk_acquis_apprentissage_vise', '=', 'aa.fk_aav')
+                    ->where('av.university_id', '=', $universityId);
+            })
+            ->where('aa.university_id', $universityId)
+            ->where('aa.fk_aat', $aatId)
+            ->pluck('av.fk_unite_enseignement');
+
+        $impactedUeIds = $directUeIds
+            ->merge($viaAavUeIds)
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
         $aat = AAT::findOrFail($validated['id']);
         $aat->delete();
+
+        $this->ueAnomalyService->recomputeForUEIds($impactedUeIds);
+
         return response()->json([
             'success' => true,
             'message' => "Acquis d'apprentissage terminal supprimé avec succès.",
@@ -139,6 +170,32 @@ class AcquisApprentissageTerminaux extends Controller
             $ue->setAttribute('has_aav_for_selected_aat', $aavs->isNotEmpty());
         });
 
+        $allUeIds = $ues->pluck('id')
+            ->merge(
+                $ues->flatMap(fn($ue) => collect($ue->children ?? [])->pluck('id'))
+            )
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $summaryMap = $this->ueAnomalyService->getSummaryForUEIds($allUeIds, (int) Auth::user()->university_id);
+        $ues->each(function ($ue) use ($summaryMap) {
+            $ue->anomaly_summary = $summaryMap->get((int) $ue->id, [
+                'has_anomaly' => false,
+                'count' => 0,
+                'severity' => 'info',
+            ]);
+
+            foreach ($ue->children ?? [] as $child) {
+                $child->anomaly_summary = $summaryMap->get((int) $child->id, [
+                    'has_anomaly' => false,
+                    'count' => 0,
+                    'severity' => 'info',
+                ]);
+            }
+        });
+
         $aat->setAttribute('ues', $ues);
 
         return $aat;
@@ -181,6 +238,8 @@ class AcquisApprentissageTerminaux extends Controller
             'description' => $validated['description'] ?? null,
             'level_contribution' => $validated['level_contribution'],
         ]);
+
+        $this->ueAnomalyService->recomputeForAAT((int) $aat->id, $universityId);
 
         return response()->json([
             'success' => true,
@@ -240,12 +299,20 @@ class AcquisApprentissageTerminaux extends Controller
             ->get()
             ->groupBy('aav_id');
 
-        $aavs = $rows->map(function ($row) use ($aat, $ueRows) {
+        $allUeIds = $ueRows->flatten(1)->pluck('id')->map(fn($id) => (int) $id)->unique()->values()->all();
+        $summaryMap = $this->ueAnomalyService->getSummaryForUEIds($allUeIds, (int) Auth::user()->university_id);
+
+        $aavs = $rows->map(function ($row) use ($aat, $ueRows, $summaryMap) {
             $ues = collect($ueRows->get($row->id, []))
                 ->map(fn($ue) => [
                     'id' => $ue->id,
                     'code' => $ue->code,
                     'name' => $ue->name,
+                    'anomaly_summary' => $summaryMap->get((int) $ue->id, [
+                        'has_anomaly' => false,
+                        'count' => 0,
+                        'severity' => 'info',
+                    ]),
                 ])
                 ->values();
 

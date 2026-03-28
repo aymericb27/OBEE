@@ -171,11 +171,11 @@
                             <div class="col-md-8 p-2">{{ pro.name }}</div>
                             <div class="col-md-2 p-1">
                                 <input
-                                    required
                                     type="number"
                                     min="1"
                                     v-model.number="pro.semester"
                                     :max="pro.nbrSemester"
+                                    placeholder="vide"
                                     class="form form-control"
                                 />
                             </div>
@@ -663,6 +663,25 @@ export default {
         },
         async submitFormUE() {
             try {
+                const normalizedPro = (this.ue.pro || []).map((pro) => {
+                    const semesterRaw = pro?.semester;
+                    const semesterNumber =
+                        semesterRaw === "" ||
+                        semesterRaw === null ||
+                        typeof semesterRaw === "undefined" ||
+                        Number.isNaN(Number(semesterRaw))
+                            ? null
+                            : Number(semesterRaw);
+
+                    return {
+                        ...pro,
+                        semester:
+                            semesterNumber !== null && semesterNumber >= 1
+                                ? semesterNumber
+                                : null,
+                    };
+                });
+
                 if (this.id) {
                     const response = await axios.put("/ue/update", {
                         id: this.ue.id,
@@ -672,7 +691,7 @@ export default {
                         description: this.ue.description,
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
-                        pro: this.ue.pro,
+                        pro: normalizedPro,
                         aat: this.ue.aat,
                         ueParentContribution: this.ueParent.contribution,
                         ueParent: this.ueParent,
@@ -695,7 +714,7 @@ export default {
                         description: this.ue.description,
                         aavprerequis: this.ue.aavprerequis,
                         aavvise: this.ue.aavvise,
-                        pro: this.ue.pro,
+                        pro: normalizedPro,
                         aat: this.ue.aat,
                         ueParentID: this.ueParent.id,
                         ueParentContribution: this.ueParent.contribution,
