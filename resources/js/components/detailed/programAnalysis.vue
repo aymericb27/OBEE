@@ -282,74 +282,152 @@
                         Aucune donnée de contribution disponible pour la
                         sélection actuelle.
                     </div>
-                    <div v-else class="table-responsive">
-                        <table class="table table-bordered table-sm bg-white">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Semestre</th>
-                                    <th>UE</th>
-                                    <th>AAV</th>
-                                    <th
-                                        v-for="aat in displayedContributionMatrixAats"
-                                        :key="`aat-head-${aat.id}`"
-                                        class="text-center"
-                                    >
-                                        {{ aat.code }}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="row in filteredContributionMatrixRows"
-                                    :key="`matrix-${row.ue_id}-${row.aav_id}`"
+                    <div v-else>
+                        <div
+                            class="d-flex justify-content-end align-items-center gap-2 mb-2 mr-2"
+                        >
+                            <label class="mb-0 small mr-2">
+                                Nombre d'élément à afficher
+                            </label>
+                            <select
+                                v-model.number="matrixPageSize"
+                                class="form-control form-select form-select-sm w-auto"
+                            >
+                                <option
+                                    v-for="option in matrixPageSizeOptions"
+                                    :key="`matrix-page-size-${option.value}`"
+                                    :value="option.value"
                                 >
-                                    <td>S{{ row.semester_number ?? "-" }}</td>
-                                    <td>
-                                        <router-link
-                                            :to="{
-                                                name: 'ue-detail',
-                                                params: { id: row.ue_id },
-                                            }"
+                                    {{ option.label }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm bg-white">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Semestre</th>
+                                        <th>UE</th>
+                                        <th>AAV</th>
+                                        <th
+                                            v-for="aat in displayedContributionMatrixAats"
+                                            :key="`aat-head-${aat.id}`"
+                                            class="text-center"
                                         >
-                                            <span class="UE">{{
-                                                row.ue_code
-                                            }}</span>
-                                        </router-link>
-                                    </td>
-                                    <td>
-                                        <span class="AAV">{{
-                                            row.aav_code
-                                        }}</span>
-                                    </td>
-                                    <td
-                                        v-for="aat in displayedContributionMatrixAats"
-                                        :key="`matrix-cell-${row.ue_id}-${row.aav_id}-${aat.id}`"
-                                        class="text-center"
+                                            {{ aat.code }}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        v-for="row in paginatedContributionMatrixRows"
+                                        :key="`matrix-${row.ue_id}-${row.aav_id}`"
                                     >
-                                        <span
-                                            v-if="
-                                                contributionValue(
-                                                    row,
-                                                    aat.id,
-                                                ) !== null
-                                            "
-                                            :class="
-                                                contributionClass(
+                                        <td>S{{ row.semester_number ?? "-" }}</td>
+                                        <td>
+                                            <router-link
+                                                :to="{
+                                                    name: 'ue-detail',
+                                                    params: { id: row.ue_id },
+                                                }"
+                                            >
+                                                <span class="UE">{{
+                                                    row.ue_code
+                                                }}</span>
+                                            </router-link>
+                                        </td>
+                                        <td>
+                                            <span class="AAV">{{
+                                                row.aav_code
+                                            }}</span>
+                                        </td>
+                                        <td
+                                            v-for="aat in displayedContributionMatrixAats"
+                                            :key="`matrix-cell-${row.ue_id}-${row.aav_id}-${aat.id}`"
+                                            class="text-center"
+                                        >
+                                            <span
+                                                v-if="
                                                     contributionValue(
                                                         row,
                                                         aat.id,
-                                                    ),
-                                                    aat.level_contribution,
-                                                )
-                                            "
-                                        >
-                                            {{ contributionValue(row, aat.id) }}
-                                        </span>
-                                        <span v-else>-</span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                                    ) !== null
+                                                "
+                                                :class="
+                                                    contributionClass(
+                                                        contributionValue(
+                                                            row,
+                                                            aat.id,
+                                                        ),
+                                                        aat.level_contribution,
+                                                    )
+                                                "
+                                            >
+                                                {{
+                                                    contributionValue(
+                                                        row,
+                                                        aat.id,
+                                                    )
+                                                }}
+                                            </span>
+                                            <span v-else>-</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div
+                            class="d-flex justify-content-between align-items-center mt-2"
+                            v-if="showMatrixPagination"
+                        >
+                            <small class="text-muted">
+                                Affichage {{ matrixRangeStart }}-{{ matrixRangeEnd }}
+                                / {{ matrixTotalRows }}
+                            </small>
+                            <ul class="pagination mb-0">
+                                <li
+                                    class="page-item"
+                                    :class="{ disabled: matrixCurrentPage === 1 }"
+                                >
+                                    <button
+                                        class="page-link"
+                                        @click="changeMatrixPage(matrixCurrentPage - 1)"
+                                        :disabled="matrixCurrentPage === 1"
+                                    >
+                                        Précédent
+                                    </button>
+                                </li>
+                                <li
+                                    v-for="page in matrixTotalPages"
+                                    :key="`matrix-page-${page}`"
+                                    class="page-item"
+                                    :class="{ active: matrixCurrentPage === page }"
+                                >
+                                    <button
+                                        class="page-link"
+                                        @click="changeMatrixPage(page)"
+                                    >
+                                        {{ page }}
+                                    </button>
+                                </li>
+                                <li
+                                    class="page-item"
+                                    :class="{
+                                        disabled: matrixCurrentPage === matrixTotalPages,
+                                    }"
+                                >
+                                    <button
+                                        class="page-link"
+                                        @click="changeMatrixPage(matrixCurrentPage + 1)"
+                                        :disabled="matrixCurrentPage === matrixTotalPages"
+                                    >
+                                        Suivant
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -862,6 +940,15 @@ export default {
             onlyNonParticipatingAavs: false,
             minAavContributionsThreshold: 1,
             maxAavContributionsThreshold: 1,
+            matrixCurrentPage: 1,
+            matrixPageSize: 10,
+            matrixPageSizeOptions: [
+                { value: 10, label: "10" },
+                { value: 25, label: "25" },
+                { value: 50, label: "50" },
+                { value: 100, label: "100" },
+                { value: -1, label: "Tout" },
+            ],
             aatsWithMaxBelowThreshold: [],
             incoherenceUeOptions: [],
             incoherenceAllUes: [],
@@ -928,6 +1015,39 @@ export default {
                 aatIds.every(
                     (aatId) => this.contributionValue(row, aatId) === null,
                 ),
+            );
+        },
+        matrixTotalRows() {
+            return this.filteredContributionMatrixRows.length;
+        },
+        effectiveMatrixPageSize() {
+            if (Number(this.matrixPageSize) <= 0) {
+                return Math.max(1, this.matrixTotalRows);
+            }
+            return Number(this.matrixPageSize) || 10;
+        },
+        matrixTotalPages() {
+            return Math.max(
+                1,
+                Math.ceil(this.matrixTotalRows / this.effectiveMatrixPageSize),
+            );
+        },
+        paginatedContributionMatrixRows() {
+            const size = this.effectiveMatrixPageSize;
+            const start = (this.matrixCurrentPage - 1) * size;
+            return this.filteredContributionMatrixRows.slice(start, start + size);
+        },
+        showMatrixPagination() {
+            return this.matrixTotalRows > this.effectiveMatrixPageSize;
+        },
+        matrixRangeStart() {
+            if (this.matrixTotalRows === 0) return 0;
+            return (this.matrixCurrentPage - 1) * this.effectiveMatrixPageSize + 1;
+        },
+        matrixRangeEnd() {
+            return Math.min(
+                this.matrixCurrentPage * this.effectiveMatrixPageSize,
+                this.matrixTotalRows,
             );
         },
         displayedContributionMatrixAats() {
@@ -1147,6 +1267,23 @@ export default {
             if (value > oneThird) return "medium_mapping";
             return "weak_mapping";
         },
+        changeMatrixPage(page) {
+            const target = Number(page);
+            if (!Number.isInteger(target)) return;
+            if (target < 1 || target > this.matrixTotalPages) return;
+            this.matrixCurrentPage = target;
+        },
+        resetMatrixPagination() {
+            this.matrixCurrentPage = 1;
+        },
+        clampMatrixPagination() {
+            if (this.matrixCurrentPage > this.matrixTotalPages) {
+                this.matrixCurrentPage = this.matrixTotalPages;
+            }
+            if (this.matrixCurrentPage < 1) {
+                this.matrixCurrentPage = 1;
+            }
+        },
         selectionStorageKey() {
             return `programAnalysis.selection.${this.id}`;
         },
@@ -1168,6 +1305,7 @@ export default {
                         this.normalizedMinAavContributionsThreshold,
                     max_aav_contributions_threshold:
                         this.normalizedMaxAavContributionsThreshold,
+                    matrix_page_size: Number(this.matrixPageSize) || 10,
                 };
                 localStorage.setItem(
                     this.selectionStorageKey(),
@@ -1226,6 +1364,15 @@ export default {
                           ),
                       )
                     : 1;
+                const parsedPageSize = Number(parsed?.matrix_page_size);
+                const allowedPageSizes = new Set(
+                    this.matrixPageSizeOptions.map((option) =>
+                        Number(option.value),
+                    ),
+                );
+                this.matrixPageSize = allowedPageSizes.has(parsedPageSize)
+                    ? parsedPageSize
+                    : 10;
             } catch (e) {
                 this.selectedUeIds = [];
                 this.selectedAatIds = [];
@@ -1234,6 +1381,7 @@ export default {
                 this.onlyNonParticipatingAavs = false;
                 this.minAavContributionsThreshold = 1;
                 this.maxAavContributionsThreshold = 1;
+                this.matrixPageSize = 10;
             }
         },
         pruneSelections() {
@@ -1257,6 +1405,7 @@ export default {
             ) {
                 this.selectedIncoherenceUeId = null;
             }
+            this.clampMatrixPagination();
             this.persistSelections();
         },
         addSelectedUe() {
@@ -1267,12 +1416,14 @@ export default {
                 this.persistSelections();
             }
             this.ueSelectionDraft = null;
+            this.resetMatrixPagination();
         },
         removeSelectedUe(id) {
             this.selectedUeIds = this.selectedUeIds.filter(
                 (item) => Number(item) !== Number(id),
             );
             this.persistSelections();
+            this.resetMatrixPagination();
         },
         addSelectedAat() {
             if (this.aatSelectionDraft === null) return;
@@ -1282,12 +1433,14 @@ export default {
                 this.persistSelections();
             }
             this.aatSelectionDraft = null;
+            this.resetMatrixPagination();
         },
         removeSelectedAat(id) {
             this.selectedAatIds = this.selectedAatIds.filter(
                 (item) => Number(item) !== Number(id),
             );
             this.persistSelections();
+            this.resetMatrixPagination();
         },
         handleProgramSwitch(selectedItems) {
             this.openProgramSwitchModal = false;
@@ -1410,6 +1563,7 @@ export default {
                     : [];
                 this.restoreSelections();
                 this.pruneSelections();
+                this.clampMatrixPagination();
             } catch (error) {
                 console.error(
                     "Erreur chargement tableau contribution :",
@@ -1519,19 +1673,29 @@ export default {
         id() {
             this.selectedAnomalyCode = null;
             this.selectedIncoherenceUeId = null;
+            this.resetMatrixPagination();
             this.loadAnalysisBlocks();
         },
         onlyParticipatingAavs() {
             if (this.onlyParticipatingAavs) {
                 this.onlyNonParticipatingAavs = false;
             }
+            this.resetMatrixPagination();
             this.persistSelections();
         },
         onlyNonParticipatingAavs() {
             if (this.onlyNonParticipatingAavs) {
                 this.onlyParticipatingAavs = false;
             }
+            this.resetMatrixPagination();
             this.persistSelections();
+        },
+        matrixPageSize() {
+            this.resetMatrixPagination();
+            this.persistSelections();
+        },
+        filteredContributionMatrixRows() {
+            this.clampMatrixPagination();
         },
         minAavContributionsThreshold() {
             this.persistSelections();
