@@ -264,11 +264,6 @@
                         </div>
                     </div>
 
-                    <div class="small text-muted mb-2">
-                        La sélection est mémorisée pour ce programme et sera
-                        réutilisable pour l'export.
-                    </div>
-
                     <div v-if="isMatrixLoading" class="text-center py-2">
                         Chargement du tableau...
                     </div>
@@ -379,10 +374,10 @@
                         </div>
 
                         <div
-                            class="d-flex justify-content-between align-items-center mt-2"
+                            class="d-flex flex-column align-items-center mt-2"
                             v-if="showMatrixPagination"
                         >
-                            <small class="text-muted">
+                            <small class="text-muted mb-1 text-center">
                                 Affichage {{ matrixRangeStart }}-{{ matrixRangeEnd }}
                                 / {{ matrixTotalRows }}
                             </small>
@@ -400,17 +395,24 @@
                                     </button>
                                 </li>
                                 <li
-                                    v-for="page in matrixTotalPages"
-                                    :key="`matrix-page-${page}`"
+                                    v-for="item in matrixPaginationItems"
+                                    :key="item.key"
                                     class="page-item"
-                                    :class="{ active: matrixCurrentPage === page }"
+                                    :class="{
+                                        active:
+                                            item.type === 'page' &&
+                                            matrixCurrentPage === item.value,
+                                        disabled: item.type === 'ellipsis',
+                                    }"
                                 >
                                     <button
+                                        v-if="item.type === 'page'"
                                         class="page-link"
-                                        @click="changeMatrixPage(page)"
+                                        @click="changeMatrixPage(item.value)"
                                     >
-                                        {{ page }}
+                                        {{ item.value }}
                                     </button>
+                                    <span v-else class="page-link">…</span>
                                 </li>
                                 <li
                                     class="page-item"
@@ -1031,6 +1033,55 @@ export default {
                 1,
                 Math.ceil(this.matrixTotalRows / this.effectiveMatrixPageSize),
             );
+        },
+        matrixPaginationItems() {
+            const total = this.matrixTotalPages;
+            const current = this.matrixCurrentPage;
+
+            const pageItem = (value) => ({
+                type: "page",
+                value,
+                key: `page-${value}`,
+            });
+            const ellipsisItem = (key) => ({
+                type: "ellipsis",
+                value: null,
+                key: `ellipsis-${key}`,
+            });
+
+            if (total <= 7) {
+                return Array.from({ length: total }, (_, index) =>
+                    pageItem(index + 1),
+                );
+            }
+
+            const items = [pageItem(1)];
+
+            if (current <= 4) {
+                for (let page = 2; page <= 5; page++) {
+                    items.push(pageItem(page));
+                }
+                items.push(ellipsisItem("right"));
+                items.push(pageItem(total));
+                return items;
+            }
+
+            if (current >= total - 3) {
+                items.push(ellipsisItem("left"));
+                for (let page = total - 4; page <= total; page++) {
+                    items.push(pageItem(page));
+                }
+                return items;
+            }
+
+            items.push(ellipsisItem("left"));
+            items.push(pageItem(current - 1));
+            items.push(pageItem(current));
+            items.push(pageItem(current + 1));
+            items.push(ellipsisItem("right"));
+            items.push(pageItem(total));
+
+            return items;
         },
         paginatedContributionMatrixRows() {
             const size = this.effectiveMatrixPageSize;
