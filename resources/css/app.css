@@ -38,6 +38,13 @@ textarea {
 .primary_color {
     color: #2a71cde3;
 }
+.cadetblue{
+    color: cadetblue !important;
+}
+
+.cadetblue:hover{
+    color: rgba(95, 158, 160, 0.664) !important;
+}
 .back_btn a {
     color: #2a71cde3;
 }
@@ -115,6 +122,14 @@ textarea {
 
 .modal-body {
     overflow-y: auto;
+}
+
+.w-35{
+    width: 35%;
+}
+
+.w-40{
+    width: 40%;
 }
 
 .page-item.active .page-link {

@@ -7,6 +7,7 @@ import AATDetailed from "./components/detailed/AATDetailed.vue";
 import AAVDetailed from "./components/detailed/AAVDetailed.vue";
 import FormUE from "./components/form/formUE.vue";
 import PRODetailed from "./components/detailed/PRODetailed.vue";
+import ProgramAnalysis from "./components/detailed/programAnalysis.vue";
 import sheduleError from "./components/error/sheduleError.vue";
 import ProgramError from "./components/error/programError.vue";
 import ExportPanel from "./components/exportPanel.vue";
@@ -75,6 +76,12 @@ const routes = [
         path: "/pro/:id",
         name: "pro-detail",
         component: PRODetailed,
+        props: true,
+    },
+    {
+        path: "/pro/:id/analysis",
+        name: "programAnalysis",
+        component: ProgramAnalysis,
         props: true,
     },
     {

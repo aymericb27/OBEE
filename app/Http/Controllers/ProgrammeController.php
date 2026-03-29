@@ -529,6 +529,508 @@ class ProgrammeController extends Controller
         ]);
     }
 
+    public function getAnalysis(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:programme,id',
+            'anomaly_code' => 'nullable|string|max:50',
+        ]);
+
+        $universityId = (int) Auth::user()->university_id;
+        $programId = (int) $validated['id'];
+        $selectedAnomalyCode = trim((string) ($validated['anomaly_code'] ?? ''));
+        if ($selectedAnomalyCode === '') {
+            $selectedAnomalyCode = null;
+        }
+
+        $programme = Programme::select('id', 'code', 'name')
+            ->where('id', $programId)
+            ->firstOrFail();
+
+        $semesters = DB::table('pro_semester')
+            ->select('id', 'semester')
+            ->where('fk_programme', $programId)
+            ->where('university_id', $universityId)
+            ->orderBy('semester')
+            ->get();
+
+        $semesterRows = [];
+        $allUeIds = [];
+        foreach ($semesters as $semester) {
+            $ues = $this->getUEBySemester($programId, (int) $semester->id);
+            $ueEntries = collect($ues)
+                ->flatMap(function ($ue) {
+                    $items = collect([[
+                        'id' => (int) $ue->id,
+                        'code' => (string) $ue->code,
+                        'name' => (string) $ue->name,
+                    ]]);
+
+                    $children = collect($ue->children ?? [])
+                        ->map(fn($child) => [
+                            'id' => (int) $child->id,
+                            'code' => (string) $child->code,
+                            'name' => (string) $child->name,
+                        ]);
+
+                    return $items->merge($children);
+                })
+                ->unique('id')
+                ->values()
+                ->all();
+
+            $semesterRows[] = [
+                'id' => (int) $semester->id,
+                'number' => (int) $semester->semester,
+                'ues' => $ueEntries,
+            ];
+
+            $allUeIds = array_merge(
+                $allUeIds,
+                collect($ueEntries)->pluck('id')->map(fn($id) => (int) $id)->all()
+            );
+        }
+
+        $allUeIds = collect($allUeIds)->unique()->values()->all();
+
+        $anomalyRows = DB::table('anomalies')
+            ->select('ue_id', 'code')
+            ->where('university_id', $universityId)
+            ->where('is_resolved', false)
+            ->where('code', '!=', UEAnomalyService::CODE_HAS_ANOMALY)
+            ->whereIn('ue_id', empty($allUeIds) ? [-1] : $allUeIds)
+            ->get();
+
+        $anomalyCodesByUe = $anomalyRows
+            ->groupBy('ue_id')
+            ->map(fn($group) => collect($group)->pluck('code')->unique()->values()->all())
+            ->all();
+
+        $availableAnomalyCodes = collect($anomalyRows)
+            ->pluck('code')
+            ->unique()
+            ->sort()
+            ->values()
+            ->map(fn($code) => [
+                'code' => $code,
+                'label' => $this->anomalyCodeLabel((string) $code),
+            ])
+            ->all();
+
+        $semestersWithAnyAnomaly = [];
+        $semestersWithSelectedAnomaly = [];
+
+        foreach ($semesterRows as $semesterRow) {
+            $any = [];
+            $selected = [];
+
+            foreach ($semesterRow['ues'] as $ue) {
+                $ueId = (int) ($ue['id'] ?? 0);
+                $codes = $anomalyCodesByUe[$ueId] ?? [];
+                if (empty($codes)) {
+                    continue;
+                }
+
+                $item = [
+                    'id' => $ueId,
+                    'code' => (string) ($ue['code'] ?? ''),
+                    'name' => (string) ($ue['name'] ?? ''),
+                    'anomaly_codes' => $codes,
+                    'anomaly_count' => count($codes),
+                ];
+
+                $any[] = $item;
+
+                if ($selectedAnomalyCode !== null && in_array($selectedAnomalyCode, $codes, true)) {
+                    $selected[] = $item;
+                }
+            }
+
+            if (!empty($any)) {
+                $semestersWithAnyAnomaly[] = [
+                    'id' => $semesterRow['id'],
+                    'number' => $semesterRow['number'],
+                    'ues' => $any,
+                ];
+            }
+
+            if (!empty($selected)) {
+                $semestersWithSelectedAnomaly[] = [
+                    'id' => $semesterRow['id'],
+                    'number' => $semesterRow['number'],
+                    'ues' => $selected,
+                ];
+            }
+        }
+
+        $semesterByUeId = [];
+        foreach ($semesterRows as $semesterRow) {
+            foreach ($semesterRow['ues'] as $ue) {
+                $ueId = (int) ($ue['id'] ?? 0);
+                if ($ueId > 0 && !array_key_exists($ueId, $semesterByUeId)) {
+                    $semesterByUeId[$ueId] = (int) $semesterRow['number'];
+                }
+            }
+        }
+
+        $aatRows = DB::table('acquis_apprentissage_terminaux')
+            ->select('id', 'code', 'name', 'level_contribution')
+            ->where('university_id', $universityId)
+            ->where(function ($query) use ($programId, $universityId) {
+                $query->whereExists(function ($sub) use ($programId, $universityId) {
+                    $sub->select(DB::raw(1))
+                        ->from('ue_aat')
+                        ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'ue_aat.fk_ue')
+                        ->whereColumn('ue_aat.fk_aat', 'acquis_apprentissage_terminaux.id')
+                        ->where('ue_aat.university_id', $universityId)
+                        ->where('ue_programme.university_id', $universityId)
+                        ->where('ue_programme.fk_programme', $programId);
+                })->orWhereExists(function ($sub) use ($programId, $universityId) {
+                    $sub->select(DB::raw(1))
+                        ->from('aav_aat')
+                        ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'aav_aat.fk_aav')
+                        ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'aavue_vise.fk_unite_enseignement')
+                        ->whereColumn('aav_aat.fk_aat', 'acquis_apprentissage_terminaux.id')
+                        ->where('aav_aat.university_id', $universityId)
+                        ->where('aavue_vise.university_id', $universityId)
+                        ->where('ue_programme.university_id', $universityId)
+                        ->where('ue_programme.fk_programme', $programId)
+                        ->where(function ($nested) use ($programId) {
+                            $nested->whereNull('aav_aat.fk_programme')
+                                ->orWhere('aav_aat.fk_programme', $programId);
+                        });
+                });
+            })
+            ->orderBy('code')
+            ->get()
+            ->map(fn($aat) => [
+                'id' => (int) $aat->id,
+                'code' => (string) $aat->code,
+                'name' => (string) $aat->name,
+                'level_contribution' => $aat->level_contribution !== null ? (int) $aat->level_contribution : null,
+            ])
+            ->values()
+            ->all();
+
+        $aavRows = DB::table('aavue_vise as av')
+            ->join('acquis_apprentissage_vise as aav', 'aav.id', '=', 'av.fk_acquis_apprentissage_vise')
+            ->join('unite_enseignement as ue', 'ue.id', '=', 'av.fk_unite_enseignement')
+            ->where('av.university_id', $universityId)
+            ->whereIn('av.fk_unite_enseignement', empty($allUeIds) ? [-1] : $allUeIds)
+            ->select(
+                'av.fk_unite_enseignement as ue_id',
+                'ue.code as ue_code',
+                'ue.name as ue_name',
+                'aav.id as aav_id',
+                'aav.code as aav_code',
+                'aav.name as aav_name'
+            )
+            ->orderBy('ue.code')
+            ->orderBy('aav.code')
+            ->get();
+
+        $aatIds = collect($aatRows)->pluck('id')->map(fn($id) => (int) $id)->all();
+        $aavIds = $aavRows->pluck('aav_id')->map(fn($id) => (int) $id)->unique()->values()->all();
+
+        $contributionRows = DB::table('aav_aat')
+            ->select('fk_aav', 'fk_aat', 'fk_programme', 'contribution')
+            ->where('university_id', $universityId)
+            ->whereIn('fk_aav', empty($aavIds) ? [-1] : $aavIds)
+            ->whereIn('fk_aat', empty($aatIds) ? [-1] : $aatIds)
+            ->where(function ($query) use ($programId) {
+                $query->whereNull('fk_programme')
+                    ->orWhere('fk_programme', $programId);
+            })
+            ->orderByRaw('CASE WHEN fk_programme IS NULL THEN 0 ELSE 1 END DESC')
+            ->get();
+
+        $contributionByAav = [];
+        foreach ($contributionRows as $row) {
+            $aavId = (int) $row->fk_aav;
+            $aatId = (int) $row->fk_aat;
+            if (!isset($contributionByAav[$aavId])) {
+                $contributionByAav[$aavId] = [];
+            }
+            if (array_key_exists($aatId, $contributionByAav[$aavId])) {
+                continue;
+            }
+            $contributionByAav[$aavId][$aatId] = $row->contribution !== null ? (int) $row->contribution : null;
+        }
+
+        $matrixRows = $aavRows
+            ->map(function ($row) use ($semesterByUeId, $aatIds, $contributionByAav) {
+                $ueId = (int) $row->ue_id;
+                $aavId = (int) $row->aav_id;
+                $contrib = [];
+
+                foreach ($aatIds as $aatId) {
+                    $contrib[(int) $aatId] = $contributionByAav[$aavId][(int) $aatId] ?? null;
+                }
+
+                return [
+                    'semester_number' => $semesterByUeId[$ueId] ?? null,
+                    'ue_id' => $ueId,
+                    'ue_code' => (string) $row->ue_code,
+                    'ue_name' => (string) $row->ue_name,
+                    'aav_id' => $aavId,
+                    'aav_code' => (string) $row->aav_code,
+                    'aav_name' => (string) $row->aav_name,
+                    'contributions' => $contrib,
+                ];
+            })
+            ->sortBy([
+                ['semester_number', 'asc'],
+                ['ue_code', 'asc'],
+                ['aav_code', 'asc'],
+            ])
+            ->values()
+            ->all();
+
+        return response()->json([
+            'program' => [
+                'id' => (int) $programme->id,
+                'code' => (string) $programme->code,
+                'name' => (string) $programme->name,
+            ],
+            'available_anomaly_codes' => $availableAnomalyCodes,
+            'selected_anomaly_code' => $selectedAnomalyCode,
+            'semesters_with_anomalies' => $semestersWithAnyAnomaly,
+            'semesters_with_specific_anomaly' => $semestersWithSelectedAnomaly,
+            'aav_aat_contribution_matrix' => [
+                'aats' => $aatRows,
+                'rows' => $matrixRows,
+            ],
+        ]);
+    }
+
+    public function getAnalysisUesWithErrors(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:programme,id',
+        ]);
+
+        $universityId = (int) Auth::user()->university_id;
+        $programId = (int) $validated['id'];
+        $programme = $this->loadProgramForAnalysis($programId);
+
+        ['semester_rows' => $semesterRows, 'all_ue_ids' => $allUeIds] =
+            $this->loadSemesterUeEntriesForAnalysis($programId, $universityId);
+
+        ['anomaly_codes_by_ue' => $anomalyCodesByUe] =
+            $this->loadAnomalyDataForUes($allUeIds, $universityId);
+
+        $semestersWithAnyAnomaly = [];
+        foreach ($semesterRows as $semesterRow) {
+            $items = [];
+            foreach (($semesterRow['ues'] ?? []) as $ue) {
+                $ueId = (int) ($ue['id'] ?? 0);
+                $codes = $anomalyCodesByUe[$ueId] ?? [];
+                if (empty($codes)) {
+                    continue;
+                }
+                $items[] = [
+                    'id' => $ueId,
+                    'code' => (string) ($ue['code'] ?? ''),
+                    'name' => (string) ($ue['name'] ?? ''),
+                    'anomaly_codes' => $codes,
+                    'anomaly_count' => count($codes),
+                ];
+            }
+
+            if (!empty($items)) {
+                $semestersWithAnyAnomaly[] = [
+                    'id' => $semesterRow['id'],
+                    'number' => $semesterRow['number'],
+                    'ues' => $items,
+                ];
+            }
+        }
+
+        return response()->json([
+            'program' => [
+                'id' => (int) $programme->id,
+                'code' => (string) $programme->code,
+                'name' => (string) $programme->name,
+            ],
+            'semesters_with_anomalies' => $semestersWithAnyAnomaly,
+        ]);
+    }
+
+    public function getAnalysisUesWithSpecificError(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:programme,id',
+            'anomaly_code' => 'nullable|string|max:50',
+        ]);
+
+        $universityId = (int) Auth::user()->university_id;
+        $programId = (int) $validated['id'];
+        $selectedAnomalyCode = trim((string) ($validated['anomaly_code'] ?? ''));
+        if ($selectedAnomalyCode === '') {
+            $selectedAnomalyCode = null;
+        }
+
+        $programme = $this->loadProgramForAnalysis($programId);
+
+        ['semester_rows' => $semesterRows, 'all_ue_ids' => $allUeIds] =
+            $this->loadSemesterUeEntriesForAnalysis($programId, $universityId);
+
+        [
+            'anomaly_codes_by_ue' => $anomalyCodesByUe,
+            'available_anomaly_codes' => $availableAnomalyCodes,
+        ] = $this->loadAnomalyDataForUes($allUeIds, $universityId);
+
+        $semestersWithSelectedAnomaly = [];
+        if ($selectedAnomalyCode !== null) {
+            foreach ($semesterRows as $semesterRow) {
+                $items = [];
+                foreach (($semesterRow['ues'] ?? []) as $ue) {
+                    $ueId = (int) ($ue['id'] ?? 0);
+                    $codes = $anomalyCodesByUe[$ueId] ?? [];
+                    if (!in_array($selectedAnomalyCode, $codes, true)) {
+                        continue;
+                    }
+                    $items[] = [
+                        'id' => $ueId,
+                        'code' => (string) ($ue['code'] ?? ''),
+                        'name' => (string) ($ue['name'] ?? ''),
+                        'anomaly_codes' => $codes,
+                        'anomaly_count' => count($codes),
+                    ];
+                }
+
+                if (!empty($items)) {
+                    $semestersWithSelectedAnomaly[] = [
+                        'id' => $semesterRow['id'],
+                        'number' => $semesterRow['number'],
+                        'ues' => $items,
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'program' => [
+                'id' => (int) $programme->id,
+                'code' => (string) $programme->code,
+                'name' => (string) $programme->name,
+            ],
+            'available_anomaly_codes' => $availableAnomalyCodes,
+            'selected_anomaly_code' => $selectedAnomalyCode,
+            'semesters_with_specific_anomaly' => $semestersWithSelectedAnomaly,
+        ]);
+    }
+
+    public function getAnalysisContributionMatrix(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:programme,id',
+        ]);
+
+        $universityId = (int) Auth::user()->university_id;
+        $programId = (int) $validated['id'];
+        $programme = $this->loadProgramForAnalysis($programId);
+
+        ['semester_rows' => $semesterRows, 'all_ue_ids' => $allUeIds] =
+            $this->loadSemesterUeEntriesForAnalysis($programId, $universityId);
+
+        $matrix = $this->buildAavAatContributionMatrix($semesterRows, $allUeIds, $programId, $universityId);
+
+        return response()->json([
+            'program' => [
+                'id' => (int) $programme->id,
+                'code' => (string) $programme->code,
+                'name' => (string) $programme->name,
+            ],
+            'aav_aat_contribution_matrix' => $matrix,
+        ]);
+    }
+
+    public function getAnalysisAatsWithMaxContributionBelow(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:programme,id',
+            'n' => 'nullable|integer|min:0',
+        ]);
+
+        $universityId = (int) Auth::user()->university_id;
+        $programId = (int) $validated['id'];
+        $threshold = isset($validated['n']) ? max(0, (int) $validated['n']) : 1;
+        $programme = $this->loadProgramForAnalysis($programId);
+
+        ['semester_rows' => $semesterRows, 'all_ue_ids' => $allUeIds] =
+            $this->loadSemesterUeEntriesForAnalysis($programId, $universityId);
+
+        $matrix = $this->buildAavAatContributionMatrix($semesterRows, $allUeIds, $programId, $universityId);
+        $aatMaxValues = $this->computeAatMaxContributionValues($matrix);
+
+        $aatList = collect($matrix['aats'] ?? [])
+            ->filter(function ($aat) use ($aatMaxValues, $threshold) {
+                $aatId = (int) ($aat['id'] ?? 0);
+                return ($aatMaxValues[$aatId] ?? 0) < $threshold;
+            })
+            ->map(function ($aat) use ($aatMaxValues) {
+                $aatId = (int) ($aat['id'] ?? 0);
+                return [
+                    'id' => $aatId,
+                    'code' => (string) ($aat['code'] ?? ''),
+                    'name' => (string) ($aat['name'] ?? ''),
+                    'max_contribution' => (int) ($aatMaxValues[$aatId] ?? 0),
+                ];
+            })
+            ->values()
+            ->all();
+
+        return response()->json([
+            'program' => [
+                'id' => (int) $programme->id,
+                'code' => (string) $programme->code,
+                'name' => (string) $programme->name,
+            ],
+            'threshold' => $threshold,
+            'aats_with_max_contribution_below' => $aatList,
+        ]);
+    }
+
+    public function getAnalysisContributionIncoherences(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:programme,id',
+            'ue_id' => 'nullable|integer|min:1',
+        ]);
+
+        $universityId = (int) Auth::user()->university_id;
+        $programId = (int) $validated['id'];
+        $selectedUeId = isset($validated['ue_id']) ? (int) $validated['ue_id'] : null;
+        $programme = $this->loadProgramForAnalysis($programId);
+
+        ['semester_rows' => $semesterRows] =
+            $this->loadSemesterUeEntriesForAnalysis($programId, $universityId);
+
+        [
+            'ue_options' => $ueOptions,
+            'incoherences' => $incoherences,
+        ] = $this->buildUeContributionIncoherences($semesterRows, $programId, $universityId);
+
+        $selectedUeIncoherence = null;
+        if ($selectedUeId !== null) {
+            $selectedUeIncoherence = collect($incoherences)
+                ->first(fn($item) => (int) ($item['ue_id'] ?? 0) === $selectedUeId);
+        }
+
+        return response()->json([
+            'program' => [
+                'id' => (int) $programme->id,
+                'code' => (string) $programme->code,
+                'name' => (string) $programme->name,
+            ],
+            'ue_options' => $ueOptions,
+            'all_ues_incoherences' => $incoherences,
+            'selected_ue_id' => $selectedUeId,
+            'selected_ue_incoherence' => $selectedUeIncoherence,
+        ]);
+    }
+
     public function getUEBySemester($programmeId, $proSemesterId)
     {
         return UniteEnseignement::select(
@@ -739,6 +1241,452 @@ class ProgrammeController extends Controller
         }
     }
 
+    private function loadProgramForAnalysis(int $programId)
+    {
+        return Programme::select('id', 'code', 'name')
+            ->where('id', $programId)
+            ->firstOrFail();
+    }
+
+    private function loadSemesterUeEntriesForAnalysis(int $programId, int $universityId): array
+    {
+        $semesters = DB::table('pro_semester')
+            ->select('id', 'semester')
+            ->where('fk_programme', $programId)
+            ->where('university_id', $universityId)
+            ->orderBy('semester')
+            ->get();
+
+        $semesterRows = [];
+        $allUeIds = [];
+        foreach ($semesters as $semester) {
+            $ues = $this->getUEBySemester($programId, (int) $semester->id);
+            $ueEntries = collect($ues)
+                ->flatMap(function ($ue) {
+                    $items = collect([[
+                        'id' => (int) $ue->id,
+                        'code' => (string) $ue->code,
+                        'name' => (string) $ue->name,
+                    ]]);
+
+                    $children = collect($ue->children ?? [])
+                        ->map(fn($child) => [
+                            'id' => (int) $child->id,
+                            'code' => (string) $child->code,
+                            'name' => (string) $child->name,
+                        ]);
+
+                    return $items->merge($children);
+                })
+                ->unique('id')
+                ->values()
+                ->all();
+
+            $semesterRows[] = [
+                'id' => (int) $semester->id,
+                'number' => (int) $semester->semester,
+                'ues' => $ueEntries,
+            ];
+
+            $allUeIds = array_merge(
+                $allUeIds,
+                collect($ueEntries)->pluck('id')->map(fn($id) => (int) $id)->all()
+            );
+        }
+
+        return [
+            'semester_rows' => $semesterRows,
+            'all_ue_ids' => collect($allUeIds)->unique()->values()->all(),
+        ];
+    }
+
+    private function loadAnomalyDataForUes(array $ueIds, int $universityId): array
+    {
+        $anomalyRows = DB::table('anomalies')
+            ->select('ue_id', 'code')
+            ->where('university_id', $universityId)
+            ->where('is_resolved', false)
+            ->where('code', '!=', UEAnomalyService::CODE_HAS_ANOMALY)
+            ->whereIn('ue_id', empty($ueIds) ? [-1] : $ueIds)
+            ->get();
+
+        $anomalyCodesByUe = $anomalyRows
+            ->groupBy('ue_id')
+            ->map(fn($group) => collect($group)->pluck('code')->unique()->values()->all())
+            ->all();
+
+        $availableAnomalyCodes = collect($anomalyRows)
+            ->pluck('code')
+            ->unique()
+            ->sort()
+            ->values()
+            ->map(fn($code) => [
+                'code' => $code,
+                'label' => $this->anomalyCodeLabel((string) $code),
+            ])
+            ->all();
+
+        return [
+            'anomaly_codes_by_ue' => $anomalyCodesByUe,
+            'available_anomaly_codes' => $availableAnomalyCodes,
+        ];
+    }
+
+    private function buildAavAatContributionMatrix(array $semesterRows, array $allUeIds, int $programId, int $universityId): array
+    {
+        $semesterByUeId = [];
+        foreach ($semesterRows as $semesterRow) {
+            foreach ($semesterRow['ues'] as $ue) {
+                $ueId = (int) ($ue['id'] ?? 0);
+                if ($ueId > 0 && !array_key_exists($ueId, $semesterByUeId)) {
+                    $semesterByUeId[$ueId] = (int) $semesterRow['number'];
+                }
+            }
+        }
+
+        $aatRows = DB::table('acquis_apprentissage_terminaux')
+            ->select('id', 'code', 'name', 'level_contribution')
+            ->where('university_id', $universityId)
+            ->where(function ($query) use ($programId, $universityId) {
+                $query->whereExists(function ($sub) use ($programId, $universityId) {
+                    $sub->select(DB::raw(1))
+                        ->from('ue_aat')
+                        ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'ue_aat.fk_ue')
+                        ->whereColumn('ue_aat.fk_aat', 'acquis_apprentissage_terminaux.id')
+                        ->where('ue_aat.university_id', $universityId)
+                        ->where('ue_programme.university_id', $universityId)
+                        ->where('ue_programme.fk_programme', $programId);
+                })->orWhereExists(function ($sub) use ($programId, $universityId) {
+                    $sub->select(DB::raw(1))
+                        ->from('aav_aat')
+                        ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'aav_aat.fk_aav')
+                        ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'aavue_vise.fk_unite_enseignement')
+                        ->whereColumn('aav_aat.fk_aat', 'acquis_apprentissage_terminaux.id')
+                        ->where('aav_aat.university_id', $universityId)
+                        ->where('aavue_vise.university_id', $universityId)
+                        ->where('ue_programme.university_id', $universityId)
+                        ->where('ue_programme.fk_programme', $programId)
+                        ->where(function ($nested) use ($programId) {
+                            $nested->whereNull('aav_aat.fk_programme')
+                                ->orWhere('aav_aat.fk_programme', $programId);
+                        });
+                });
+            })
+            ->orderBy('code')
+            ->get()
+            ->map(fn($aat) => [
+                'id' => (int) $aat->id,
+                'code' => (string) $aat->code,
+                'name' => (string) $aat->name,
+                'level_contribution' => $aat->level_contribution !== null ? (int) $aat->level_contribution : null,
+            ])
+            ->values()
+            ->all();
+
+        $aavRows = DB::table('aavue_vise as av')
+            ->join('acquis_apprentissage_vise as aav', 'aav.id', '=', 'av.fk_acquis_apprentissage_vise')
+            ->join('unite_enseignement as ue', 'ue.id', '=', 'av.fk_unite_enseignement')
+            ->where('av.university_id', $universityId)
+            ->whereIn('av.fk_unite_enseignement', empty($allUeIds) ? [-1] : $allUeIds)
+            ->select(
+                'av.fk_unite_enseignement as ue_id',
+                'ue.code as ue_code',
+                'ue.name as ue_name',
+                'aav.id as aav_id',
+                'aav.code as aav_code',
+                'aav.name as aav_name'
+            )
+            ->orderBy('ue.code')
+            ->orderBy('aav.code')
+            ->get();
+
+        $aatIds = collect($aatRows)->pluck('id')->map(fn($id) => (int) $id)->all();
+        $aavIds = $aavRows->pluck('aav_id')->map(fn($id) => (int) $id)->unique()->values()->all();
+
+        $contributionRows = DB::table('aav_aat')
+            ->select('fk_aav', 'fk_aat', 'fk_programme', 'contribution')
+            ->where('university_id', $universityId)
+            ->whereIn('fk_aav', empty($aavIds) ? [-1] : $aavIds)
+            ->whereIn('fk_aat', empty($aatIds) ? [-1] : $aatIds)
+            ->where(function ($query) use ($programId) {
+                $query->whereNull('fk_programme')
+                    ->orWhere('fk_programme', $programId);
+            })
+            ->orderByRaw('CASE WHEN fk_programme IS NULL THEN 0 ELSE 1 END DESC')
+            ->get();
+
+        $contributionByAav = [];
+        foreach ($contributionRows as $row) {
+            $aavId = (int) $row->fk_aav;
+            $aatId = (int) $row->fk_aat;
+            if (!isset($contributionByAav[$aavId])) {
+                $contributionByAav[$aavId] = [];
+            }
+            if (array_key_exists($aatId, $contributionByAav[$aavId])) {
+                continue;
+            }
+            $contributionByAav[$aavId][$aatId] = $row->contribution !== null ? (int) $row->contribution : null;
+        }
+
+        $matrixRows = $aavRows
+            ->map(function ($row) use ($semesterByUeId, $aatIds, $contributionByAav) {
+                $ueId = (int) $row->ue_id;
+                $aavId = (int) $row->aav_id;
+                $contrib = [];
+
+                foreach ($aatIds as $aatId) {
+                    $contrib[(int) $aatId] = $contributionByAav[$aavId][(int) $aatId] ?? null;
+                }
+
+                return [
+                    'semester_number' => $semesterByUeId[$ueId] ?? null,
+                    'ue_id' => $ueId,
+                    'ue_code' => (string) $row->ue_code,
+                    'ue_name' => (string) $row->ue_name,
+                    'aav_id' => $aavId,
+                    'aav_code' => (string) $row->aav_code,
+                    'aav_name' => (string) $row->aav_name,
+                    'contributions' => $contrib,
+                ];
+            })
+            ->sortBy([
+                ['semester_number', 'asc'],
+                ['ue_code', 'asc'],
+                ['aav_code', 'asc'],
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'aats' => $aatRows,
+            'rows' => $matrixRows,
+        ];
+    }
+
+    private function computeAatMaxContributionValues(array $matrix): array
+    {
+        $values = [];
+        $aats = collect($matrix['aats'] ?? []);
+        foreach ($aats as $aat) {
+            $values[(int) ($aat['id'] ?? 0)] = 0;
+        }
+
+        $rows = collect($matrix['rows'] ?? []);
+        foreach ($rows as $row) {
+            $contributions = $row['contributions'] ?? [];
+            foreach ($contributions as $aatId => $value) {
+                if ($value === null) {
+                    continue;
+                }
+
+                $id = (int) $aatId;
+                $numericValue = (int) $value;
+                if (!array_key_exists($id, $values) || $numericValue > $values[$id]) {
+                    $values[$id] = $numericValue;
+                }
+            }
+        }
+
+        return $values;
+    }
+
+    private function buildUeContributionIncoherences(array $semesterRows, int $programId, int $universityId): array
+    {
+        $ueMetaById = [];
+        foreach ($semesterRows as $semesterRow) {
+            $semesterNumber = isset($semesterRow['number']) ? (int) $semesterRow['number'] : null;
+            foreach (($semesterRow['ues'] ?? []) as $ue) {
+                $ueId = (int) ($ue['id'] ?? 0);
+                if ($ueId <= 0 || isset($ueMetaById[$ueId])) {
+                    continue;
+                }
+                $ueMetaById[$ueId] = [
+                    'id' => $ueId,
+                    'code' => (string) ($ue['code'] ?? ''),
+                    'name' => (string) ($ue['name'] ?? ''),
+                    'semester_number' => $semesterNumber,
+                ];
+            }
+        }
+
+        $ueIds = array_values(array_map('intval', array_keys($ueMetaById)));
+        if (empty($ueIds)) {
+            return [
+                'ue_options' => [],
+                'incoherences' => [],
+            ];
+        }
+
+        $ueAatByUe = [];
+        $ueAatRows = DB::table('ue_aat')
+            ->select('fk_ue', 'fk_aat')
+            ->where('university_id', $universityId)
+            ->whereIn('fk_ue', $ueIds)
+            ->get();
+        foreach ($ueAatRows as $row) {
+            $ueId = (int) $row->fk_ue;
+            $aatId = (int) $row->fk_aat;
+            if (!isset($ueAatByUe[$ueId])) {
+                $ueAatByUe[$ueId] = [];
+            }
+            $ueAatByUe[$ueId][$aatId] = true;
+        }
+
+        $ueAavByUe = [];
+        $allAavIdsLookup = [];
+        $ueAavRows = DB::table('aavue_vise')
+            ->select('fk_unite_enseignement', 'fk_acquis_apprentissage_vise')
+            ->where('university_id', $universityId)
+            ->whereIn('fk_unite_enseignement', $ueIds)
+            ->get();
+        foreach ($ueAavRows as $row) {
+            $ueId = (int) $row->fk_unite_enseignement;
+            $aavId = (int) $row->fk_acquis_apprentissage_vise;
+            if (!isset($ueAavByUe[$ueId])) {
+                $ueAavByUe[$ueId] = [];
+            }
+            $ueAavByUe[$ueId][$aavId] = true;
+            $allAavIdsLookup[$aavId] = true;
+        }
+        $allAavIds = array_values(array_map('intval', array_keys($allAavIdsLookup)));
+
+        $aavAatByAav = [];
+        $allAatIdsLookup = [];
+        if (!empty($allAavIds)) {
+            $aavAatRows = DB::table('aav_aat')
+                ->select('fk_aav', 'fk_aat', 'fk_programme')
+                ->where('university_id', $universityId)
+                ->whereIn('fk_aav', $allAavIds)
+                ->where(function ($query) use ($programId) {
+                    $query->whereNull('fk_programme')
+                        ->orWhere('fk_programme', $programId);
+                })
+                ->orderByRaw('CASE WHEN fk_programme IS NULL THEN 0 ELSE 1 END DESC')
+                ->get();
+
+            foreach ($aavAatRows as $row) {
+                $aavId = (int) $row->fk_aav;
+                $aatId = (int) $row->fk_aat;
+                if (!isset($aavAatByAav[$aavId])) {
+                    $aavAatByAav[$aavId] = [];
+                }
+                $aavAatByAav[$aavId][$aatId] = true;
+                $allAatIdsLookup[$aatId] = true;
+            }
+        }
+
+        foreach ($ueAatByUe as $aatLookup) {
+            foreach (array_keys($aatLookup) as $aatId) {
+                $allAatIdsLookup[(int) $aatId] = true;
+            }
+        }
+        $allAatIds = array_values(array_map('intval', array_keys($allAatIdsLookup)));
+
+        $aavRowsById = DB::table('acquis_apprentissage_vise')
+            ->select('id', 'code', 'name')
+            ->where('university_id', $universityId)
+            ->whereIn('id', empty($allAavIds) ? [-1] : $allAavIds)
+            ->get()
+            ->keyBy('id');
+
+        $aatRowsById = DB::table('acquis_apprentissage_terminaux')
+            ->select('id', 'code', 'name')
+            ->where('university_id', $universityId)
+            ->whereIn('id', empty($allAatIds) ? [-1] : $allAatIds)
+            ->get()
+            ->keyBy('id');
+
+        $incoherences = [];
+        foreach ($ueIds as $ueId) {
+            $ueAatLookup = $ueAatByUe[$ueId] ?? [];
+            $ueAatIds = array_map('intval', array_keys($ueAatLookup));
+            $ueAavIds = array_map('intval', array_keys($ueAavByUe[$ueId] ?? []));
+
+            $aatFromAavLookup = [];
+            foreach ($ueAavIds as $aavId) {
+                foreach (array_keys($aavAatByAav[$aavId] ?? []) as $aatId) {
+                    $aatFromAavLookup[(int) $aatId] = true;
+                }
+            }
+
+            $declaredUeButNoAavCases = [];
+            foreach ($ueAatIds as $aatId) {
+                if (isset($aatFromAavLookup[$aatId])) {
+                    continue;
+                }
+                $declaredUeButNoAavCases[] = [
+                    'aat_id' => $aatId,
+                    'aat_code' => $aatRowsById->get($aatId)->code ?? null,
+                    'aat_name' => $aatRowsById->get($aatId)->name ?? null,
+                ];
+            }
+
+            $aavToAatNotDeclaredInUeCases = [];
+            $seenPairs = [];
+            foreach ($ueAavIds as $aavId) {
+                foreach (array_keys($aavAatByAav[$aavId] ?? []) as $aatIdRaw) {
+                    $aatId = (int) $aatIdRaw;
+                    if (isset($ueAatLookup[$aatId])) {
+                        continue;
+                    }
+                    $pairKey = $aavId . '|' . $aatId;
+                    if (isset($seenPairs[$pairKey])) {
+                        continue;
+                    }
+                    $seenPairs[$pairKey] = true;
+                    $aavToAatNotDeclaredInUeCases[] = [
+                        'aav_id' => $aavId,
+                        'aav_code' => $aavRowsById->get($aavId)->code ?? null,
+                        'aav_name' => $aavRowsById->get($aavId)->name ?? null,
+                        'aat_id' => $aatId,
+                        'aat_code' => $aatRowsById->get($aatId)->code ?? null,
+                        'aat_name' => $aatRowsById->get($aatId)->name ?? null,
+                    ];
+                }
+            }
+
+            $totalCases = count($declaredUeButNoAavCases) + count($aavToAatNotDeclaredInUeCases);
+            if ($totalCases === 0) {
+                continue;
+            }
+
+            $meta = $ueMetaById[$ueId] ?? ['code' => '', 'name' => '', 'semester_number' => null];
+            $incoherences[] = [
+                'ue_id' => $ueId,
+                'ue_code' => (string) ($meta['code'] ?? ''),
+                'ue_name' => (string) ($meta['name'] ?? ''),
+                'semester_number' => $meta['semester_number'] !== null ? (int) $meta['semester_number'] : null,
+                'total_cases' => $totalCases,
+                'declared_ue_but_no_aav_cases' => array_values($declaredUeButNoAavCases),
+                'aav_to_aat_not_declared_in_ue_cases' => array_values($aavToAatNotDeclaredInUeCases),
+            ];
+        }
+
+        $ueOptions = collect($ueMetaById)
+            ->map(fn($ue) => [
+                'id' => (int) $ue['id'],
+                'code' => (string) ($ue['code'] ?? ''),
+                'name' => (string) ($ue['name'] ?? ''),
+                'semester_number' => $ue['semester_number'] !== null ? (int) $ue['semester_number'] : null,
+            ])
+            ->sortBy('code', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->all();
+
+        $incoherences = collect($incoherences)
+            ->sortBy([
+                ['semester_number', 'asc'],
+                ['ue_code', 'asc'],
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'ue_options' => $ueOptions,
+            'incoherences' => $incoherences,
+        ];
+    }
+
 
     public function getDetailed(Request $request)
     {
@@ -754,6 +1702,21 @@ class ProgrammeController extends Controller
                 $validated['id']
             )->get();
         return $response;
+    }
+
+    private function anomalyCodeLabel(string $code): string
+    {
+        return match ($code) {
+            UEAnomalyService::CODE_PREREQ_AS_UE => 'Erreur de prérequis (UE)',
+            UEAnomalyService::CODE_PREREQ_OUTSIDE_ALLOWED => 'Erreur de prérequis (les prérequis ne sont pas des AAV d un semestre précédent)',
+            UEAnomalyService::CODE_EMPTY_AAV_LIST => 'Erreur de données (liste des AAV vide)',
+            UEAnomalyService::CODE_EMPTY_CREDITS => 'Erreur de crédit',
+            UEAnomalyService::CODE_MISSING_SEMESTER => "Erreur d'affectation de semestre",
+            UEAnomalyService::CODE_MISSING_AAV_AAT_CONTRIBUTION => 'Erreur de contribution',
+            UEAnomalyService::CODE_MISSING_AAT_LEVEL => 'Erreur de niveau de contribution',
+            UEAnomalyService::CODE_INCOHERENT_AAT_CONTRIBUTION => 'Erreur de cohérence de contribution (les AAV ne contribuent pas à un AAT de l`UE)',
+            default => $code,
+        };
     }
 }
 

@@ -221,9 +221,13 @@ export default {
             try {
                 const response = await axios.get(this.routeGET);
 
-                const excludeIds = this.listToExclude.map((item) => item.id);
+                const excludeIds = new Set(
+                    (this.listToExclude || []).map((item) =>
+                        String(item?.id ?? ""),
+                    ),
+                );
                 this.list = response.data.filter(
-                    (item) => !excludeIds.includes(item.id)
+                    (item) => !excludeIds.has(String(item?.id ?? ""))
                 );
 
                 this.currentPage = 1;
@@ -280,6 +284,21 @@ export default {
     },
     mounted() {
         this.loadList();
+    },
+    watch: {
+        visible(value) {
+            if (value) {
+                this.loadList();
+            }
+        },
+        listToExclude: {
+            deep: true,
+            handler() {
+                if (this.visible) {
+                    this.loadList();
+                }
+            },
+        },
     },
 };
 </script>

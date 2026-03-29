@@ -14,12 +14,12 @@
         </div>
         <div class="p-4 border rounded shadow bg-white mt-3">
             <div class="row mb-4">
-                <h3 class="primary_color col-md-10 mb-0">
+                <h3 class="primary_color col-md-9 mb-0">
                     <span class="box_code PRO pl-2 pr-2">{{ pro.code }}</span>
 
                     {{ pro.name }}
                 </h3>
-                <span class="col-md-2 text-right">
+                <span class="col-md-3 text-right">
                     <i
                         style="font-size: 24px"
                         class="fa-regular fa-trash-can mr-2 deleteBtn"
@@ -40,6 +40,17 @@
                         style="font-size: 28px"
                         class="fa-solid ml-2 fa-download green_color cursor_pointer"
                     ></i>
+                    <router-link
+                        :to="{
+                            name: 'programAnalysis',
+                            params: { id: pro.id },
+                        }"
+                    >
+                        <i
+                            style="font-size: 28px"
+                            class="fa-solid ml-2 fa-chart-area cadetblue "
+                        ></i>
+                    </router-link>
                 </span>
             </div>
             <div class="listComponent mb-4">

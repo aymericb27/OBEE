@@ -58,6 +58,11 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/pro/pre/get', [ProgrammeController::class, 'getPrerequis'])->name('pro.get');
     Route::delete('/pro/delete', [ProgrammeController::class, 'delete'])->name('pro.delete');
     Route::get('/pro/get/detailed', [ProgrammeController::class, 'getDetailed'])->name('pro.get.detailed');
+    Route::get('/pro/analysis/ues-with-errors', [ProgrammeController::class, 'getAnalysisUesWithErrors'])->name('pro.analysis.ues.with.errors');
+    Route::get('/pro/analysis/ues-with-specific-error', [ProgrammeController::class, 'getAnalysisUesWithSpecificError'])->name('pro.analysis.ues.with.specific.error');
+    Route::get('/pro/analysis/contribution-matrix', [ProgrammeController::class, 'getAnalysisContributionMatrix'])->name('pro.analysis.contribution.matrix');
+    Route::get('/pro/analysis/aat-max-contribution-below', [ProgrammeController::class, 'getAnalysisAatsWithMaxContributionBelow'])->name('pro.analysis.aat.max.contribution.below');
+    Route::get('/pro/analysis/contribution-incoherences', [ProgrammeController::class, 'getAnalysisContributionIncoherences'])->name('pro.analysis.contribution.incoherences');
     Route::get('/programme/get/tree', [ProgrammeController::class, 'getTree'])->name('pro.get.tree');
     Route::get('/pro/ue/get', [ProgrammeController::class, 'getUE']);
     Route::post('/programme/create', [ProgrammeController::class, 'store'])->name('pro.store');
