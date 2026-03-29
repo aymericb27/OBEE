@@ -967,7 +967,8 @@ class ProgrammeController extends Controller
         $aatList = collect($matrix['aats'] ?? [])
             ->filter(function ($aat) use ($aatMaxValues, $threshold) {
                 $aatId = (int) ($aat['id'] ?? 0);
-                return ($aatMaxValues[$aatId] ?? 0) < $threshold;
+                $maxValue = (int) ($aatMaxValues[$aatId] ?? 0);
+                return $maxValue > 0 && $maxValue < $threshold;
             })
             ->map(function ($aat) use ($aatMaxValues) {
                 $aatId = (int) ($aat['id'] ?? 0);
@@ -1719,4 +1720,3 @@ class ProgrammeController extends Controller
         };
     }
 }
-

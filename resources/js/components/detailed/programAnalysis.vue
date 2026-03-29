@@ -973,9 +973,10 @@ export default {
                 ? this.contributionMatrixAats
                 : [];
             return aats.filter(
-                (aat) =>
-                    (this.aatContributionCounts[Number(aat.id)] || 0) <
-                    threshold,
+                (aat) => {
+                    const count = this.aatContributionCounts[Number(aat.id)] || 0;
+                    return count > 0 && count < threshold;
+                },
             );
         },
         aatContributingAavsByAat() {
@@ -1572,4 +1573,3 @@ export default {
     padding: 0.5rem;
 }
 </style>
-
