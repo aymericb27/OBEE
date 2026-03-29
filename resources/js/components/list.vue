@@ -333,28 +333,60 @@
                     <!-- ✅ Pagination uniquement si > 10 -->
                     <div
                         v-if="showPagination"
-                        class="d-flex justify-content-between align-items-center p-2"
+                        class="d-flex flex-column align-items-center p-2"
                     >
-                        <button
-                            class="btn btn-sm btn-outline-secondary"
-                            :disabled="currentPage === 1"
-                            @click="prevPage"
-                        >
-                            <i class="fa fa-chevron-left"></i>
-                        </button>
-
-                        <span class="small">
+                        <small class="text-muted mb-1 text-center">
                             Page {{ currentPage }} / {{ totalPages }} —
                             {{ filteredItems.length }} résultats
-                        </span>
-
-                        <button
-                            class="btn btn-sm btn-outline-secondary"
-                            :disabled="currentPage === totalPages"
-                            @click="nextPage"
-                        >
-                            <i class="fa fa-chevron-right"></i>
-                        </button>
+                        </small>
+                        <ul class="pagination mb-0">
+                            <li
+                                class="page-item"
+                                :class="{ disabled: currentPage === 1 }"
+                            >
+                                <button
+                                    class="page-link"
+                                    @click="changePage(currentPage - 1)"
+                                    :disabled="currentPage === 1"
+                                >
+                                    Précédent
+                                </button>
+                            </li>
+                            <li
+                                v-for="item in paginationItems"
+                                :key="item.key"
+                                class="page-item"
+                                :class="{
+                                    active:
+                                        item.type === 'page' &&
+                                        currentPage === item.value,
+                                    disabled: item.type === 'ellipsis',
+                                }"
+                            >
+                                <button
+                                    v-if="item.type === 'page'"
+                                    class="page-link"
+                                    @click="changePage(item.value)"
+                                >
+                                    {{ item.value }}
+                                </button>
+                                <span v-else class="page-link">...</span>
+                            </li>
+                            <li
+                                class="page-item"
+                                :class="{
+                                    disabled: currentPage === totalPages,
+                                }"
+                            >
+                                <button
+                                    class="page-link"
+                                    @click="changePage(currentPage + 1)"
+                                    :disabled="currentPage === totalPages"
+                                >
+                                    Suivant
+                                </button>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 
@@ -462,6 +494,55 @@ export default {
             const start = (this.currentPage - 1) * this.pageSize;
             return this.filteredItems.slice(start, start + this.pageSize);
         },
+        paginationItems() {
+            const total = this.totalPages;
+            const current = this.currentPage;
+
+            const pageItem = (value) => ({
+                type: "page",
+                value,
+                key: `page-${value}`,
+            });
+            const ellipsisItem = (key) => ({
+                type: "ellipsis",
+                value: null,
+                key: `ellipsis-${key}`,
+            });
+
+            if (total <= 7) {
+                return Array.from({ length: total }, (_, index) =>
+                    pageItem(index + 1),
+                );
+            }
+
+            const items = [pageItem(1)];
+
+            if (current <= 4) {
+                for (let page = 2; page <= 5; page++) {
+                    items.push(pageItem(page));
+                }
+                items.push(ellipsisItem("right"));
+                items.push(pageItem(total));
+                return items;
+            }
+
+            if (current >= total - 3) {
+                items.push(ellipsisItem("left"));
+                for (let page = total - 4; page <= total; page++) {
+                    items.push(pageItem(page));
+                }
+                return items;
+            }
+
+            items.push(ellipsisItem("left"));
+            items.push(pageItem(current - 1));
+            items.push(pageItem(current));
+            items.push(pageItem(current + 1));
+            items.push(ellipsisItem("right"));
+            items.push(pageItem(total));
+
+            return items;
+        },
     },
 
     watch: {
@@ -542,11 +623,12 @@ export default {
             }
         },
 
-        nextPage() {
-            if (this.currentPage < this.totalPages) this.currentPage++;
-        },
-        prevPage() {
-            if (this.currentPage > 1) this.currentPage--;
+        changePage(page) {
+            const targetPage = Number(page);
+            if (!Number.isInteger(targetPage)) return;
+            if (targetPage >= 1 && targetPage <= this.totalPages) {
+                this.currentPage = targetPage;
+            }
         },
     },
 

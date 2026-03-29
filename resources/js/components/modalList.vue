@@ -97,17 +97,24 @@
                                 </li>
 
                                 <li
-                                    v-for="page in totalPages"
-                                    :key="page"
+                                    v-for="item in paginationItems"
+                                    :key="item.key"
                                     class="page-item"
-                                    :class="{ active: currentPage === page }"
+                                    :class="{
+                                        active:
+                                            item.type === 'page' &&
+                                            currentPage === item.value,
+                                        disabled: item.type === 'ellipsis',
+                                    }"
                                 >
                                     <button
+                                        v-if="item.type === 'page'"
                                         class="page-link"
-                                        @click="changePage(page)"
+                                        @click="changePage(item.value)"
                                     >
-                                        {{ page }}
+                                        {{ item.value }}
                                     </button>
+                                    <span v-else class="page-link">...</span>
                                 </li>
 
                                 <li
@@ -214,6 +221,57 @@ export default {
             const start = (this.currentPage - 1) * this.itemsPerPage;
             return this.filteredList.slice(start, start + this.itemsPerPage);
         },
+        paginationItems() {
+            const total = this.totalPages;
+            const current = this.currentPage;
+
+            const pageItem = (value) => ({
+                type: "page",
+                value,
+                key: `page-${value}`,
+            });
+            const ellipsisItem = (key) => ({
+                type: "ellipsis",
+                value: null,
+                key: `ellipsis-${key}`,
+            });
+
+            if (total <= 0) return [];
+
+            if (total <= 7) {
+                return Array.from({ length: total }, (_, index) =>
+                    pageItem(index + 1),
+                );
+            }
+
+            const items = [pageItem(1)];
+
+            if (current <= 4) {
+                for (let page = 2; page <= 5; page++) {
+                    items.push(pageItem(page));
+                }
+                items.push(ellipsisItem("right"));
+                items.push(pageItem(total));
+                return items;
+            }
+
+            if (current >= total - 3) {
+                items.push(ellipsisItem("left"));
+                for (let page = total - 4; page <= total; page++) {
+                    items.push(pageItem(page));
+                }
+                return items;
+            }
+
+            items.push(ellipsisItem("left"));
+            items.push(pageItem(current - 1));
+            items.push(pageItem(current));
+            items.push(pageItem(current + 1));
+            items.push(ellipsisItem("right"));
+            items.push(pageItem(total));
+
+            return items;
+        },
     },
     methods: {
         async loadList() {
@@ -286,6 +344,18 @@ export default {
         this.loadList();
     },
     watch: {
+        searchQuery() {
+            this.currentPage = 1;
+        },
+        totalPages(totalPages) {
+            if (totalPages <= 0) {
+                this.currentPage = 1;
+                return;
+            }
+            if (this.currentPage > totalPages) {
+                this.currentPage = totalPages;
+            }
+        },
         visible(value) {
             if (value) {
                 this.loadList();
