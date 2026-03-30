@@ -526,6 +526,32 @@ export default {
                         p?.prereq_name ? ` - ${p.prereq_name}` : "",
                     );
                 });
+            } else if (code === "UE_ANOM_10") {
+                const invalidAavs = Array.isArray(details?.invalid_aav_prerequis)
+                    ? details.invalid_aav_prerequis
+                    : [];
+                invalidAavs.forEach((a, idx) => {
+                    pushLinked(
+                        `pre-ue-mismatch-${idx}-${a?.aav_id ?? idx}`,
+                        "AAV",
+                        a?.aav_id ?? null,
+                        a?.aav_code || `AAV#${a?.aav_id ?? "?"}`,
+                        a?.aav_name ? ` - ${a.aav_name}` : "",
+                    );
+                });
+                const missingUes = Array.isArray(details?.missing_ue_prerequis)
+                    ? details.missing_ue_prerequis
+                    : [];
+                missingUes.forEach((u, idx) => {
+                    pushLinked(
+                        `pre-ue-uncovered-${idx}-${u?.id ?? idx}`,
+                        "UE",
+                        u?.id ?? null,
+                        u?.code || `UE#${u?.id ?? "?"}`,
+                        u?.name ? ` - ${u.name}` : "",
+                        "UE prérequise sans AAV associé: ",
+                    );
+                });
             } else if (code === "UE_ANOM_07") {
                 const missingAavs = Array.isArray(details?.missing_aavs)
                     ? details.missing_aavs
@@ -597,20 +623,24 @@ export default {
                 });
             } else if (code === "UE_ANOM_02") {
                 const detailsEntries = entries.length ? entries : [anom];
+                const seen = new Set();
                 detailsEntries.forEach((entry, idx) => {
                     const d = entry?.details || {};
-                    const ues = Array.isArray(d?.matching_ues)
-                        ? d.matching_ues
+                    const ues = Array.isArray(d?.ue_prerequis)
+                        ? d.ue_prerequis
                         : [];
                     if (!ues.length) return;
                     ues.forEach((u, uidx) => {
+                        const key = String(u?.id ?? `${u?.code ?? ""}-${uidx}`);
+                        if (seen.has(key)) return;
+                        seen.add(key);
                         pushLinked(
-                            `ue-match-${idx}-${uidx}-${u?.id ?? uidx}`,
+                            `ue-pre-${idx}-${uidx}-${u?.id ?? uidx}`,
                             "UE",
                             u?.id ?? null,
                             u?.code || `UE#${u?.id ?? "?"}`,
                             u?.name ? ` - ${u.name}` : "",
-                            `Correspondance prerequis ${d?.prereq_code || ""}: `,
+                            "Prérequis UE: ",
                         );
                     });
                 });
@@ -627,8 +657,13 @@ export default {
         },
         anomalyTypeText(anom) {
             const code = anom?.code || "";
-            if (code === "UE_ANOM_02") return "Erreur de prérequis (UE)";
+            if (code === "UE_ANOM_02")
+                return "Erreur de prérequis UE (AAV manquant)";
             if (code === "UE_ANOM_03") return "Erreur de prérequis";
+            if (code === "UE_ANOM_10")
+                return "Erreur de cohérence prérequis UE/AAV";
+            if (code === "UE_ANOM_11")
+                return "Erreur d'affectation au programme";
             if (code === "UE_ANOM_04")
                 return "Erreur de données (liste des AAV vide)";
             if (code === "UE_ANOM_05")
@@ -658,8 +693,12 @@ export default {
                 return "L'UE declare contribuer a un AAT mais aucun AAV de l'UE ne contribue a cet AAT pour ce programme. Aligner la matrice UE -> AAT avec les contributions des AAV.";
             if (code === "UE_ANOM_03")
                 return "Un ou des prérequis ne fait pas partie des acquis d'apprentissages visées des semestres precedents. Vérifier que le prérequis appartient aux AAV autorisés.";
+            if (code === "UE_ANOM_10")
+                return "Vérifier que chaque AAV prérequis appartient aux UE prérequises et que chaque UE prérequise est couverte par au moins un AAV prérequis.";
+            if (code === "UE_ANOM_11")
+                return "Associer cette UE à au moins un programme.";
             if (code === "UE_ANOM_02")
-                return "Remplacer ce prérequis par une liste d'AAV explicite.";
+                return "Ajouter au moins un prérequis AAV ou retirer les prérequis UE.";
             return "Action: corriger la donnée source puis sauvegarder.";
         },
         toggleSection(section) {

@@ -1710,12 +1710,14 @@ class ProgrammeController extends Controller
         return match ($code) {
             UEAnomalyService::CODE_PREREQ_AS_UE => 'Erreur de prérequis (UE)',
             UEAnomalyService::CODE_PREREQ_OUTSIDE_ALLOWED => 'Erreur de prérequis (les prérequis ne sont pas des AAV d un semestre précédent)',
+            UEAnomalyService::CODE_PREREQ_AAV_NOT_IN_PREREQ_UE => 'Erreur de cohérence prérequis UE/AAV',
             UEAnomalyService::CODE_EMPTY_AAV_LIST => 'Erreur de données (liste des AAV vide)',
             UEAnomalyService::CODE_EMPTY_CREDITS => 'Erreur de crédit',
             UEAnomalyService::CODE_MISSING_SEMESTER => "Erreur d'affectation de semestre",
             UEAnomalyService::CODE_MISSING_AAV_AAT_CONTRIBUTION => 'Erreur de contribution',
             UEAnomalyService::CODE_MISSING_AAT_LEVEL => 'Erreur de niveau de contribution',
             UEAnomalyService::CODE_INCOHERENT_AAT_CONTRIBUTION => 'Erreur de cohérence de contribution (les AAV ne contribuent pas à un AAT de l`UE)',
+            UEAnomalyService::CODE_NOT_IN_ANY_PROGRAM => "Erreur d'affectation au programme",
             default => $code,
         };
     }

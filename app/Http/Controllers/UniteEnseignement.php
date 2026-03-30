@@ -491,6 +491,19 @@ class UniteEnseignement extends Controller
             ->orderBy('unite_enseignement.code')
             ->get();
 
+        $summaryMap = $this->ueAnomalyService->getSummaryForUEIds(
+            $response->pluck('id')->map(fn($id) => (int) $id)->all(),
+            (int) Auth::user()->university_id
+        );
+
+        $response->each(function ($ue) use ($summaryMap) {
+            $ue->anomaly_summary = $summaryMap->get((int) $ue->id, [
+                'has_anomaly' => false,
+                'count' => 0,
+                'severity' => 'info',
+            ]);
+        });
+
         return response()->json($response);
     }
 

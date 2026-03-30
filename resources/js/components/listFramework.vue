@@ -91,7 +91,7 @@
                             style="list-style-type: none; cursor: pointer"
                             @click="selectProgram('PRE')"
                         >
-                            <h5 class="m-0">Prérequis des unités d'enseignement</h5>
+                            <h5 class="m-0">Prérequis des unités d'enseignements en terme d'AAV</h5>
                         </li>
                         <li
                             class="p-2 program-item"

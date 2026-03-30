@@ -17,6 +17,8 @@ class UEAnomalyService
     public const CODE_MISSING_AAV_AAT_CONTRIBUTION = 'UE_ANOM_07';
     public const CODE_MISSING_AAT_LEVEL = 'UE_ANOM_08';
     public const CODE_INCOHERENT_AAT_CONTRIBUTION = 'UE_ANOM_09';
+    public const CODE_PREREQ_AAV_NOT_IN_PREREQ_UE = 'UE_ANOM_10';
+    public const CODE_NOT_IN_ANY_PROGRAM = 'UE_ANOM_11';
 
     /**
      * Recompute and persist anomalies for one UE.
@@ -378,6 +380,20 @@ class UEAnomalyService
         $prereqRows = $this->loadAavRows($uePrereqIds, $universityId)->keyBy('id');
         $aavRows = $this->loadAavRows($ueAavIds, $universityId)->keyBy('id');
 
+        if (empty($contexts)) {
+            $this->pushAnomaly(
+                $collector,
+                $this->makeAnomaly(
+                    self::CODE_NOT_IN_ANY_PROGRAM,
+                    $ueId,
+                    null,
+                    null,
+                    'warning',
+                    'Cette UE ne figure dans aucun programme.'
+                )
+            );
+        }
+
         if (empty($ueAavIds)) {
             $this->pushAnomaly(
                 $collector,
@@ -582,9 +598,10 @@ class UEAnomalyService
             );
         }
 
-        // Rule #2 (explicit UE prerequisites):
-        // if a UE has prerequisite UEs, raise an anomaly to ask for prerequisite AAV details.
-        if ($uePrereqUERows->isNotEmpty()) {
+        // Rule #2:
+        // a prerequisite UE error exists when UE prerequisites are provided
+        // but no AAV prerequisite is provided.
+        if ($uePrereqUERows->isNotEmpty() && empty($uePrereqIds)) {
             $this->pushAnomaly(
                 $collector,
                 $this->makeAnomaly(
@@ -593,7 +610,7 @@ class UEAnomalyService
                     null,
                     null,
                     'warning',
-                    'Des prerequis sont renseignes en termes d UE. Renseignez les prerequis en termes d AAV.',
+                    'Des prerequis UE sont renseignes mais aucun prerequis AAV n est renseigne.',
                     [
                         'ue_prerequis' => $uePrereqUERows
                             ->map(fn($row) => [
@@ -603,55 +620,150 @@ class UEAnomalyService
                             ])
                             ->values()
                             ->all(),
-                        'source' => 'ue_prerequis',
+                        'aav_prerequis_count' => 0,
                     ]
                 )
             );
         }
 
-        // Rule #2 (heuristic):
-        // if a prereq AAV code matches one or many UE codes, it usually means a prereq was expressed as UE.
-        $prereqCodes = $prereqRows
-            ->pluck('code')
-            ->filter(fn($c) => is_string($c) && trim($c) !== '')
-            ->map(fn($c) => trim($c))
-            ->unique()
-            ->values()
-            ->all();
+        // Rule #10:
+        // if both prerequisite UE list and prerequisite AAV list are present:
+        // 1) each prerequisite AAV must belong to at least one prerequisite UE (via AAV vises)
+        // 2) each prerequisite UE must be represented by at least one prerequisite AAV
+        if ($uePrereqUERows->isNotEmpty() && !empty($uePrereqIds)) {
+            $uePrereqUeIds = $uePrereqUERows
+                ->pluck('id')
+                ->map(fn($id) => (int) $id)
+                ->filter(fn($id) => $id > 0)
+                ->unique()
+                ->values()
+                ->all();
 
-        if ($uePrereqUERows->isEmpty() && !empty($prereqCodes)) {
-            $ueByCode = DB::table('unite_enseignement')
-                ->select('id', 'code', 'name')
+            $normalizedPrereqAavIds = collect($uePrereqIds)
+                ->map(fn($id) => (int) $id)
+                ->filter(fn($id) => $id > 0)
+                ->unique()
+                ->values()
+                ->all();
+
+            $allowedAavIds = DB::table('aavue_vise')
                 ->where('university_id', $universityId)
-                ->whereIn('code', $prereqCodes)
-                ->get()
-                ->groupBy('code');
+                ->whereIn('fk_unite_enseignement', empty($uePrereqUeIds) ? [-1] : $uePrereqUeIds)
+                ->pluck('fk_acquis_apprentissage_vise')
+                ->map(fn($id) => (int) $id)
+                ->filter(fn($id) => $id > 0)
+                ->unique()
+                ->values()
+                ->all();
 
-            foreach ($prereqRows as $prereq) {
-                $code = trim((string) ($prereq->code ?? ''));
-                if ($code === '' || !$ueByCode->has($code)) {
-                    continue;
+            $allowedAavLookup = array_flip($allowedAavIds);
+            $invalidPrereqAavs = collect($uePrereqIds)
+                ->map(fn($id) => (int) $id)
+                ->filter(fn($id) => $id > 0 && !isset($allowedAavLookup[$id]))
+                ->map(function ($aavId) use ($prereqRows) {
+                    $aav = $prereqRows->get($aavId);
+                    return [
+                        'aav_id' => (int) $aavId,
+                        'aav_code' => $aav->code ?? null,
+                        'aav_name' => $aav->name ?? null,
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $coveredUeIds = DB::table('aavue_vise')
+                ->where('university_id', $universityId)
+                ->whereIn('fk_unite_enseignement', empty($uePrereqUeIds) ? [-1] : $uePrereqUeIds)
+                ->whereIn('fk_acquis_apprentissage_vise', empty($normalizedPrereqAavIds) ? [-1] : $normalizedPrereqAavIds)
+                ->pluck('fk_unite_enseignement')
+                ->map(fn($id) => (int) $id)
+                ->filter(fn($id) => $id > 0)
+                ->unique()
+                ->values()
+                ->all();
+
+            $coveredUeLookup = array_flip($coveredUeIds);
+            $missingUePrerequis = $uePrereqUERows
+                ->filter(fn($row) => !isset($coveredUeLookup[(int) $row->id]))
+                ->map(fn($row) => [
+                    'id' => (int) $row->id,
+                    'code' => $row->code,
+                    'name' => $row->name,
+                ])
+                ->values()
+                ->all();
+
+            if (!empty($invalidPrereqAavs) || !empty($missingUePrerequis)) {
+                $impactedAavLabels = collect($invalidPrereqAavs)
+                    ->map(function ($row) {
+                        $code = trim((string) ($row['aav_code'] ?? ''));
+                        $name = trim((string) ($row['aav_name'] ?? ''));
+                        if ($code !== '' && $name !== '') {
+                            return "{$code} - {$name}";
+                        }
+                        if ($code !== '') {
+                            return $code;
+                        }
+                        if ($name !== '') {
+                            return $name;
+                        }
+                        return '#'.(int) ($row['aav_id'] ?? 0);
+                    })
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                $missingUeLabels = collect($missingUePrerequis)
+                    ->map(function ($row) {
+                        $code = trim((string) ($row['code'] ?? ''));
+                        $name = trim((string) ($row['name'] ?? ''));
+                        if ($code !== '' && $name !== '') {
+                            return "{$code} - {$name}";
+                        }
+                        if ($code !== '') {
+                            return $code;
+                        }
+                        if ($name !== '') {
+                            return $name;
+                        }
+                        return '#' . (int) ($row['id'] ?? 0);
+                    })
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                $messageParts = [];
+                if (!empty($impactedAavLabels)) {
+                    $messageParts[] = 'AAV impactes: ' . implode(', ', $impactedAavLabels) . '.';
+                }
+                if (!empty($missingUeLabels)) {
+                    $messageParts[] = 'UE prerequises sans AAV associe: ' . implode(', ', $missingUeLabels) . '.';
                 }
 
                 $this->pushAnomaly(
                     $collector,
                     $this->makeAnomaly(
-                        self::CODE_PREREQ_AS_UE,
+                        self::CODE_PREREQ_AAV_NOT_IN_PREREQ_UE,
                         $ueId,
                         null,
                         null,
                         'warning',
-                        'Un prerequis semble renseigne comme UE plutot que comme liste d AAV.',
+                        'Incoherence entre prerequis UE et prerequis AAV. ' . implode(' ', $messageParts),
                         [
-                            'prereq_id' => (int) $prereq->id,
-                            'prereq_code' => $code,
-                            'matching_ues' => $ueByCode->get($code)->map(function ($row) {
-                                return [
+                            'ue_prerequis' => $uePrereqUERows
+                                ->map(fn($row) => [
                                     'id' => (int) $row->id,
                                     'code' => $row->code,
                                     'name' => $row->name,
-                                ];
-                            })->values()->all(),
+                                ])
+                                ->values()
+                                ->all(),
+                            'invalid_aav_prerequis' => $invalidPrereqAavs,
+                            'missing_ue_prerequis' => $missingUePrerequis,
+                            'allowed_aav_ids' => $allowedAavIds,
+                            'covered_ue_prerequis_ids' => $coveredUeIds,
                         ]
                     )
                 );
