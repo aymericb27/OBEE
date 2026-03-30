@@ -6,7 +6,7 @@
                 Retour
             </a>
         </div>
-        <div class="container pb-4 ">
+        <div class="container pb-4">
             <div v-if="$route.query.message" class="alert alert-success mt-3">
                 <i
                     class="fa-solid fa-check green mr-2"
@@ -73,12 +73,22 @@
                 </div>
 
                 <div class="listComponent mb-4">
-                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('anomalies')">
+                    <div
+                        class="mb-2 d-flex justify-content-between align-items-center cursor_pointer"
+                        @click="toggleSection('anomalies')"
+                    >
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-triangle-exclamation"></i>
                             Anomalies détectées
                         </h5>
-                        <i class="fa-solid primary_color" :class="isExpanded('anomalies') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                        <i
+                            class="fa-solid primary_color"
+                            :class="
+                                isExpanded('anomalies')
+                                    ? 'fa-chevron-down'
+                                    : 'fa-chevron-up'
+                            "
+                        ></i>
                     </div>
                     <div
                         v-show="isExpanded('anomalies')"
@@ -105,7 +115,9 @@
                                     }"
                                     :showCount="false"
                                 />
-                                <strong class="ml-2">{{ anomalyTypeText(anom) }}</strong>
+                                <strong class="ml-2">{{
+                                    anomalyTypeText(anom)
+                                }}</strong>
                             </div>
                             <div class="mt-1">
                                 <ul class="mb-0 anomaly-bullet-list">
@@ -117,7 +129,9 @@
                                             {{ item.text }}
                                         </template>
                                         <template v-else>
-                                            <span v-if="item.prefix">{{ item.prefix }}</span>
+                                            <span v-if="item.prefix">{{
+                                                item.prefix
+                                            }}</span>
                                             <router-link
                                                 v-if="item.routeName && item.id"
                                                 :to="{
@@ -125,15 +139,25 @@
                                                     params: { id: item.id },
                                                 }"
                                             >
-                                                <span style="font-size: 1.1em;" :class="item.codeClass">
+                                                <span
+                                                    style="font-size: 1.1em"
+                                                    :class="item.codeClass"
+                                                >
                                                     {{ item.codeText }}
                                                 </span>
                                             </router-link>
-                                            <span v-else :class="item.codeClass">
+                                            <span
+                                                v-else
+                                                :class="item.codeClass"
+                                            >
                                                 {{ item.codeText }}
                                             </span>
-                                            <span v-if="item.labelText">{{ item.labelText }}</span>
-                                            <span v-if="item.suffix">{{ item.suffix }}</span>
+                                            <span v-if="item.labelText">{{
+                                                item.labelText
+                                            }}</span>
+                                            <span v-if="item.suffix">{{
+                                                item.suffix
+                                            }}</span>
                                         </template>
                                     </li>
                                 </ul>
@@ -152,11 +176,21 @@
                     class="listComponent mb-4"
                     v-if="ue.children && ue.children.length"
                 >
-                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('children')">
+                    <div
+                        class="mb-2 d-flex justify-content-between align-items-center cursor_pointer"
+                        @click="toggleSection('children')"
+                    >
                         <h5 class="d-inline-block primary_color">
                             liste des éléments constitutifs
                         </h5>
-                        <i class="fa-solid primary_color" :class="isExpanded('children') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                        <i
+                            class="fa-solid primary_color"
+                            :class="
+                                isExpanded('children')
+                                    ? 'fa-chevron-down'
+                                    : 'fa-chevron-up'
+                            "
+                        ></i>
                     </div>
                     <list
                         :key="`${ue.id}`"
@@ -170,12 +204,22 @@
                     />
                 </div>
                 <div class="listComponent mb-4">
-                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('programs')">
+                    <div
+                        class="mb-2 d-flex justify-content-between align-items-center cursor_pointer"
+                        @click="toggleSection('programs')"
+                    >
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-scroll"></i> Faisant partie
                             du/des programme(s)
                         </h5>
-                        <i class="fa-solid primary_color" :class="isExpanded('programs') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                        <i
+                            class="fa-solid primary_color"
+                            :class="
+                                isExpanded('programs')
+                                    ? 'fa-chevron-down'
+                                    : 'fa-chevron-up'
+                            "
+                        ></i>
                     </div>
                     <list
                         :key="`${ue.id}`"
@@ -189,12 +233,22 @@
                     />
                 </div>
                 <div class="listComponent mb-4">
-                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('aavVise')">
+                    <div
+                        class="mb-2 d-flex justify-content-between align-items-center cursor_pointer"
+                        @click="toggleSection('aavVise')"
+                    >
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-brands fa-google-scholar"></i>
                             Liste des acquis d'apprentissage visé
                         </h5>
-                        <i class="fa-solid primary_color" :class="isExpanded('aavVise') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                        <i
+                            class="fa-solid primary_color"
+                            :class="
+                                isExpanded('aavVise')
+                                    ? 'fa-chevron-down'
+                                    : 'fa-chevron-up'
+                            "
+                        ></i>
                     </div>
                     <list
                         :key="`${ue.id}`"
@@ -215,12 +269,22 @@
                     />
                 </div>
                 <div class="listComponent mb-4">
-                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('prerequis')">
+                    <div
+                        class="mb-2 d-flex justify-content-between align-items-center cursor_pointer"
+                        @click="toggleSection('prerequis')"
+                    >
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-key"></i>
-                            Liste des prérequis
+                            Liste des prérequis en terme d'AAV
                         </h5>
-                        <i class="fa-solid primary_color" :class="isExpanded('prerequis') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                        <i
+                            class="fa-solid primary_color"
+                            :class="
+                                isExpanded('prerequis')
+                                    ? 'fa-chevron-down'
+                                    : 'fa-chevron-up'
+                            "
+                        ></i>
                     </div>
                     <list
                         :key="`${ue.id}`"
@@ -234,12 +298,51 @@
                     />
                 </div>
                 <div class="listComponent mb-4">
-                    <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('aat')">
+                    <div
+                        class="mb-2 d-flex justify-content-between align-items-center cursor_pointer"
+                        @click="toggleSection('prerequisUE')"
+                    >
+                        <h5 class="d-inline-block primary_color">
+                            <i class="fa-solid fa-key"></i>
+                            Liste des prérequis en termes d'UE
+                        </h5>
+                        <i
+                            class="fa-solid primary_color"
+                            :class="
+                                isExpanded('prerequisUE')
+                                    ? 'fa-chevron-down'
+                                    : 'fa-chevron-up'
+                            "
+                        ></i>
+                    </div>
+                    <list
+                        :key="`${ue.id}-ue-prerequis`"
+                        v-if="ue.id"
+                        v-show="isExpanded('prerequisUE')"
+                        routeGET="/ue/ueprerequis/get"
+                        :paramsRouteGET="{ id: ue.id }"
+                        linkDetailed="ue-detail"
+                        typeList="UE"
+                        :listColonne="['code', 'name']"
+                    />
+                </div>
+                <div class="listComponent mb-4">
+                    <div
+                        class="mb-2 d-flex justify-content-between align-items-center cursor_pointer"
+                        @click="toggleSection('aat')"
+                    >
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-graduation-cap"></i>
                             Liste des acquis d'apprentissage terminaux
                         </h5>
-                        <i class="fa-solid primary_color" :class="isExpanded('aat') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                        <i
+                            class="fa-solid primary_color"
+                            :class="
+                                isExpanded('aat')
+                                    ? 'fa-chevron-down'
+                                    : 'fa-chevron-up'
+                            "
+                        ></i>
                     </div>
                     <list
                         :key="`${ue.id}`"
@@ -336,7 +439,8 @@ export default {
                     current.details = anom.details || {};
                 }
                 if (
-                    (anom.severity === "error" && current.severity !== "error") ||
+                    (anom.severity === "error" &&
+                        current.severity !== "error") ||
                     (anom.severity === "warning" && current.severity === "info")
                 ) {
                     current.severity = anom.severity;
@@ -369,6 +473,7 @@ export default {
                 programs: true,
                 aavVise: true,
                 prerequis: true,
+                prerequisUE: true,
                 aat: true,
             },
         };
@@ -460,7 +565,9 @@ export default {
                             : [],
                     )
                     .concat(
-                        Array.isArray(details?.aav_to_aat_not_declared_in_ue_cases)
+                        Array.isArray(
+                            details?.aav_to_aat_not_declared_in_ue_cases,
+                        )
                             ? details.aav_to_aat_not_declared_in_ue_cases
                             : [],
                     );
@@ -492,7 +599,9 @@ export default {
                 const detailsEntries = entries.length ? entries : [anom];
                 detailsEntries.forEach((entry, idx) => {
                     const d = entry?.details || {};
-                    const ues = Array.isArray(d?.matching_ues) ? d.matching_ues : [];
+                    const ues = Array.isArray(d?.matching_ues)
+                        ? d.matching_ues
+                        : [];
                     if (!ues.length) return;
                     ues.forEach((u, uidx) => {
                         pushLinked(
@@ -520,24 +629,37 @@ export default {
             const code = anom?.code || "";
             if (code === "UE_ANOM_02") return "Erreur de prérequis (UE)";
             if (code === "UE_ANOM_03") return "Erreur de prérequis";
-            if (code === "UE_ANOM_04") return "Erreur de données (liste des AAV vide)";
-            if (code === "UE_ANOM_05") return "Erreur de données (crédits manquants)";
-            if (code === "UE_ANOM_06") return "Erreur d'affectation de semestre";
+            if (code === "UE_ANOM_04")
+                return "Erreur de données (liste des AAV vide)";
+            if (code === "UE_ANOM_05")
+                return "Erreur de données (crédits manquants)";
+            if (code === "UE_ANOM_06")
+                return "Erreur d'affectation de semestre";
             if (code === "UE_ANOM_07") return "Erreur de contribution";
-            if (code === "UE_ANOM_08") return "Erreur de niveau de contribution";
-            if (code === "UE_ANOM_09") return "Erreur de cohérence de contribution";
+            if (code === "UE_ANOM_08")
+                return "Erreur de niveau de contribution";
+            if (code === "UE_ANOM_09")
+                return "Erreur de cohérence de contribution";
             return "Anomalie";
         },
         anomalyActionText(anom) {
             const code = anom?.code || "";
-            if (code === "UE_ANOM_04") return "Ajouter des AAV visés à cette UE.";
-            if (code === "UE_ANOM_05") return "Renseigner les crédits (ECTS) de cette UE.";
-            if (code === "UE_ANOM_06") return "Certains semestres sont sans UE. vérifier l'affectation de semestre dans le(s) programme(s).";
-            if (code === "UE_ANOM_07") return "Compléter les contributions AAV -> AAT manquantes.";
-            if (code === "UE_ANOM_08") return "Renseigner le niveau de contribution du AAT concerné.";
-            if (code === "UE_ANOM_09") return "L'UE declare contribuer a un AAT mais aucun AAV de l'UE ne contribue a cet AAT pour ce programme. Aligner la matrice UE -> AAT avec les contributions des AAV.";
-            if (code === "UE_ANOM_03") return "Un ou des prérequis ne fait pas partie des acquis d'apprentissages visées des semestres precedents. Vérifier que le prérequis appartient aux AAV autorisés.";
-            if (code === "UE_ANOM_02") return "Remplacer ce prérequis par une liste d'AAV explicite.";
+            if (code === "UE_ANOM_04")
+                return "Ajouter des AAV visés à cette UE.";
+            if (code === "UE_ANOM_05")
+                return "Renseigner les crédits (ECTS) de cette UE.";
+            if (code === "UE_ANOM_06")
+                return "Certains semestres sont sans UE. vérifier l'affectation de semestre dans le(s) programme(s).";
+            if (code === "UE_ANOM_07")
+                return "Compléter les contributions AAV -> AAT manquantes.";
+            if (code === "UE_ANOM_08")
+                return "Renseigner le niveau de contribution du AAT concerné.";
+            if (code === "UE_ANOM_09")
+                return "L'UE declare contribuer a un AAT mais aucun AAV de l'UE ne contribue a cet AAT pour ce programme. Aligner la matrice UE -> AAT avec les contributions des AAV.";
+            if (code === "UE_ANOM_03")
+                return "Un ou des prérequis ne fait pas partie des acquis d'apprentissages visées des semestres precedents. Vérifier que le prérequis appartient aux AAV autorisés.";
+            if (code === "UE_ANOM_02")
+                return "Remplacer ce prérequis par une liste d'AAV explicite.";
             return "Action: corriger la donnée source puis sauvegarder.";
         },
         toggleSection(section) {
@@ -615,10 +737,6 @@ export default {
     },
 };
 </script>
-
-
-
-
 
 <style scoped>
 .anomaly-bullet-list {

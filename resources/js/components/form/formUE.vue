@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <div class="back_btn">
             <a href="#" @click="$router.back()" class="primary_color">
@@ -100,13 +100,25 @@
                             <div class="col-md-2 p-2">Contribution</div>
                         </div>
                         <div
-                            v-if="!ue.aat || !ue.aat.length"
+                            v-if="isLoadingAATList"
+                            class="p-3 text-center text-muted"
+                        >
+                            <div
+                                class="spinner-border spinner-border-sm mr-2"
+                                role="status"
+                                aria-hidden="true"
+                            ></div>
+                            chargement des AAT...
+                        </div>
+                        <div
+                            v-else-if="!ue.aat || !ue.aat.length"
                             class="p-2 text-center"
                         >
                             aucune donnée à afficher
                         </div>
 
                         <div
+                            v-else
                             v-for="(aat, index) in ue.aat"
                             class="row"
                             :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
@@ -151,11 +163,23 @@
                             <div class="col-md-8 p-2">Libellé</div>
                             <div class="col-md-2 p-2">Semestre</div>
                         </div>
-                        <div v-if="!ue.pro.length" class="p-2 text-center">
+                        <div
+                            v-if="isLoadingProList"
+                            class="p-3 text-center text-muted"
+                        >
+                            <div
+                                class="spinner-border spinner-border-sm mr-2"
+                                role="status"
+                                aria-hidden="true"
+                            ></div>
+                            chargement des programmes...
+                        </div>
+                        <div v-else-if="!ue.pro.length" class="p-2 text-center">
                             aucune donnée à afficher
                         </div>
 
                         <div
+                            v-else
                             v-for="(pro, index) in ue.pro"
                             class="row"
                             :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
@@ -199,11 +223,23 @@
                             <div class="col-md-1 p-2">Code</div>
                             <div class="col-md-9 p-2">Nom</div>
                         </div>
-                        <div v-if="!ue.aavvise.length" class="p-2 text-center">
+                        <div
+                            v-if="isLoadingAAVViseList"
+                            class="p-3 text-center text-muted"
+                        >
+                            <div
+                                class="spinner-border spinner-border-sm mr-2"
+                                role="status"
+                                aria-hidden="true"
+                            ></div>
+                            chargement des AAV visés...
+                        </div>
+                        <div v-else-if="!ue.aavvise.length" class="p-2 text-center">
                             aucune donnée à afficher
                         </div>
 
                         <div
+                            v-else
                             v-for="(aav, index) in ue.aavvise"
                             class="row"
                             :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
@@ -222,14 +258,14 @@
                     <div class="listComponent mb-5">
                         <div class="mb-2">
                             <h5 class="d-inline-block primary_color">
-                                Liste des prérequis
+                                Liste des prérequis en termes d'UE
                             </h5>
                             <button
                                 type="button"
                                 class="btn btn-primary ml-2 mb-2"
-                                @click="openModalPrerequis()"
+                                @click="openModalUEPrerequis()"
                             >
-                                ajouter un prérequis
+                                ajouter un prérequis UE
                             </button>
                         </div>
                         <div class="row border-bottom">
@@ -238,7 +274,84 @@
                             <div class="col-md-9 p-2">Nom</div>
                         </div>
                         <div
-                            v-if="!ue.aavprerequis.length"
+                            v-if="isLoadingUEPrerequis"
+                            class="p-3 text-center text-muted"
+                        >
+                            <div
+                                class="spinner-border spinner-border-sm mr-2"
+                                role="status"
+                                aria-hidden="true"
+                            ></div>
+                            chargement des prérequis UE...
+                        </div>
+                        <div
+                            v-else-if="!ue.ueprerequis.length"
+                            class="p-2 text-center"
+                        >
+                            aucune donnée à afficher
+                        </div>
+                        <div
+                            v-else
+                            v-for="(item, index) in ue.ueprerequis"
+                            class="row"
+                            :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
+                        >
+                            <div class="col-md-1 text-right p-2">
+                                <i
+                                    @click="
+                                        removeElement('ueprerequis', item.id)
+                                    "
+                                    class="text-danger fa fa-close pr-0"
+                                    style="cursor: pointer"
+                                ></i>
+                            </div>
+                            <div class="col-md-1 p-2 UE">{{ item.code }}</div>
+                            <div class="col-md-10 p-2">{{ item.name }}</div>
+                        </div>
+                    </div>
+                    <div class="listComponent mb-5">
+                        <div class="mb-2">
+                            <h5 class="d-inline-block primary_color">
+                                Liste des prérequis en termes d'AAV
+                            </h5>
+                            <button
+                                type="button"
+                                class="btn btn-primary ml-2 mb-2"
+                                @click="openModalPrerequis()"
+                            >
+                                ajouter un prérequis
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary ml-2 mb-2"
+                                :disabled="
+                                    !Array.isArray(ue.aavprerequis) ||
+                                    !ue.aavprerequis.length ||
+                                    isLoadingUEPrerequis
+                                "
+                                @click="autoAddUEPrerequisFromAAV()"
+                            >
+                                ajouter les prérequis en terme d'UE automatiquement
+                            </button>
+                        </div>
+                        <div class="row border-bottom">
+                            <div class="col-md-1"></div>
+                            <div class="col-md-1 p-2">Code</div>
+                            <div class="col-md-9 p-2">Nom</div>
+                        </div>
+                        <div
+                            v-if="isLoadingAAVPrerequisList"
+                            class="p-3 text-center text-muted"
+                        >
+                            <div
+                                class="spinner-border spinner-border-sm mr-2"
+                                role="status"
+                                aria-hidden="true"
+                            ></div>
+                            chargement des AAV prérequis...
+                        </div>
+                        <div
+                            v-else-if="!ue.aavprerequis.length"
                             class="p-2 text-center"
                         >
                             aucune donnée à afficher
@@ -465,6 +578,16 @@
         @selected="handleSelected"
     />
     <modalList
+        v-if="showModalUEPrerequis"
+        :visible="showModalUEPrerequis"
+        :routeGET="modalRoute"
+        :title="modalTitle"
+        :listToExclude="uePrerequisToExclude"
+        type="UE"
+        @close="showModalUEPrerequis = false"
+        @selected="handleSelected"
+    />
+    <modalList
         v-if="showModalAAT"
         :visible="showModalAAT"
         :routeGET="modalRoute"
@@ -512,6 +635,7 @@ export default {
             activeForm: null,
             showModalVise: false,
             showModalPrerequis: false,
+            showModalUEPrerequis: false,
             showModalCreateAAV: false,
             showModalAAT: false,
             showModalPro: false,
@@ -521,7 +645,13 @@ export default {
             proToExclude: [],
             aavViseToExclude: [],
             aavPrerequisToExclude: [],
-            modalTarget: "", // 'aavvise' ou 'aavprerequis'
+            uePrerequisToExclude: [],
+            isLoadingAATList: false,
+            isLoadingProList: false,
+            isLoadingAAVViseList: false,
+            isLoadingAAVPrerequisList: false,
+            isLoadingUEPrerequis: false,
+            modalTarget: "", // 'aavvise' ou 'aavprerequis' ou 'ueprerequis'
             listAAT: [],
             aavForm: {
                 selectedAATId: "",
@@ -536,6 +666,7 @@ export default {
             ue: {
                 aavvise: [],
                 aavprerequis: [],
+                ueprerequis: [],
                 pro: [],
                 aat: [],
                 name: "",
@@ -615,14 +746,14 @@ export default {
         openModalTerminal() {
             this.modalTarget = "aat";
             this.modalRoute = "/aat/get";
-            this.modalTitle = "Ajouter des acquis d’apprentissage terminaux";
+            this.modalTitle = "Ajouter des acquis d'apprentissage terminaux";
             this.aatPrerequisToExclude = this.ue.aat;
             this.showModalAAT = true;
         },
         openModalVise() {
             this.modalTarget = "aavvise";
             this.modalRoute = "/aav/get";
-            this.modalTitle = "Ajouter des acquis d’apprentissage visés";
+            this.modalTitle = "Ajouter des acquis d'apprentissage visés";
             this.aavViseToExclude = [
                 ...this.ue.aavvise,
                 ...this.ue.aavprerequis,
@@ -639,6 +770,94 @@ export default {
             ];
             this.showModalPrerequis = true;
         },
+        openModalUEPrerequis() {
+            this.modalTarget = "ueprerequis";
+            this.modalRoute = "/ues/get";
+            this.modalTitle = "Ajouter des prerequis UE";
+
+            const excluded = [...this.ue.ueprerequis];
+            const currentUEId = Number(this.id || this.ue.id);
+            if (Number.isInteger(currentUEId) && currentUEId > 0) {
+                excluded.push({ id: currentUEId });
+            }
+            this.uePrerequisToExclude = excluded;
+            this.showModalUEPrerequis = true;
+        },
+        async autoAddUEPrerequisFromAAV() {
+            this.formErrors = null;
+
+            const aavIds = (this.ue.aavprerequis || [])
+                .map((item) => Number(item?.id))
+                .filter((id) => Number.isInteger(id) && id > 0);
+
+            if (!aavIds.length) {
+                this.formErrors =
+                    "Ajoutez d'abord des prérequis AAV pour générer la liste des prérequis UE.";
+                return;
+            }
+
+            this.isLoadingUEPrerequis = true;
+            try {
+                const responses = await Promise.all(
+                    aavIds.map((aavId) =>
+                        axios.get("/aav/UEvise/get", {
+                            params: { id: aavId },
+                        }),
+                    ),
+                );
+
+                const currentUEId = Number(this.id || this.ue.id);
+                const ueById = new Map(
+                    (this.ue.ueprerequis || []).map((ue) => [
+                        Number(ue.id),
+                        ue,
+                    ]),
+                );
+
+                responses.forEach((response) => {
+                    const ues = Array.isArray(response.data)
+                        ? response.data
+                        : [];
+
+                    ues.forEach((ue) => {
+                        const ueId = Number(ue?.id);
+                        if (!Number.isInteger(ueId) || ueId <= 0) return;
+                        if (
+                            Number.isInteger(currentUEId) &&
+                            currentUEId > 0 &&
+                            ueId === currentUEId
+                        ) {
+                            return;
+                        }
+                        if (!ueById.has(ueId)) {
+                            ueById.set(ueId, {
+                                id: ue.id,
+                                code: ue.code,
+                                name: ue.name,
+                            });
+                        }
+                    });
+                });
+
+                this.ue.ueprerequis = Array.from(ueById.values()).sort(
+                    (a, b) =>
+                        String(a?.code || "").localeCompare(
+                            String(b?.code || ""),
+                            undefined,
+                            {
+                                numeric: true,
+                                sensitivity: "base",
+                            },
+                        ),
+                );
+            } catch (error) {
+                console.error(error);
+                this.formErrors =
+                    "Impossible de générer automatiquement les prérequis UE.";
+            } finally {
+                this.isLoadingUEPrerequis = false;
+            }
+        },
         openModalPro() {
             this.modalTarget = "pro";
             this.modalRoute = "/pro/get";
@@ -651,6 +870,8 @@ export default {
                 this.ue.aavvise.push(...selectedItems);
             } else if (this.modalTarget === "aavprerequis") {
                 this.ue.aavprerequis.push(...selectedItems);
+            } else if (this.modalTarget === "ueprerequis") {
+                this.ue.ueprerequis.push(...selectedItems);
             } else if (this.modalTarget === "pro") {
                 this.ue.pro.push(...selectedItems);
             } else if (this.modalTarget === "aat") {
@@ -690,6 +911,7 @@ export default {
                         code: this.ue.code,
                         description: this.ue.description,
                         aavprerequis: this.ue.aavprerequis,
+                        ueprerequis: this.ue.ueprerequis,
                         aavvise: this.ue.aavvise,
                         pro: normalizedPro,
                         aat: this.ue.aat,
@@ -697,9 +919,9 @@ export default {
                         ueParent: this.ueParent,
                     });
 
-                    // ✅ Si tout s’est bien passé
+                    //  Si tout s'est bien passé
                     if (response.data.success) {
-                        // ✅ Redirection avec message (query param)
+                        //  Redirection avec message (query param)
                         this.$router.push({
                             name: "ue-detail",
                             params: { id: this.ue.id },
@@ -713,15 +935,16 @@ export default {
                         code: this.ue.code,
                         description: this.ue.description,
                         aavprerequis: this.ue.aavprerequis,
+                        ueprerequis: this.ue.ueprerequis,
                         aavvise: this.ue.aavvise,
                         pro: normalizedPro,
                         aat: this.ue.aat,
                         ueParentID: this.ueParent.id,
                         ueParentContribution: this.ueParent.contribution,
                     });
-                    // ✅ Si tout s’est bien passé
+                    //  Si tout s'est bien passé
                     if (response.data.success) {
-                        // ✅ Redirection avec message (query param)
+                        //  Redirection avec message (query param)
                         this.$router.push({
                             name: "ue-detail",
                             params: { id: response.data.id },
@@ -730,7 +953,7 @@ export default {
                     }
                 }
             } catch (error) {
-                // ⚠️ Gestion des erreurs
+                // Gestion des erreurs
                 if (
                     error.response &&
                     error.response.data &&
@@ -797,6 +1020,7 @@ export default {
             }
         },
         async loadProgram() {
+            this.isLoadingProList = true;
             try {
                 const programId = this.$route.query.programID;
                 const semesterNumber = this.$route.query.semesterNumber;
@@ -823,6 +1047,8 @@ export default {
                 console.log(error);
                 this.formErrors =
                     "Impossible de charger le programme sélectionné.";
+            } finally {
+                this.isLoadingProList = false;
             }
         },
 
@@ -841,6 +1067,11 @@ export default {
             }
         },
         async loadUE() {
+            this.isLoadingAATList = true;
+            this.isLoadingProList = true;
+            this.isLoadingAAVViseList = true;
+            this.isLoadingAAVPrerequisList = true;
+            this.isLoadingUEPrerequis = true;
             try {
                 const responseUE = await axios.get("/UEGet/detailed", {
                     params: {
@@ -858,18 +1089,21 @@ export default {
                     },
                 });
                 this.ue.aat = responseAAT.data;
+                this.isLoadingAATList = false;
                 const responsePro = await axios.get("/ue/pro/get", {
                     params: {
                         id: this.id,
                     },
                 });
                 this.ue.pro = responsePro.data;
+                this.isLoadingProList = false;
                 const responseAAVvise = await axios.get("/ue/aavvise/get", {
                     params: {
                         id: this.id,
                     },
                 });
                 this.ue.aavvise = responseAAVvise.data;
+                this.isLoadingAAVViseList = false;
                 const responseAAVprerequis = await axios.get(
                     "/ue/aavprerequis/get",
                     {
@@ -879,8 +1113,24 @@ export default {
                     },
                 );
                 this.ue.aavprerequis = responseAAVprerequis.data;
+                this.isLoadingAAVPrerequisList = false;
+                const responseUEprerequis = await axios.get(
+                    "/ue/ueprerequis/get",
+                    {
+                        params: {
+                            id: this.id,
+                        },
+                    },
+                );
+                this.ue.ueprerequis = responseUEprerequis.data;
             } catch (error) {
                 console.log(error);
+            } finally {
+                this.isLoadingAATList = false;
+                this.isLoadingProList = false;
+                this.isLoadingAAVViseList = false;
+                this.isLoadingAAVPrerequisList = false;
+                this.isLoadingUEPrerequis = false;
             }
         },
         removeElement(type, id) {
@@ -922,3 +1172,4 @@ export default {
     background: rgba(0, 0, 0, 0.45);
 }
 </style>
+

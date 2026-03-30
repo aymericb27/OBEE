@@ -70,4 +70,14 @@ class UniteEnseignement extends Model
             'fk_acquis_apprentissage_prerequis'
         );
     }
+
+    public function uePrerequis()
+    {
+        return $this->belongsToMany(
+            UniteEnseignement::class,
+            'ue_prerequis',
+            'fk_UE_parent',
+            'fk_UE_prerequis'
+        );
+    }
 }

@@ -32,6 +32,8 @@ class UniteEnseignement extends Controller
             'description' => 'nullable|string|max:2024',
             'aavprerequis' => ['array'],
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
+            'ueprerequis' => ['array'],
+            'ueprerequis.*.id' => ['integer', 'exists:unite_enseignement,id'],
             'aavvise' => ['array'],
             'aavvise.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'pro' => ['array'],
@@ -85,6 +87,18 @@ class UniteEnseignement extends Controller
                 $pivotData[$item['id']] = ['university_id' => Auth::user()->university_id];
             }
             $ue->prerequis()->sync($pivotData);
+        }
+
+        if (isset($validated['ueprerequis'])) {
+            $pivotData = [];
+            foreach ($validated['ueprerequis'] as $item) {
+                $prereqUeId = (int) $item['id'];
+                if ($prereqUeId === (int) $ue->id) {
+                    continue;
+                }
+                $pivotData[$prereqUeId] = ['university_id' => Auth::user()->university_id];
+            }
+            $ue->uePrerequis()->sync($pivotData);
         }
 
         if (!empty($validated['aat'])) {
@@ -178,6 +192,8 @@ class UniteEnseignement extends Controller
             'code' => 'required|string|max:50',
             'aavprerequis' => ['array'],
             'aavprerequis.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
+            'ueprerequis' => ['array'],
+            'ueprerequis.*.id' => ['integer', 'exists:unite_enseignement,id'],
             'aavvise' => ['array'],
             'aavvise.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
             'pro' => ['array'],
@@ -227,6 +243,17 @@ class UniteEnseignement extends Controller
                 $pivotData[$item['id']] = ['university_id' => Auth::user()->university_id];
             }
             $ue->prerequis()->sync($pivotData);
+        }
+        if (isset($validated['ueprerequis'])) {
+            $pivotData = [];
+            foreach ($validated['ueprerequis'] as $item) {
+                $prereqUeId = (int) $item['id'];
+                if ($prereqUeId === (int) $ue->id) {
+                    continue;
+                }
+                $pivotData[$prereqUeId] = ['university_id' => Auth::user()->university_id];
+            }
+            $ue->uePrerequis()->sync($pivotData);
         }
         if (isset($validated['pro'])) {
 
@@ -445,6 +472,26 @@ class UniteEnseignement extends Controller
             ->get();
 
         return $this->appendAATContributions($response, $ueId);
+    }
+
+    public function getUEprerequis(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:unite_enseignement,id',
+        ]);
+
+        $response = UE::select(
+            'unite_enseignement.id',
+            'unite_enseignement.code',
+            'unite_enseignement.name'
+        )
+            ->join('ue_prerequis', 'ue_prerequis.fk_UE_prerequis', '=', 'unite_enseignement.id')
+            ->where('ue_prerequis.fk_UE_parent', (int) $validated['id'])
+            ->where('ue_prerequis.university_id', (int) Auth::user()->university_id)
+            ->orderBy('unite_enseignement.code')
+            ->get();
+
+        return response()->json($response);
     }
 
     private function appendAATContributions($aavs, int $ueId)

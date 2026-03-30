@@ -47,6 +47,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/ue/aavvise/get', [UniteEnseignement::class, 'getAAVvise'])->name('ue.get.aavvise');
     Route::get('/ue/aavvise/get/onlyParent', [UniteEnseignement::class, 'getAAVviseOnlyParent'])->name('ue.get.aavvise.onlyParent');
     Route::get('/ue/aavprerequis/get', [UniteEnseignement::class, 'getAAVprerequis'])->name('ue.get.aavprerequis');
+    Route::get('/ue/ueprerequis/get', [UniteEnseignement::class, 'getUEprerequis'])->name('ue.get.ueprerequis');
     Route::put('/ue/update', [UniteEnseignement::class, 'update'])->name('ue.update');
     Route::post('/ue/store', [UniteEnseignement::class, 'store'])->name('ue.store');
     Route::delete('/ue/delete', [UniteEnseignement::class, 'delete']);
