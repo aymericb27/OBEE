@@ -99,7 +99,7 @@ class ProgramAnalysisAnomalyUEExport
         $sheet->getColumnDimension('B')->setWidth(100);
 
         for ($r = 6; $r <= $endRow; $r++) {
-            $sheet->getRowDimension($r)->setRowHeight(22);
+            $sheet->getRowDimension($r)->setRowHeight(35);
         }
 
         $programCode = preg_replace('/[^A-Za-z0-9_-]+/', '_', (string) $this->programme->code);
