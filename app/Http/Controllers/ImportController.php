@@ -333,6 +333,8 @@ class ImportController extends Controller
             'in'       => 'Le champ :attribute doit être une des valeurs suivantes : :values.',
             'max'      => 'Le champ :attribute est trop long (max :max caractères).',
             'min'      => 'Le champ :attribute doit être un nombre (min :min).',
+            'main.name.max' => "Le libellé de l'UE est trop long (maximum 255 caractères).",
+            'links.prerequis_ues.*.libelle.max' => "Le libellé d'un prérequis UE est trop long (maximum 255 caractères).",
 
             'links.aats.*.contribution.integer' => 'La contribution de l’AAT doit être un nombre (1, 2 ou 3).',
             'links.aats.*.contribution.in'      => 'La contribution de l’AAT doit valoir 1, 2 ou 3.',
@@ -368,6 +370,9 @@ class ImportController extends Controller
             'links.prerequis'           => 'Liste des prérequis',
             'links.prerequis.*.code'    => 'Sigle du prérequis',
             'links.prerequis.*.libelle' => 'Libellé du prérequis',
+            'links.prerequis_ues'           => 'Liste des prérequis UE',
+            'links.prerequis_ues.*.code'    => 'Sigle du prérequis UE',
+            'links.prerequis_ues.*.libelle' => 'Libellé du prérequis UE',
         ];
 
         $validator = Validator::make($values, [
@@ -375,7 +380,7 @@ class ImportController extends Controller
 
             'main' => 'required|array',
             'main.code'        => 'nullable|string|max:50',
-            'main.name'        => 'required|string|max:500',
+            'main.name'        => 'required|string|max:255',
             'main.description' => 'nullable|string',
             'main.ects'        => 'required|integer|min:1|max:120',
 
@@ -395,6 +400,10 @@ class ImportController extends Controller
             'links.prerequis' => 'nullable|array',
             'links.prerequis.*.code' => 'nullable|string|max:50',
             'links.prerequis.*.libelle' => 'nullable|string|max:500',
+
+            'links.prerequis_ues' => 'nullable|array',
+            'links.prerequis_ues.*.code' => 'nullable|string|max:50',
+            'links.prerequis_ues.*.libelle' => 'nullable|string|max:500',
 
             'links.programmes' => 'nullable|array',
             'links.programmes.*.code' => 'nullable|string|max:50',
@@ -435,11 +444,17 @@ class ImportController extends Controller
                 // duplicate key
                 if (($e->errorInfo[0] ?? null) === '23000') {
                     throw ValidationException::withMessages([
-                        'main.code' => ["Le sigle d’UE \"$ueCode\" existe déjà dans le logiciel, veuillez en fournir un différent."]
+                        'main.code' => ["Le sigle d'UE \"$ueCode\" existe deja dans le logiciel, veuillez en fournir un different."]
+                    ]);
+                }
+                if (($e->errorInfo[0] ?? null) === '22001') {
+                    throw ValidationException::withMessages([
+                        'main.name' => ["Le libellé d'une UE est trop long pour l'import (maximum 255 caractères)."]
                     ]);
                 }
                 throw $e;
             }
+            $affectedUeIds = [(int) $ue->id];
 
             // -------------------------
             // 2) AATs liés
@@ -629,9 +644,54 @@ class ImportController extends Controller
                 }
             }
 
+            // -------------------------
+            // 6) Prérequis UE liés
+            // -------------------------
+            $prerequisUes = $links['prerequis_ues'] ?? [];
+            if (!empty($prerequisUes)) {
+                foreach ($prerequisUes as $preUeData) {
+                    $code = trim($preUeData['code'] ?? '');
+                    $name = trim($preUeData['libelle'] ?? '');
+
+                    if ($code === '' && $name === '') continue;
+
+                    if ($code === '' && $name !== '') {
+                        $code = $this->codeGen->nextUE();
+                    }
+
+                    $preUe = UniteEnseignement::where('code', $code)
+                        ->where('university_id', $uid)
+                        ->first();
+
+                    if (!$preUe && $name === '') continue;
+
+                    if (!$preUe) {
+                        $preUe = UniteEnseignement::create([
+                            'code' => $code,
+                            'name' => $name !== '' ? $name : null,
+                            'university_id' => $uid,
+                            'ects' => 1,
+                        ]);
+                    } elseif (($preUe->name === null || trim((string)$preUe->name) === '') && $name !== '') {
+                        $preUe->name = $name;
+                        $preUe->save();
+                    }
+
+                    if ((int) $preUe->id === (int) $ue->id) {
+                        continue;
+                    }
+
+                    $ue->uePrerequis()->syncWithoutDetaching([
+                        $preUe->id => ['university_id' => $uid]
+                    ]);
+
+                    $affectedUeIds[] = (int) $preUe->id;
+                }
+            }
+
             DB::commit();
 
-            $this->ueAnomalyService->recomputeForUE((int) $ue->id);
+            $this->ueAnomalyService->recomputeForUEIds($affectedUeIds);
 
             return $ue;
         } catch (\Throwable $e) {
@@ -726,7 +786,12 @@ class ImportController extends Controller
             } catch (QueryException $e) {
                 if (($e->errorInfo[0] ?? null) === '23000') {
                     throw ValidationException::withMessages([
-                        'main.code' => ["Le sigle AAT \"$aatCode\" existe déjà dans le logiciel, veuillez en fournir un différent."]
+                        'main.code' => ["Le sigle AAT \"$aatCode\" existe deja dans le logiciel, veuillez en fournir un different."]
+                    ]);
+                }
+                if (($e->errorInfo[0] ?? null) === '22001') {
+                    throw ValidationException::withMessages([
+                        'main.name' => ["Le libellé d'une UE est trop long pour l'import (maximum 255 caractères)."]
                     ]);
                 }
                 throw $e;
@@ -831,3 +896,4 @@ class ImportController extends Controller
         }
     }
 }
+

@@ -227,7 +227,7 @@
 
                 <div class="mt-5 row">
                     <div
-                        class="col-md-4"
+                        class="col-md-3"
                         v-for="block in relatedBlocks"
                         :key="block.id"
                     >
@@ -241,7 +241,7 @@
                             <div class="col-4">
                                 <label>{{ f.label }}</label>
                             </div>
-                            <div class="col-4">
+                            <div class="col-6">
                                 <input
                                     type="text"
                                     class="form-control"
@@ -467,6 +467,10 @@ export default {
                     code: "",
                     libelle: "",
                 },
+                prerequis_ue: {
+                    code: "",
+                    libelle: "",
+                },
                 aav: {
                     code: "",
                     libelle: "",
@@ -497,6 +501,20 @@ export default {
                             key: "libelle",
                             label: "Libellés",
                             placeholder: "ex: C11",
+                        },
+                    ],
+                },
+                {
+                    id: "prerequis_ue",
+                    title: "Liste des prérequis (UE)",
+                    hideWhenType: ["AAT"],
+                    modelKey: "prerequis_ue",
+                    fields: [
+                        { key: "code", label: "Sigles", placeholder: "ex: C13" },
+                        {
+                            key: "libelle",
+                            label: "Libellés",
+                            placeholder: "ex: C14",
                         },
                     ],
                 },
@@ -644,6 +662,10 @@ export default {
                 prerequis: {
                     ...this.config.prerequis,
                     ...(saved.prerequis || {}),
+                },
+                prerequis_ue: {
+                    ...this.config.prerequis_ue,
+                    ...(saved.prerequis_ue || {}),
                 },
                 aav: { ...this.config.aav, ...(saved.aav || {}) },
                 aat: { ...this.config.aat, ...(saved.aat || {}) },

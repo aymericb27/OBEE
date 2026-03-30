@@ -357,6 +357,7 @@ class UEAnomalyService
         $ueAavIds = $this->loadUEAavIds($ueId, $universityId);
         $uePrereqIds = $this->loadUEPrereqIds($ueId, $universityId);
         $ueAatIds = $this->loadUEAatIds($ueId, $universityId);
+        $uePrereqUERows = $this->loadUEPrereqUERows($ueId, $universityId);
 
         $contextProgramIds = collect($contexts)
             ->pluck('program_id')
@@ -581,6 +582,33 @@ class UEAnomalyService
             );
         }
 
+        // Rule #2 (explicit UE prerequisites):
+        // if a UE has prerequisite UEs, raise an anomaly to ask for prerequisite AAV details.
+        if ($uePrereqUERows->isNotEmpty()) {
+            $this->pushAnomaly(
+                $collector,
+                $this->makeAnomaly(
+                    self::CODE_PREREQ_AS_UE,
+                    $ueId,
+                    null,
+                    null,
+                    'warning',
+                    'Des prerequis sont renseignes en termes d UE. Renseignez les prerequis en termes d AAV.',
+                    [
+                        'ue_prerequis' => $uePrereqUERows
+                            ->map(fn($row) => [
+                                'id' => (int) $row->id,
+                                'code' => $row->code,
+                                'name' => $row->name,
+                            ])
+                            ->values()
+                            ->all(),
+                        'source' => 'ue_prerequis',
+                    ]
+                )
+            );
+        }
+
         // Rule #2 (heuristic):
         // if a prereq AAV code matches one or many UE codes, it usually means a prereq was expressed as UE.
         $prereqCodes = $prereqRows
@@ -591,7 +619,7 @@ class UEAnomalyService
             ->values()
             ->all();
 
-        if (!empty($prereqCodes)) {
+        if ($uePrereqUERows->isEmpty() && !empty($prereqCodes)) {
             $ueByCode = DB::table('unite_enseignement')
                 ->select('id', 'code', 'name')
                 ->where('university_id', $universityId)
@@ -916,6 +944,20 @@ class UEAnomalyService
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function loadUEPrereqUERows(int $ueId, int $universityId): Collection
+    {
+        return DB::table('ue_prerequis as up')
+            ->join('unite_enseignement as ue', function ($join) use ($universityId) {
+                $join->on('ue.id', '=', 'up.fk_UE_prerequis')
+                    ->where('ue.university_id', '=', $universityId);
+            })
+            ->where('up.university_id', $universityId)
+            ->where('up.fk_UE_parent', $ueId)
+            ->select('ue.id', 'ue.code', 'ue.name')
+            ->distinct()
+            ->get();
     }
 
     private function loadUEAatIds(int $ueId, int $universityId): array

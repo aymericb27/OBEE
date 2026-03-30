@@ -58,6 +58,7 @@ class GenericSingleImportService
             'aats'       => $this->extractLineLists($config['aat'] ?? [], 'AAT', $errors),
             'aavs'       => $this->extractLineLists($config['aav'] ?? [], 'AAV', $errors),
             'prerequis'  => $this->extractLineLists($config['prerequis'] ?? [], 'Prérequis', $errors),
+            'prerequis_ues' => $this->extractLineLists($config['prerequis_ue'] ?? [], 'Prérequis UE', $errors),
             'programmes' => $this->extractProgrammeLists($config['programmes'] ?? [], 'Programmes', $errors),
         ];
 
