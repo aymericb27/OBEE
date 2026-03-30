@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Programme;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ExportController extends Controller
 {
@@ -30,36 +33,53 @@ class ExportController extends Controller
         return $export->download();
     }
 
-    /*     public function export(Request $request, string $type)
+    public function exportProgramAnalysisUesWithErrors(Request $request)
     {
-        // On récupère les filtres envoyés par params
-        $filters = $request->input('filter', []);
-        $select = $request->input('select', []); // sécurité si jamais non défini
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:programme,id',
+            'anomaly_code' => 'nullable|string|max:50',
+        ]);
 
-        // On choisit quel export exécuter selon le type
-        switch (strtoupper($type)) {
-            case 'UE':
-                $export = new UEExport($filters, $select);
-                $filename = 'unites_enseignements.xlsx';
-                break;
-            case 'PRO':
-                $export = new ProgExport($filters);
-                $filename = 'programmes.xlsx';
-                break;
+        $export = new \App\Exports\ProgramAnalysisAnomalyUEExport(
+            (int) $validated['id'],
+            (int) Auth::user()->university_id,
+            $validated['anomaly_code'] ?? null
+        );
 
-            case 'AAT':
-                $export = new AATExport($filters);
-                $filename = 'acquis_terminaux.xlsx';
-                break;
-            case 'AAV':
-                $export = new AAVExport($filters);
-                $filename = 'acquis_apprentissages.xlsx';
-                break;
-            default:
-                return response()->json(['error' => 'Type d’export inconnu'], 400);
-        }
+        return $export->download();
+    }
 
-        // Téléchargement via Laravel Excel
-        return Excel::download($export, $filename);
-    } */
+    public function exportProgramAnalysisContributionMatrix(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:programme,id',
+            'aats' => 'required|array',
+            'aats.*.id' => 'required|integer',
+            'aats.*.code' => 'nullable|string|max:255',
+            'aats.*.name' => 'nullable|string|max:255',
+            'rows' => 'required|array',
+            'rows.*.ue_id' => 'nullable|integer',
+            'rows.*.ue_code' => 'nullable|string|max:255',
+            'rows.*.ue_name' => 'nullable|string|max:255',
+            'rows.*.aav_id' => 'nullable|integer',
+            'rows.*.aav_code' => 'nullable|string|max:255',
+            'rows.*.aav_name' => 'nullable|string|max:255',
+            'rows.*.contributions' => 'nullable|array',
+        ]);
+
+        $programme = Programme::select('code', 'name')
+            ->where('id', (int) $validated['id'])
+            ->where('university_id', (int) Auth::user()->university_id)
+            ->firstOrFail();
+
+        $export = new \App\Exports\ProgramAnalysisContributionMatrixExport(
+            (string) ($programme->code ?? ''),
+            (string) ($programme->name ?? ''),
+            $validated['aats'] ?? [],
+            $validated['rows'] ?? []
+        );
+
+        return $export->download();
+    }
+
 }

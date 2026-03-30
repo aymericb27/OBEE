@@ -72,9 +72,24 @@
                             <button
                                 type="button"
                                 class="btn btn-outline-primary d-inline-flex align-items-center text-nowrap "
-                                title="Export (bientot disponible)"
+                                :disabled="
+                                    isAnomalyExportLoading ||
+                                    isErrorsLoading ||
+                                    isSpecificLoading
+                                "
+                                :title="
+                                    isAnomalyExportLoading
+                                        ? 'Téléchargement en cours'
+                                        : 'Télécharger la liste des UE avec anomalies'
+                                "
+                                @click="downloadAnomalyUeList"
                             >
-                                <i class="fa-solid fa-download mr-1 "></i><span>télécharger sous excel</span>
+                                <i class="fa-solid fa-download mr-1 "></i
+                                ><span>{{
+                                    isAnomalyExportLoading
+                                        ? "téléchargement..."
+                                        : "télécharger sous excel"
+                                }}</span>
                             </button>
                         </div>
                     </div>
@@ -186,9 +201,25 @@
                             <button
                                 type="button"
                                 class="btn btn-outline-primary d-inline-flex align-items-center text-nowrap mb-2"
-                                title="Export (bientot disponible)"
+                                :disabled="
+                                    isMatrixExportLoading ||
+                                    isMatrixLoading ||
+                                    displayedContributionMatrixAats.length === 0 ||
+                                    filteredContributionMatrixRows.length === 0
+                                "
+                                :title="
+                                    isMatrixExportLoading
+                                        ? 'Téléchargement en cours'
+                                        : 'Télécharger la matrice AAV -> AAT'
+                                "
+                                @click="downloadContributionMatrixExcel"
                             >
-                                <i class="fa-solid fa-download mr-1"></i><span>télécharger sous excel</span>
+                                <i class="fa-solid fa-download mr-1"></i
+                                ><span>{{
+                                    isMatrixExportLoading
+                                        ? "téléchargement..."
+                                        : "télécharger sous excel"
+                                }}</span>
                             </button>
                         </div>
                         <div class="mt-1">
@@ -928,6 +959,8 @@ export default {
             },
             isErrorsLoading: false,
             isSpecificLoading: false,
+            isAnomalyExportLoading: false,
+            isMatrixExportLoading: false,
             isMatrixLoading: false,
             isMaxContributionLoading: false,
             isIncoherenceLoading: false,
@@ -1524,6 +1557,117 @@ export default {
             if (!aat) return `AAT #${id}`;
             if (aat.code && aat.name) return `${aat.code} - ${aat.name}`;
             return aat.code || aat.name || `AAT #${id}`;
+        },
+        async downloadAnomalyUeList() {
+            if (this.isAnomalyExportLoading) return;
+
+            this.isAnomalyExportLoading = true;
+            try {
+                const response = await axios.get(
+                    "/pro/analysis/ues-with-errors/export",
+                    {
+                        params: {
+                            id: this.id,
+                            anomaly_code:
+                                this.selectedAnomalyCode || undefined,
+                        },
+                        responseType: "blob",
+                    },
+                );
+
+                const disposition =
+                    response?.headers?.["content-disposition"] || "";
+                const match = disposition.match(/filename="?([^"]+)"?/i);
+                const filename = match?.[1]
+                    ? decodeURIComponent(match[1])
+                    : `anomalies_ues_${this.program?.code || this.id}.xlsx`;
+
+                const blob = new Blob([response.data], {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error(
+                    "Erreur lors de l'export des UE avec anomalies :",
+                    error,
+                );
+            } finally {
+                this.isAnomalyExportLoading = false;
+            }
+        },
+        async downloadContributionMatrixExcel() {
+            if (this.isMatrixExportLoading) return;
+
+            const aats = this.displayedContributionMatrixAats.map((aat) => ({
+                id: Number(aat?.id || 0),
+                code: String(aat?.code || ""),
+                name: String(aat?.name || ""),
+            }));
+
+            const rows = this.filteredContributionMatrixRows.map((row) => ({
+                ue_id: Number(row?.ue_id || 0),
+                ue_code: String(row?.ue_code || ""),
+                ue_name: String(row?.ue_name || ""),
+                aav_id: Number(row?.aav_id || 0),
+                aav_code: String(row?.aav_code || ""),
+                aav_name: String(row?.aav_name || ""),
+                contributions:
+                    row?.contributions && typeof row.contributions === "object"
+                        ? row.contributions
+                        : {},
+            }));
+
+            if (!aats.length || !rows.length) {
+                return;
+            }
+
+            this.isMatrixExportLoading = true;
+            try {
+                const response = await axios.post(
+                    "/pro/analysis/contribution-matrix/export",
+                    {
+                        id: this.id,
+                        aats,
+                        rows,
+                    },
+                    {
+                        responseType: "blob",
+                    },
+                );
+
+                const disposition =
+                    response?.headers?.["content-disposition"] || "";
+                const match = disposition.match(/filename=\"?([^"]+)\"?/i);
+                const filename = match?.[1]
+                    ? decodeURIComponent(match[1])
+                    : `matrice_contribution_aav_aat_${this.program?.code || this.id}.xlsx`;
+
+                const blob = new Blob([response.data], {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error(
+                    "Erreur lors de l'export de la matrice AAV->AAT :",
+                    error,
+                );
+            } finally {
+                this.isMatrixExportLoading = false;
+            }
         },
         async loadErrorsBlock() {
             this.isErrorsLoading = true;

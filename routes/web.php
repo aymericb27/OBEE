@@ -61,6 +61,8 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/pro/get/detailed', [ProgrammeController::class, 'getDetailed'])->name('pro.get.detailed');
     Route::get('/pro/analysis/ues-with-errors', [ProgrammeController::class, 'getAnalysisUesWithErrors'])->name('pro.analysis.ues.with.errors');
     Route::get('/pro/analysis/ues-with-specific-error', [ProgrammeController::class, 'getAnalysisUesWithSpecificError'])->name('pro.analysis.ues.with.specific.error');
+    Route::get('/pro/analysis/ues-with-errors/export', [ExportController::class, 'exportProgramAnalysisUesWithErrors'])->name('pro.analysis.ues.with.errors.export');
+    Route::post('/pro/analysis/contribution-matrix/export', [ExportController::class, 'exportProgramAnalysisContributionMatrix'])->name('pro.analysis.contribution.matrix.export');
     Route::get('/pro/analysis/contribution-matrix', [ProgrammeController::class, 'getAnalysisContributionMatrix'])->name('pro.analysis.contribution.matrix');
     Route::get('/pro/analysis/aat-max-contribution-below', [ProgrammeController::class, 'getAnalysisAatsWithMaxContributionBelow'])->name('pro.analysis.aat.max.contribution.below');
     Route::get('/pro/analysis/contribution-incoherences', [ProgrammeController::class, 'getAnalysisContributionIncoherences'])->name('pro.analysis.contribution.incoherences');
