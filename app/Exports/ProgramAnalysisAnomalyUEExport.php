@@ -7,7 +7,10 @@ use App\Models\UniteEnseignement;
 use App\Services\UEAnomalyService;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProgramAnalysisAnomalyUEExport
@@ -32,29 +35,71 @@ class ProgramAnalysisAnomalyUEExport
     public function download()
     {
         $rows = $this->buildRows();
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('UE anomalies');
 
-        $template = resource_path('templates/anomalies_list_ue.xlsx');
-        if (!is_file($template) || filesize($template) === 0) {
-            throw new \RuntimeException("Template introuvable ou vide: {$template}");
+        $sheet->setCellValue('A1', 'Liste des UE avec anomalies');
+        $sheet->mergeCells('A1:B1');
+        $sheet->setCellValue('A3', 'Programme');
+        $sheet->setCellValue('B3', trim((string) $this->programme->code . ' - ' . (string) $this->programme->name));
+
+        // Compat avec la demande précédente (ancienne position template).
+        $sheet->setCellValue('A5', 'UE');
+        $sheet->setCellValue('B5', 'Anomalies');
+
+        $startRow = 6;
+        if (empty($rows)) {
+            $sheet->setCellValue('A' . $startRow, 'Aucune UE avec anomalie pour ce filtre.');
+            $sheet->mergeCells("A{$startRow}:B{$startRow}");
+        } else {
+            foreach ($rows as $index => $row) {
+                $excelRow = $startRow + $index;
+                $sheet->setCellValue('A' . $excelRow, $row['ue']);
+                $sheet->setCellValue('B' . $excelRow, $row['anomalies']);
+            }
         }
 
-        $tmpDir = storage_path('app/tmp');
-        @mkdir($tmpDir, 0775, true);
-        $tmp = $tmpDir . '/anomalies_list_ue_' . uniqid() . '.xlsx';
-        copy($template, $tmp);
+        $endRow = empty($rows) ? $startRow : ($startRow + count($rows) - 1);
 
-        $reader = new XlsxReader();
-        $reader->setReadDataOnly(false);
-        $spreadsheet = $reader->load($tmp);
-        @unlink($tmp);
+        $sheet->getStyle('A1:B1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 13],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_LEFT,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
 
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setCellValue('D3', (string) $this->programme->name);
-        $startRow = 6;
-        foreach ($rows as $index => $row) {
-            $excelRow = $startRow + $index;
-            $sheet->setCellValue('B' . $excelRow, $row['ue']);
-            $sheet->setCellValue('E' . $excelRow, $row['anomalies']);
+        $sheet->getStyle('A3:B3')->applyFromArray([
+            'font' => ['bold' => true],
+        ]);
+
+        $sheet->getStyle('A5:B5')->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FFEFEFEF'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_LEFT,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet->getStyle("A5:B{$endRow}")
+            ->getBorders()
+            ->getAllBorders()
+            ->setBorderStyle(Border::BORDER_THIN);
+
+        $sheet->getStyle("B6:B{$endRow}")
+            ->getAlignment()
+            ->setWrapText(true);
+
+        $sheet->getColumnDimension('A')->setWidth(42);
+        $sheet->getColumnDimension('B')->setWidth(100);
+
+        for ($r = 6; $r <= $endRow; $r++) {
+            $sheet->getRowDimension($r)->setRowHeight(22);
         }
 
         $programCode = preg_replace('/[^A-Za-z0-9_-]+/', '_', (string) $this->programme->code);
