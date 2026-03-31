@@ -119,6 +119,9 @@
                                     anomalyTypeText(anom)
                                 }}</strong>
                             </div>
+                            <div class="text-muted small mt-1">
+                                {{ anomalyActionText(anom) }}
+                            </div>
                             <div class="mt-1">
                                 <ul class="mb-0 anomaly-bullet-list">
                                     <li
@@ -161,9 +164,6 @@
                                         </template>
                                     </li>
                                 </ul>
-                            </div>
-                            <div class="text-muted small mt-1">
-                                {{ anomalyActionText(anom) }}
                             </div>
                         </div>
                         <div v-else class="text-muted">
@@ -239,7 +239,7 @@
                     >
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-brands fa-google-scholar"></i>
-                            Liste des acquis d'apprentissage visé
+                            Liste des acquis d'apprentissage visé par l'UE (AAV)
                         </h5>
                         <i
                             class="fa-solid primary_color"
@@ -275,7 +275,7 @@
                     >
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-key"></i>
-                            Liste des prérequis en terme d'AAV
+                            Liste des prérequis en termes d'AAV
                         </h5>
                         <i
                             class="fa-solid primary_color"
@@ -333,7 +333,8 @@
                     >
                         <h5 class="d-inline-block primary_color">
                             <i class="fa-solid fa-graduation-cap"></i>
-                            Liste des acquis d'apprentissage terminaux
+                            Liste des acquis d'apprentissage terminaux auxquels
+                            l'UE affirme contribuer
                         </h5>
                         <i
                             class="fa-solid primary_color"
@@ -349,6 +350,36 @@
                         v-if="ue.id"
                         v-show="isExpanded('aat')"
                         routeGET="/ue/aat/get"
+                        :paramsRouteGET="{ id: ue.id }"
+                        linkDetailed="aat-detail"
+                        typeList="AAT"
+                        :listColonne="['code', 'name']"
+                    />
+                </div>
+                <div class="listComponent mb-4">
+                    <div
+                        class="mb-2 d-flex justify-content-between align-items-center cursor_pointer"
+                        @click="toggleSection('aatFromAav')"
+                    >
+                        <h5 class="d-inline-block primary_color">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            Liste des acquis d'apprentissage terminaux
+                            auxquelles les AAV de l'UE contribuent
+                        </h5>
+                        <i
+                            class="fa-solid primary_color"
+                            :class="
+                                isExpanded('aatFromAav')
+                                    ? 'fa-chevron-down'
+                                    : 'fa-chevron-up'
+                            "
+                        ></i>
+                    </div>
+                    <list
+                        :key="`${ue.id}-aat-from-aav`"
+                        v-if="ue.id"
+                        v-show="isExpanded('aatFromAav')"
+                        routeGET="/ue/aat/from-aav/get"
                         :paramsRouteGET="{ id: ue.id }"
                         linkDetailed="aat-detail"
                         typeList="AAT"
@@ -475,6 +506,7 @@ export default {
                 prerequis: true,
                 prerequisUE: true,
                 aat: true,
+                aatFromAav: true,
             },
         };
     },
@@ -526,8 +558,23 @@ export default {
                         p?.prereq_name ? ` - ${p.prereq_name}` : "",
                     );
                 });
+            } else if (code === "UE_ANOM_12") {
+                const prereqUes = Array.isArray(details?.impacted_ue_prereqs)
+                    ? details.impacted_ue_prereqs
+                    : [];
+                prereqUes.forEach((u, idx) => {
+                    pushLinked(
+                        `ue-pre-sem-${idx}-${u?.prereq_ue_id ?? idx}`,
+                        "UE",
+                        u?.prereq_ue_id ?? null,
+                        u?.prereq_ue_code || `UE#${u?.prereq_ue_id ?? "?"}`,
+                        u?.prereq_ue_name ? ` - ${u.prereq_ue_name}` : "",
+                    );
+                });
             } else if (code === "UE_ANOM_10") {
-                const invalidAavs = Array.isArray(details?.invalid_aav_prerequis)
+                const invalidAavs = Array.isArray(
+                    details?.invalid_aav_prerequis,
+                )
                     ? details.invalid_aav_prerequis
                     : [];
                 invalidAavs.forEach((a, idx) => {
@@ -659,7 +706,9 @@ export default {
             const code = anom?.code || "";
             if (code === "UE_ANOM_02")
                 return "Erreur de prérequis UE (AAV manquant)";
-            if (code === "UE_ANOM_03") return "Erreur de prérequis";
+            if (code === "UE_ANOM_03") return "Erreur de prérequis AAV (semestre)";
+            if (code === "UE_ANOM_12")
+                return "Erreur de prerequis UE (semestre)";
             if (code === "UE_ANOM_10")
                 return "Erreur de cohérence prérequis UE/AAV";
             if (code === "UE_ANOM_11")
@@ -692,7 +741,9 @@ export default {
             if (code === "UE_ANOM_09")
                 return "L'UE declare contribuer a un AAT mais aucun AAV de l'UE ne contribue a cet AAT pour ce programme. Aligner la matrice UE -> AAT avec les contributions des AAV.";
             if (code === "UE_ANOM_03")
-                return "Un ou des prérequis ne fait pas partie des acquis d'apprentissages visées des semestres precedents. Vérifier que le prérequis appartient aux AAV autorisés.";
+                return "Un ou des prérequis AAV ne fait pas partie des acquis d'apprentissages visées des semestres precedents. Vérifier que le prérequis appartient aux AAV autorisés.";
+            if (code === "UE_ANOM_12")
+                return "Un ou des prérequis UE ne fait pas partie des UE des semestres précédents. Vérifier que chaque UE prérequise est placée dans un semestre antérieur.";
             if (code === "UE_ANOM_10")
                 return "Vérifier que chaque AAV prérequis appartient aux UE prérequises et que chaque UE prérequise est couverte par au moins un AAV prérequis.";
             if (code === "UE_ANOM_11")
@@ -786,3 +837,5 @@ export default {
     margin-bottom: 0.25rem;
 }
 </style>
+
+
