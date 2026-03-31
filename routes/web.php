@@ -42,6 +42,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/UEGet/detailed', [UniteEnseignement::class, 'getDetailed'])->name('UE.get.detailed');
     Route::get('/ue/ecs/get', [UniteEnseignement::class, 'getChildren'])->name('ue.get.ecs');
     Route::get('/ue/aat/get', [UniteEnseignement::class, 'getAATs'])->name('ue.get.aat');
+    Route::get('/ue/aat/from-aav/get', [UniteEnseignement::class, 'getAATContributedByAAVs'])->name('ue.get.aat.from.aav');
     Route::get('/ue/pro/get', [UniteEnseignement::class, 'getPro'])->name('ue.pro.get');
     Route::get('/ue/parent/get', [UniteEnseignement::class, 'getParent'])->name('ue.get.parent');
     Route::get('/ue/aavvise/get', [UniteEnseignement::class, 'getAAVvise'])->name('ue.get.aavvise');

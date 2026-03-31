@@ -59,7 +59,7 @@
                             style="list-style-type: none; cursor: pointer"
                             @click="selectProgram('UE')"
                         >
-                            <h5 class="m-0">Unité d'enseignement</h5>
+                            <h5 class="m-0">Unité d'enseignement (UE)</h5>
                         </li>
                         <li
                             class="p-2 program-item"
@@ -70,7 +70,7 @@
                             @click="selectProgram('AAT')"
                         >
                             <h5 class="m-0">
-                                Acquis d'apprentissage terminaux
+                                Acquis d'apprentissage terminaux (AAT)
                             </h5>
                         </li>
                         <li
@@ -81,7 +81,7 @@
                             style="list-style-type: none; cursor: pointer"
                             @click="selectProgram('AAV')"
                         >
-                            <h5 class="m-0">Acquis d'aprentissage visées</h5>
+                            <h5 class="m-0">Acquis d'aprentissage visées (AAV)</h5>
                         </li>
                         <li
                             class="p-2 program-item"
@@ -91,7 +91,7 @@
                             style="list-style-type: none; cursor: pointer"
                             @click="selectProgram('PRE')"
                         >
-                            <h5 class="m-0">Prérequis des unités d'enseignements en terme d'AAV</h5>
+                            <h5 class="m-0">Prérequis des unités d'enseignement en termes d'AAV</h5>
                         </li>
                         <li
                             class="p-2 program-item"
@@ -111,7 +111,7 @@
                             style="list-style-type: none; cursor: pointer"
                             @click="selectProgram('PRO')"
                         >
-                            <h5 class="m-0">Programme</h5>
+                            <h5 class="m-0">Programmes</h5>
                         </li>
                     </ul>
                 </div>

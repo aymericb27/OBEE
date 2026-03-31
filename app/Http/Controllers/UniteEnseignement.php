@@ -359,6 +359,47 @@ class UniteEnseignement extends Controller
             ->where('fk_ue', $validated['id'])->get();
         return $response;
     }
+
+    public function getAATContributedByAAVs(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+        ]);
+
+        $ueId = (int) $validated['id'];
+        $universityId = (int) Auth::user()->university_id;
+
+        $ecIds = ElementConstitutif::where('fk_ue_parent', $ueId)
+            ->pluck('fk_ue_child')
+            ->toArray();
+        $ueIds = array_unique(array_merge([$ueId], $ecIds));
+
+        $aavIds = DB::table('aavue_vise')
+            ->whereIn('fk_unite_enseignement', $ueIds)
+            ->where('university_id', $universityId)
+            ->pluck('fk_acquis_apprentissage_vise')
+            ->unique()
+            ->values();
+
+        if ($aavIds->isEmpty()) {
+            return response()->json([]);
+        }
+
+        $response = AcquisApprentissageTerminaux::query()
+            ->select(
+                'acquis_apprentissage_terminaux.id',
+                'acquis_apprentissage_terminaux.code',
+                'acquis_apprentissage_terminaux.name'
+            )
+            ->join('aav_aat', 'aav_aat.fk_aat', '=', 'acquis_apprentissage_terminaux.id')
+            ->whereIn('aav_aat.fk_aav', $aavIds)
+            ->where('aav_aat.university_id', $universityId)
+            ->distinct()
+            ->orderBy('acquis_apprentissage_terminaux.code')
+            ->get();
+
+        return response()->json($response);
+    }
     public function addEC(Request $request)
     {
         $validated = $request->validate([

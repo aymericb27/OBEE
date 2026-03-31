@@ -1704,21 +1704,23 @@ class ProgrammeController extends Controller
             )->get();
         return $response;
     }
-
     private function anomalyCodeLabel(string $code): string
     {
         return match ($code) {
-            UEAnomalyService::CODE_PREREQ_AS_UE => 'Erreur de prérequis (UE)',
-            UEAnomalyService::CODE_PREREQ_OUTSIDE_ALLOWED => 'Erreur de prérequis (les prérequis ne sont pas des AAV d un semestre précédent)',
-            UEAnomalyService::CODE_PREREQ_AAV_NOT_IN_PREREQ_UE => 'Erreur de cohérence prérequis UE/AAV',
-            UEAnomalyService::CODE_EMPTY_AAV_LIST => 'Erreur de données (liste des AAV vide)',
-            UEAnomalyService::CODE_EMPTY_CREDITS => 'Erreur de crédit',
+            UEAnomalyService::CODE_PREREQ_AS_UE => 'Erreur de prerequis (Une UE a des prérequis UE renseigné mais aucun prérequis AAV)',
+            UEAnomalyService::CODE_PREREQ_OUTSIDE_ALLOWED => 'Erreur de prerequis (les prerequis ne sont pas des AAV d un semestre precedent)',
+            UEAnomalyService::CODE_PREREQ_UE_OUTSIDE_ALLOWED => 'Erreur de prerequis (les UE prerequises ne sont pas dans un semestre precedent)',
+            UEAnomalyService::CODE_PREREQ_AAV_NOT_IN_PREREQ_UE => 'Erreur de coherence prerequis UE/AAV',
+            UEAnomalyService::CODE_EMPTY_AAV_LIST => 'Erreur de donnees (liste des AAV vide)',
+            UEAnomalyService::CODE_EMPTY_CREDITS => 'Erreur de credit',
             UEAnomalyService::CODE_MISSING_SEMESTER => "Erreur d'affectation de semestre",
             UEAnomalyService::CODE_MISSING_AAV_AAT_CONTRIBUTION => 'Erreur de contribution',
             UEAnomalyService::CODE_MISSING_AAT_LEVEL => 'Erreur de niveau de contribution',
-            UEAnomalyService::CODE_INCOHERENT_AAT_CONTRIBUTION => 'Erreur de cohérence de contribution (les AAV ne contribuent pas à un AAT de l`UE)',
+            UEAnomalyService::CODE_INCOHERENT_AAT_CONTRIBUTION => 'Erreur de coherence de contribution (les AAV ne contribuent pas a un AAT de l UE)',
             UEAnomalyService::CODE_NOT_IN_ANY_PROGRAM => "Erreur d'affectation au programme",
             default => $code,
         };
     }
 }
+
+

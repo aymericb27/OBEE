@@ -341,6 +341,10 @@ export default {
     color: #b82b00;
     cursor: pointer;
 }
+.unlinkBtn:hover {
+    color: #b82b00c0;
+    cursor: pointer;
+}
 
 :deep(.semester-empty-anomaly-badge.severity-error) {
     color: #dc3545;}

@@ -19,6 +19,7 @@ class UEAnomalyService
     public const CODE_INCOHERENT_AAT_CONTRIBUTION = 'UE_ANOM_09';
     public const CODE_PREREQ_AAV_NOT_IN_PREREQ_UE = 'UE_ANOM_10';
     public const CODE_NOT_IN_ANY_PROGRAM = 'UE_ANOM_11';
+    public const CODE_PREREQ_UE_OUTSIDE_ALLOWED = 'UE_ANOM_12';
 
     /**
      * Recompute and persist anomalies for one UE.
@@ -498,7 +499,9 @@ class UEAnomalyService
 
         $programPrereqCache = [];
         $previousAavCache = [];
+        $previousUeCache = [];
         $prereqOutsideAllowedMap = [];
+        $uePrereqOutsideAllowedMap = [];
 
         foreach ($contexts as $context) {
             $programId = (int) $context['program_id'];
@@ -512,6 +515,13 @@ class UEAnomalyService
             $previousKey = $programId . '|' . ($semesterNumber ?? 'null');
             if (!isset($previousAavCache[$previousKey])) {
                 $previousAavCache[$previousKey] = $this->loadPreviousSemesterAavIds(
+                    $programId,
+                    $semesterNumber,
+                    $universityId
+                );
+            }
+            if (!isset($previousUeCache[$previousKey])) {
+                $previousUeCache[$previousKey] = $this->loadPreviousSemesterUEIds(
                     $programId,
                     $semesterNumber,
                     $universityId
@@ -542,6 +552,35 @@ class UEAnomalyService
                     if ($semesterId !== null) {
                         $prereqOutsideAllowedMap[$prereqId]['semester_ids'][(int) $semesterId] = true;
                     }
+                }
+            }
+
+            if ($semesterNumber === null || $uePrereqUERows->isEmpty()) {
+                continue;
+            }
+
+            $allowedUeLookup = array_flip($previousUeCache[$previousKey]);
+            foreach ($uePrereqUERows as $prereqUe) {
+                $prereqUeId = (int) ($prereqUe->id ?? 0);
+                if ($prereqUeId <= 0 || isset($allowedUeLookup[$prereqUeId])) {
+                    continue;
+                }
+
+                if (!isset($uePrereqOutsideAllowedMap[$prereqUeId])) {
+                    $uePrereqOutsideAllowedMap[$prereqUeId] = [
+                        'prereq_ue_id' => $prereqUeId,
+                        'prereq_ue_code' => $prereqUe->code ?? null,
+                        'prereq_ue_name' => $prereqUe->name ?? null,
+                        'program_ids' => [],
+                        'semester_ids' => [],
+                    ];
+                }
+
+                if ($programId > 0) {
+                    $uePrereqOutsideAllowedMap[$prereqUeId]['program_ids'][$programId] = true;
+                }
+                if ($semesterId !== null) {
+                    $uePrereqOutsideAllowedMap[$prereqUeId]['semester_ids'][$semesterId] = true;
                 }
             }
         }
@@ -621,6 +660,58 @@ class UEAnomalyService
                             ->values()
                             ->all(),
                         'aav_prerequis_count' => 0,
+                    ]
+                )
+            );
+        }
+
+        if (!empty($uePrereqOutsideAllowedMap)) {
+            $impactedPrereqUes = collect($uePrereqOutsideAllowedMap)
+                ->map(function ($row) {
+                    $code = trim((string) ($row['prereq_ue_code'] ?? ''));
+                    $name = trim((string) ($row['prereq_ue_name'] ?? ''));
+                    if ($code !== '' && $name !== '') {
+                        return "{$code} - {$name}";
+                    }
+                    if ($code !== '') {
+                        return $code;
+                    }
+                    if ($name !== '') {
+                        return $name;
+                    }
+                    return '#' . (int) ($row['prereq_ue_id'] ?? 0);
+                })
+                ->filter()
+                ->values()
+                ->all();
+
+            $programIds = collect($uePrereqOutsideAllowedMap)
+                ->flatMap(fn($row) => array_keys($row['program_ids'] ?? []))
+                ->map(fn($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            $semesterIds = collect($uePrereqOutsideAllowedMap)
+                ->flatMap(fn($row) => array_keys($row['semester_ids'] ?? []))
+                ->map(fn($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            $this->pushAnomaly(
+                $collector,
+                $this->makeAnomaly(
+                    self::CODE_PREREQ_UE_OUTSIDE_ALLOWED,
+                    $ueId,
+                    null,
+                    null,
+                    'warning',
+                    'Un prerequis UE ne fait pas partie des UE des semestres precedents. Prerequis impactes: ' . implode(', ', $impactedPrereqUes) . '.',
+                    [
+                        'impacted_ue_prereqs' => array_values($uePrereqOutsideAllowedMap),
+                        'impacted_program_ids' => $programIds,
+                        'impacted_semester_ids' => $semesterIds,
                     ]
                 )
             );
@@ -1115,6 +1206,27 @@ class UEAnomalyService
             ->where('up.fk_programme', $programId)
             ->where('ps.semester', '<', $semesterNumber)
             ->pluck('av.fk_acquis_apprentissage_vise')
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function loadPreviousSemesterUEIds(int $programId, ?int $semesterNumber, int $universityId): array
+    {
+        if ($semesterNumber === null) {
+            return [];
+        }
+
+        return DB::table('ue_programme as up')
+            ->join('pro_semester as ps', function ($join) use ($universityId) {
+                $join->on('ps.id', '=', 'up.fk_semester')
+                    ->where('ps.university_id', '=', $universityId);
+            })
+            ->where('up.university_id', $universityId)
+            ->where('up.fk_programme', $programId)
+            ->where('ps.semester', '<', $semesterNumber)
+            ->pluck('up.fk_unite_enseignement')
             ->map(fn($id) => (int) $id)
             ->unique()
             ->values()
