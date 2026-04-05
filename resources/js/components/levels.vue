@@ -46,7 +46,7 @@
                         </li>
                     </ul>
                     <div v-else class="p-2">
-                        Aucune acquis d'apprentissage terminaux dans le
+                        Aucun acquis d'apprentissage terminal dans le
                         programme
                     </div>
                 </div>

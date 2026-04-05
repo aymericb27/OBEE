@@ -59,7 +59,7 @@
                             style="list-style-type: none; cursor: pointer"
                             @click="selectProgram('UE')"
                         >
-                            <h5 class="m-0">Unité d'enseignement (UE)</h5>
+                            <h5 class="m-0">Unités d'enseignement (UE)</h5>
                         </li>
                         <li
                             class="p-2 program-item"

@@ -46,7 +46,7 @@
             </div>
             <div class="mb-3">
                 <h5 class="primary_color">
-                    Nombre de niveau de contribution
+                    Nombre de niveaux de contribution
                     <strong class="text-danger">*</strong>
                 </h5>
                 <select
