@@ -73,15 +73,6 @@
                         </span>
                         <span v-else class="name">tous</span>
                     </strong>
-                    <button
-                        v-if="currentProgram.id"
-                        class="btn btn-link text-danger p-0 ml-2"
-                        type="button"
-                        title="Retirer le programme courant"
-                        @click="clearCurrentProgramSelection"
-                    >
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
                 </div>
             </div>
             <router-link v-if="isAdmin" to="/admin/users">
@@ -107,10 +98,7 @@
 
 <script>
 import axios from "axios";
-import {
-    clearCurrentProgram,
-    currentProgramState,
-} from "./stores/currentProgram";
+import { currentProgramState } from "./stores/currentProgram";
 
 export default {
     data() {
@@ -161,9 +149,6 @@ export default {
             } catch (e) {
                 console.error("Logout failed", e);
             }
-        },
-        clearCurrentProgramSelection() {
-            clearCurrentProgram();
         },
     },
 };
