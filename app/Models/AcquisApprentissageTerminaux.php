@@ -18,9 +18,15 @@ class AcquisApprentissageTerminaux extends Model
         'name',
         'code',
         'university_id',
+        'fk_programme',
         'level_contribution',
 
     ];
+
+    public function programme()
+    {
+        return $this->belongsTo(Programme::class, 'fk_programme');
+    }
 
     public function aav()
     {
@@ -29,7 +35,7 @@ class AcquisApprentissageTerminaux extends Model
             'aav_aat',
             'fk_aat', // clé pivot vers AAT (ce modèle)
             'fk_aav'  // clé pivot vers AAV (related)
-        )->withPivot('contribution', 'fk_programme')
+        )->withPivot('contribution')
             ->withTimestamps();
     }
 }

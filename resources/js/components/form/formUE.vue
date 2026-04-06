@@ -498,20 +498,9 @@
                                 {{ aat.name }}
                             </div>
                             <!-- PROGRAMME -->
-                            <select
-                                class="form-control ms-3 mr-2"
-                                style="width: 38%"
-                                v-model="aat.fk_programme"
-                            >
-                                <option :value="null">- aucun programme -</option>
-                                <option
-                                    v-for="pro in ue.pro"
-                                    :key="pro.id"
-                                    :value="pro.id"
-                                >
-                                    {{ pro.code }} - {{ pro.name }}
-                                </option>
-                            </select>
+                            <div class="ms-3 mr-2" style="width: 38%">
+                                {{ formatProgrammeLabel(aat) }}
+                            </div>
                             <!-- CONTRIBUTION -->
                             <select
                                 class="form-control ms-3"
@@ -695,7 +684,8 @@ export default {
                 name: aat.name,
                 contribution: 1, // valeur par défaut
                 level_contribution: aat.level_contribution,
-                fk_programme: this.getDefaultProgramIdForAAV(),
+                programme_code: aat.programme_code ?? null,
+                programme_name: aat.programme_name ?? null,
                 rowKey: `${aat.id}-${Date.now()}-${Math.random()}`,
             });
 
@@ -711,17 +701,12 @@ export default {
         isAATAlreadySelected(id) {
             return this.aavForm.aatSelected.some((a) => a.id === id);
         },
-        getDefaultProgramIdForAAV() {
-            const routeProgramId = Number(this.$route.query.programID);
-            if (Number.isInteger(routeProgramId) && routeProgramId > 0) {
-                return routeProgramId;
-            }
-
-            if (this.ue.pro.length === 1) {
-                return this.ue.pro[0].id;
-            }
-
-            return null;
+        formatProgrammeLabel(aat) {
+            const code = (aat?.programme_code || "").trim();
+            const name = (aat?.programme_name || "").trim();
+            if (!code && !name) return "-";
+            if (code && name) return `${code} - ${name}`;
+            return code || name;
         },
         handleNewAAV() {
             this.loadAAT();
@@ -984,13 +969,13 @@ export default {
 
             const seenPairs = new Set();
             for (const row of this.aavForm.aatSelected) {
-                const pairKey = `${row.id}|${row.fk_programme ?? "null"}`;
-                if (seenPairs.has(pairKey)) {
+                const key = `${row.id}`;
+                if (seenPairs.has(key)) {
                     this.formAAvErrors =
-                        "Un même AAT ne peut être ajouté qu'une seule fois pour un même programme.";
+                        "Un même AAT ne peut être ajouté qu'une seule fois.";
                     return;
                 }
-                seenPairs.add(pairKey);
+                seenPairs.add(key);
             }
 
             const payload = {
@@ -999,7 +984,6 @@ export default {
                 aat: this.aavForm.aatSelected.map((a) => ({
                     id: a.id,
                     contribution: a.contribution,
-                    fk_programme: a.fk_programme ?? null,
                 })),
             };
             try {

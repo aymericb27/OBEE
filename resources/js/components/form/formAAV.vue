@@ -75,19 +75,7 @@
                     <div class="col-md-1 p-2 AAT">{{ aat.code }}</div>
                     <div class="col-md-5 p-2">{{ aat.name }}</div>
                     <div class="col-md-3 p-2">
-                        <select
-                            class="form form-control"
-                            v-model="aat.fk_programme"
-                        >
-                            <option :value="null">- aucun programme -</option>
-                            <option
-                                v-for="pro in listProgramme"
-                                :key="pro.id"
-                                :value="pro.id"
-                            >
-                                {{ pro.code }} - {{ pro.name }}
-                            </option>
-                        </select>
+                        {{ formatProgrammeLabel(aat) }}
                     </div>
                     <div class="col-md-2 p-2">
                         <select
@@ -145,7 +133,6 @@ export default {
             modalRoute: "",
             modalTitle: "",
             aatToExclude: [],
-            listProgramme: [],
             form: {
                 id: null,
                 name: "",
@@ -156,7 +143,6 @@ export default {
     },
 
     mounted() {
-        this.loadProgrammes();
         if (this.id) {
             this.loadAAV();
         }
@@ -170,7 +156,6 @@ export default {
             const itemsWithContribution = selectedItems.map((item) => ({
                 ...item,
                 contribution: 1,
-                fk_programme: this.getDefaultProgramIdForAAV(),
                 rowKey: this.buildRowKey(item.id),
             }));
             this.form.aats.push(...itemsWithContribution);
@@ -178,17 +163,12 @@ export default {
         removeAAT(rowKey) {
             this.form.aats = this.form.aats.filter((a) => a.rowKey !== rowKey);
         },
-        getDefaultProgramIdForAAV() {
-            const routeProgramId = Number(this.$route.query.programID);
-            if (Number.isInteger(routeProgramId) && routeProgramId > 0) {
-                return routeProgramId;
-            }
-
-            if (this.listProgramme.length === 1) {
-                return this.listProgramme[0].id;
-            }
-
-            return null;
+        formatProgrammeLabel(aat) {
+            const code = (aat?.programme_code || "").trim();
+            const name = (aat?.programme_name || "").trim();
+            if (!code && !name) return "-";
+            if (code && name) return `${code} - ${name}`;
+            return code || name;
         },
         openModalTerminal() {
             this.modalTarget = "aat";
@@ -199,15 +179,6 @@ export default {
                 : "Ajouter des acquis d'apprentissage terminaux";
             this.aatToExclude = [];
             this.showModalAAT = true;
-        },
-        async loadProgrammes() {
-            try {
-                const response = await axios.get("/pro/get");
-                this.listProgramme = response.data || [];
-            } catch (error) {
-                console.log(error);
-                this.listProgramme = [];
-            }
         },
         async loadAAV() {
             try {
@@ -234,14 +205,14 @@ export default {
         async saveProgram() {
             const seenPairs = new Set();
             for (const row of this.form.aats) {
-                const pairKey = `${row.id}|${row.fk_programme ?? "null"}`;
-                if (seenPairs.has(pairKey)) {
+                const key = `${row.id}`;
+                if (seenPairs.has(key)) {
                     alert(
-                        "Un meme AAT ne peut etre ajoute qu'une seule fois pour un meme programme.",
+                        "Un meme AAT ne peut etre ajoute qu'une seule fois.",
                     );
                     return;
                 }
-                seenPairs.add(pairKey);
+                seenPairs.add(key);
             }
 
             if (this.form.id) {
@@ -252,7 +223,6 @@ export default {
                     aats: this.form.aats.map((aat) => ({
                         id: aat.id,
                         contribution: aat.contribution,
-                        fk_programme: aat.fk_programme ?? null,
                     })),
                 };
 
@@ -271,7 +241,6 @@ export default {
                 aat: this.form.aats.map((aat) => ({
                     id: aat.id,
                     contribution: aat.contribution,
-                    fk_programme: aat.fk_programme ?? null,
                 })),
             };
 

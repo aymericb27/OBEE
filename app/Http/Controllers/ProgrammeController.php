@@ -688,17 +688,16 @@ class ProgrammeController extends Controller
                 })->orWhereExists(function ($sub) use ($programId, $universityId) {
                     $sub->select(DB::raw(1))
                         ->from('aav_aat')
+                        ->join('acquis_apprentissage_terminaux as aat_target', 'aat_target.id', '=', 'aav_aat.fk_aat')
                         ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'aav_aat.fk_aav')
                         ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'aavue_vise.fk_unite_enseignement')
                         ->whereColumn('aav_aat.fk_aat', 'acquis_apprentissage_terminaux.id')
                         ->where('aav_aat.university_id', $universityId)
+                        ->where('aat_target.university_id', $universityId)
                         ->where('aavue_vise.university_id', $universityId)
                         ->where('ue_programme.university_id', $universityId)
                         ->where('ue_programme.fk_programme', $programId)
-                        ->where(function ($nested) use ($programId) {
-                            $nested->whereNull('aav_aat.fk_programme')
-                                ->orWhere('aav_aat.fk_programme', $programId);
-                        });
+                        ->where('aat_target.fk_programme', $programId);
                 });
             })
             ->orderBy('code')
@@ -733,15 +732,12 @@ class ProgrammeController extends Controller
         $aavIds = $aavRows->pluck('aav_id')->map(fn($id) => (int) $id)->unique()->values()->all();
 
         $contributionRows = DB::table('aav_aat')
-            ->select('fk_aav', 'fk_aat', 'fk_programme', 'contribution')
-            ->where('university_id', $universityId)
+            ->join('acquis_apprentissage_terminaux as aat_target', 'aat_target.id', '=', 'aav_aat.fk_aat')
+            ->select('aav_aat.fk_aav', 'aav_aat.fk_aat', 'aav_aat.contribution')
+            ->where('aav_aat.university_id', $universityId)
             ->whereIn('fk_aav', empty($aavIds) ? [-1] : $aavIds)
             ->whereIn('fk_aat', empty($aatIds) ? [-1] : $aatIds)
-            ->where(function ($query) use ($programId) {
-                $query->whereNull('fk_programme')
-                    ->orWhere('fk_programme', $programId);
-            })
-            ->orderByRaw('CASE WHEN fk_programme IS NULL THEN 0 ELSE 1 END DESC')
+            ->where('aat_target.fk_programme', $programId)
             ->get();
 
         $contributionByAav = [];
@@ -1360,17 +1356,16 @@ class ProgrammeController extends Controller
                 })->orWhereExists(function ($sub) use ($programId, $universityId) {
                     $sub->select(DB::raw(1))
                         ->from('aav_aat')
+                        ->join('acquis_apprentissage_terminaux as aat_target', 'aat_target.id', '=', 'aav_aat.fk_aat')
                         ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'aav_aat.fk_aav')
                         ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'aavue_vise.fk_unite_enseignement')
                         ->whereColumn('aav_aat.fk_aat', 'acquis_apprentissage_terminaux.id')
                         ->where('aav_aat.university_id', $universityId)
+                        ->where('aat_target.university_id', $universityId)
                         ->where('aavue_vise.university_id', $universityId)
                         ->where('ue_programme.university_id', $universityId)
                         ->where('ue_programme.fk_programme', $programId)
-                        ->where(function ($nested) use ($programId) {
-                            $nested->whereNull('aav_aat.fk_programme')
-                                ->orWhere('aav_aat.fk_programme', $programId);
-                        });
+                        ->where('aat_target.fk_programme', $programId);
                 });
             })
             ->orderBy('code')
@@ -1405,15 +1400,12 @@ class ProgrammeController extends Controller
         $aavIds = $aavRows->pluck('aav_id')->map(fn($id) => (int) $id)->unique()->values()->all();
 
         $contributionRows = DB::table('aav_aat')
-            ->select('fk_aav', 'fk_aat', 'fk_programme', 'contribution')
-            ->where('university_id', $universityId)
+            ->join('acquis_apprentissage_terminaux as aat_target', 'aat_target.id', '=', 'aav_aat.fk_aat')
+            ->select('aav_aat.fk_aav', 'aav_aat.fk_aat', 'aav_aat.contribution')
+            ->where('aav_aat.university_id', $universityId)
             ->whereIn('fk_aav', empty($aavIds) ? [-1] : $aavIds)
             ->whereIn('fk_aat', empty($aatIds) ? [-1] : $aatIds)
-            ->where(function ($query) use ($programId) {
-                $query->whereNull('fk_programme')
-                    ->orWhere('fk_programme', $programId);
-            })
-            ->orderByRaw('CASE WHEN fk_programme IS NULL THEN 0 ELSE 1 END DESC')
+            ->where('aat_target.fk_programme', $programId)
             ->get();
 
         $contributionByAav = [];
@@ -1555,14 +1547,11 @@ class ProgrammeController extends Controller
         $allAatIdsLookup = [];
         if (!empty($allAavIds)) {
             $aavAatRows = DB::table('aav_aat')
-                ->select('fk_aav', 'fk_aat', 'fk_programme')
-                ->where('university_id', $universityId)
+                ->join('acquis_apprentissage_terminaux as aat_target', 'aat_target.id', '=', 'aav_aat.fk_aat')
+                ->select('aav_aat.fk_aav', 'aav_aat.fk_aat')
+                ->where('aav_aat.university_id', $universityId)
                 ->whereIn('fk_aav', $allAavIds)
-                ->where(function ($query) use ($programId) {
-                    $query->whereNull('fk_programme')
-                        ->orWhere('fk_programme', $programId);
-                })
-                ->orderByRaw('CASE WHEN fk_programme IS NULL THEN 0 ELSE 1 END DESC')
+                ->where('aat_target.fk_programme', $programId)
                 ->get();
 
             foreach ($aavAatRows as $row) {
@@ -1722,5 +1711,3 @@ class ProgrammeController extends Controller
         };
     }
 }
-
-

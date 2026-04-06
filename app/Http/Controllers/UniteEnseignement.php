@@ -455,6 +455,7 @@ class UniteEnseignement extends Controller
         ]);
 
         $ueId = (int) $validated['id'];
+        $universityId = (int) Auth::user()->university_id;
 
         // 1) IDs des UEs à prendre en compte : UE + ses éléments constitutifs
         // ⚠️ Adapte le nom des colonnes de la table element_constitutif si besoin
@@ -478,11 +479,13 @@ class UniteEnseignement extends Controller
             ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
             ->join('unite_enseignement as ue', 'ue.id', '=', 'aavue_vise.fk_unite_enseignement')
             ->whereIn('aavue_vise.fk_unite_enseignement', $ueIds)
+            ->where('aavue_vise.university_id', $universityId)
+            ->where('acquis_apprentissage_vise.university_id', $universityId)
             ->orderBy('ue.code')
             ->orderBy('acquis_apprentissage_vise.code')
             ->get();
 
-        return $this->appendAATContributions($response, $ueId);
+        return $this->appendAATContributions($response);
     }
 
     public function getAAVviseOnlyParent(Request $request)
@@ -506,13 +509,16 @@ class UniteEnseignement extends Controller
             'id' => 'required|integer',
         ]);
         $ueId = (int) $validated['id'];
+        $universityId = (int) Auth::user()->university_id;
 
         $response = AAV::select('acquis_apprentissage_vise.id', 'name', 'code')
             ->join('aavue_prerequis', 'fk_acquis_apprentissage_prerequis', '=', 'acquis_apprentissage_vise.id')
             ->where('aavue_prerequis.fk_unite_enseignement', $ueId)
+            ->where('aavue_prerequis.university_id', $universityId)
+            ->where('acquis_apprentissage_vise.university_id', $universityId)
             ->get();
 
-        return $this->appendAATContributions($response, $ueId);
+        return $this->appendAATContributions($response);
     }
 
     public function getUEprerequis(Request $request)
@@ -548,26 +554,22 @@ class UniteEnseignement extends Controller
         return response()->json($response);
     }
 
-    private function appendAATContributions($aavs, int $ueId)
+    private function appendAATContributions($aavs)
     {
-        $ueAATIds = DB::table('ue_aat')
-            ->where('fk_ue', $ueId)
-            ->pluck('fk_aat')
-            ->values();
+        $aavIds = $aavs->pluck('id')->unique()->values();
+        $universityId = (int) Auth::user()->university_id;
 
-        if ($ueAATIds->isEmpty()) {
+        if ($aavIds->isEmpty()) {
             return $aavs->map(function ($aav) {
                 $aav->aat_contributions = [];
                 return $aav;
             });
         }
 
-        $aavIds = $aavs->pluck('id')->unique()->values();
-
         $contributionsByAav = DB::table('aav_aat')
             ->join('acquis_apprentissage_terminaux as aat', 'aat.id', '=', 'aav_aat.fk_aat')
             ->whereIn('aav_aat.fk_aav', $aavIds)
-            ->whereIn('aav_aat.fk_aat', $ueAATIds)
+            ->where('aav_aat.university_id', $universityId)
             ->select(
                 'aav_aat.fk_aav as aav_id',
                 'aat.id as aat_id',
@@ -587,7 +589,8 @@ class UniteEnseignement extends Controller
                     'aat_level_contribution' => (int) $row->aat_level_contribution,
                     'contribution' => (int) $row->contribution,
                 ])
-                ->values();
+                ->values()
+                ->all();
 
             return $aav;
         });

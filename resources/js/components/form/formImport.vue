@@ -75,6 +75,23 @@
                 </div>
             </div>
 
+            <div v-if="canChooseAATProgramme" class="mb-4">
+                <div class="mt-2">
+                    <button
+                        type="button"
+                        class="primary_color btn btn-link p-0 text-decoration-underline"
+                        @click="openProgramModal"
+                    >
+                        choisir le programme
+                    </button>
+                </div>
+                <div v-if="selectedAATProgramme" class="mt-2">
+                    <h5 class="d-inline-block">Programme sélectionné</h5>
+                    : {{ selectedAATProgramme.code || "-" }} -
+                    {{ selectedAATProgramme.name || "-" }}
+                </div>
+            </div>
+
             <!-- SECTION : Upload du fichier -->
             <!-- SECTION : Upload du fichier (Drag & Drop) -->
             <div class="mb-4 mt-4">
@@ -411,6 +428,7 @@
 import * as XLSX from "xlsx";
 import axios from "axios";
 import modalList from "../modalList.vue";
+import { currentProgramState } from "../../stores/currentProgram";
 const STORAGE_KEY = "import_generic_config_v1";
 
 export default {
@@ -432,6 +450,7 @@ export default {
             missingUELinksMessage: "",
             importWarnings: [],
             selectedProgrammeLink: null,
+            selectedAATProgramme: null,
             isLoading: false,
             excelFile: null,
             fullData: [],
@@ -626,6 +645,9 @@ export default {
                 this.config.importMode === "single" && this.config.type === "UE"
             );
         },
+        canChooseAATProgramme() {
+            return this.config.type === "AAT";
+        },
     },
     watch: {
         config: {
@@ -638,6 +660,9 @@ export default {
             if (newType !== "UE") {
                 this.resetProgrammeSemesterSelection();
             }
+            if (newType === "AAT") {
+                this.ensureDefaultAATProgrammeFromCurrent();
+            }
         },
         "config.importMode"(newMode) {
             if (newMode !== "single") {
@@ -648,35 +673,36 @@ export default {
 
     mounted() {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
+        if (raw) {
+            try {
+                const saved = JSON.parse(raw);
 
-        try {
-            const saved = JSON.parse(raw);
-
-            // ⚠️ merge pour garder les nouvelles clés si tu ajoutes des champs plus tard
-            this.config = {
-                ...this.config,
-                ...saved,
-                columns: { ...this.config.columns, ...(saved.columns || {}) },
-                cells: { ...this.config.cells, ...(saved.cells || {}) },
-                prerequis: {
-                    ...this.config.prerequis,
-                    ...(saved.prerequis || {}),
-                },
-                prerequis_ue: {
-                    ...this.config.prerequis_ue,
-                    ...(saved.prerequis_ue || {}),
-                },
-                aav: { ...this.config.aav, ...(saved.aav || {}) },
-                aat: { ...this.config.aat, ...(saved.aat || {}) },
-                ue: { ...this.config.ue, ...(saved.ue || {}) },
-            };
-        } catch (e) {
-            // Si le JSON est corrompu
-            localStorage.removeItem(STORAGE_KEY);
-        } finally {
-            this.isHydrating = false; // ✅ toujours exécuté
+                // ⚠️ merge pour garder les nouvelles clés si tu ajoutes des champs plus tard
+                this.config = {
+                    ...this.config,
+                    ...saved,
+                    columns: { ...this.config.columns, ...(saved.columns || {}) },
+                    cells: { ...this.config.cells, ...(saved.cells || {}) },
+                    prerequis: {
+                        ...this.config.prerequis,
+                        ...(saved.prerequis || {}),
+                    },
+                    prerequis_ue: {
+                        ...this.config.prerequis_ue,
+                        ...(saved.prerequis_ue || {}),
+                    },
+                    aav: { ...this.config.aav, ...(saved.aav || {}) },
+                    aat: { ...this.config.aat, ...(saved.aat || {}) },
+                    ue: { ...this.config.ue, ...(saved.ue || {}) },
+                };
+            } catch (e) {
+                // Si le JSON est corrompu
+                localStorage.removeItem(STORAGE_KEY);
+            }
         }
+
+        this.isHydrating = false;
+        this.ensureDefaultAATProgrammeFromCurrent();
     },
 
     methods: {
@@ -883,8 +909,41 @@ export default {
             return out;
         },
         openProgramModal() {
-            if (!this.canChooseProgrammeSemester) return;
+            if (!this.canChooseProgrammeSemester && !this.canChooseAATProgramme)
+                return;
             this.showProgramModal = true;
+        },
+        async ensureDefaultAATProgrammeFromCurrent(force = false) {
+            if (!this.canChooseAATProgramme) return;
+
+            const currentId = Number(currentProgramState.id);
+            if (!Number.isInteger(currentId) || currentId <= 0) return;
+
+            if (!force && this.selectedAATProgramme?.id) return;
+
+            const fallbackProgramme = {
+                id: currentId,
+                code: String(currentProgramState.code || "").trim(),
+                name: String(currentProgramState.name || "").trim(),
+            };
+
+            if (fallbackProgramme.code || fallbackProgramme.name) {
+                this.selectedAATProgramme = fallbackProgramme;
+                return;
+            }
+
+            try {
+                const response = await axios.get("/pro/get/detailed", {
+                    params: { id: currentId },
+                });
+                this.selectedAATProgramme = {
+                    id: currentId,
+                    code: String(response.data?.code || "").trim(),
+                    name: String(response.data?.name || "").trim(),
+                };
+            } catch (error) {
+                this.selectedAATProgramme = fallbackProgramme;
+            }
         },
         async handleProgramSelected(selectedItems) {
             if (!Array.isArray(selectedItems) || selectedItems.length !== 1) {
@@ -894,6 +953,16 @@ export default {
 
             const program = selectedItems[0];
             if (!program?.id) return;
+
+            if (this.canChooseAATProgramme) {
+                this.selectedAATProgramme = {
+                    id: Number(program.id),
+                    code: String(program.code || "").trim(),
+                    name: String(program.name || "").trim(),
+                };
+                this.showProgramModal = false;
+                return;
+            }
 
             this.showProgramModal = false;
             this.selectedProgramDraft = program;
@@ -980,6 +1049,13 @@ export default {
                     code: this.selectedProgrammeLink.code,
                     name: this.selectedProgrammeLink.name,
                     semesters: this.selectedProgrammeLink.semesters,
+                };
+            }
+            if (this.canChooseAATProgramme && this.selectedAATProgramme) {
+                payloadConfig.selectedAATProgramme = {
+                    id: this.selectedAATProgramme.id,
+                    code: this.selectedAATProgramme.code,
+                    name: this.selectedAATProgramme.name,
                 };
             }
 
@@ -1124,6 +1200,18 @@ export default {
         validateRequiredImportFields() {
             const type = this.config.type;
             const mode = this.config.importMode;
+            const selectedAATProgrammeId = Number(this.selectedAATProgramme?.id);
+
+            if (
+                type === "AAT" &&
+                (!Number.isInteger(selectedAATProgrammeId) ||
+                    selectedAATProgrammeId <= 0)
+            ) {
+                this.errors = [
+                    "Le programme est obligatoire pour l'import d'un AAT.",
+                ];
+                return false;
+            }
 
             if (mode === "list") {
                 const codeCol = this.config?.columns?.[type]?.code;

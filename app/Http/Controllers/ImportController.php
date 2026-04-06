@@ -78,6 +78,21 @@ class ImportController extends Controller
                     ], 422);
                 }
 
+                $uid = Auth::user()->university_id;
+                $selectedAATProgrammeId = null;
+                if (($config['type'] ?? null) === 'AAT') {
+                    $selectedAATProgrammeId = $this->resolveAATProgrammeIdFromConfig($config, $uid);
+                    if ($selectedAATProgrammeId === null) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => "Le programme est obligatoire pour l'import d'un AAT.",
+                            'errors' => [
+                                'selectedAATProgramme' => ["Veuillez sélectionner un programme valide pour importer des AAT."],
+                            ],
+                        ], 422);
+                    }
+                }
+
                 $stored = [];
                 $errors = [];
                 $warnings = [];
@@ -92,6 +107,7 @@ class ImportController extends Controller
                                         'code' => $data['code'] ?? null,
                                         'name' => $data['name'] ?? null,
                                         'description' => $data['description'] ?? null,
+                                        'fk_programme' => $selectedAATProgrammeId,
                                     ],
                                     'links' => [],
                                 ];
@@ -192,6 +208,23 @@ class ImportController extends Controller
                         'status' => 'error',
                         'message' => "Erreur lors de la lecture du fichier Excel.",
                     ], 422);
+                }
+
+                if (($config['type'] ?? null) === 'AAT') {
+                    $uid = Auth::user()->university_id;
+                    $selectedAATProgrammeId = $this->resolveAATProgrammeIdFromConfig($config, $uid);
+                    if ($selectedAATProgrammeId === null) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => "Le programme est obligatoire pour l'import d'un AAT.",
+                            'errors' => [
+                                'selectedAATProgramme' => ["Veuillez sélectionner un programme valide pour importer des AAT."],
+                            ],
+                        ], 422);
+                    }
+
+                    $data['main'] = $data['main'] ?? [];
+                    $data['main']['fk_programme'] = $selectedAATProgrammeId;
                 }
 
                 if (($config['type'] ?? null) === 'UE' && !empty($config['selectedProgrammeLink']) && is_array($config['selectedProgrammeLink'])) {
@@ -455,6 +488,7 @@ class ImportController extends Controller
                 throw $e;
             }
             $affectedUeIds = [(int) $ue->id];
+            $defaultProgrammeIdForNewAat = $this->resolveProgrammeIdFromLinks($links, $uid);
 
             // -------------------------
             // 2) AATs liés
@@ -480,11 +514,17 @@ class ImportController extends Controller
                             continue;
                         }
                     } else {
+                        if ($defaultProgrammeIdForNewAat === null) {
+                            $warnings[] = "Aucun programme disponible pour creer automatiquement un AAT. Le lien n'a pas ete importe.";
+                            continue;
+                        }
+
                         $generatedCode = $this->codeGen->nextAAT();
                         $aat = AAT::create([
                             'code' => $generatedCode,
                             'name' => $name !== '' ? $name : null,
                             'university_id' => $uid,
+                            'fk_programme' => $defaultProgrammeIdForNewAat,
                         ]);
                     }
 
@@ -710,29 +750,25 @@ class ImportController extends Controller
 
         if ($type !== 'AAT') {
             throw ValidationException::withMessages([
-                'type' => ["storeAAT ne gère que le type AAT. Reçu: {$type}"]
+                'type' => ["storeAAT ne gere que le type AAT. Recu: {$type}"]
             ]);
         }
 
-        // --------------------------
-        // VALIDATION
-        // --------------------------
         $messages = [
             'required' => 'Le champ :attribute est obligatoire.',
-            'string'   => 'Le champ :attribute doit être un texte.',
-            'array'    => 'Le champ :attribute doit être une liste.',
-            'max'      => 'Le champ :attribute est trop long (max :max caractères).',
+            'string'   => 'Le champ :attribute doit etre un texte.',
+            'array'    => 'Le champ :attribute doit etre une liste.',
+            'max'      => 'Le champ :attribute est trop long (max :max caracteres).',
         ];
 
         $attributes = [
             'main.code' => 'Sigle AAT',
-            'main.name' => 'Libellé AAT',
+            'main.name' => 'Libelle AAT',
             'main.description' => 'Description AAT',
-
+            'main.fk_programme' => 'Programme AAT',
             'links.ues' => 'Liste des UE liées',
             'links.ues.*.code' => 'Sigle UE',
             'links.ues.*.libelle' => 'Libellé UE',
-
             'links.aavs' => 'Liste des AAV liés',
             'links.aavs.*.code' => 'Sigle AAV',
             'links.aavs.*.libelle' => 'Libellé AAV',
@@ -740,19 +776,15 @@ class ImportController extends Controller
 
         $validator = Validator::make($values, [
             'type' => 'required|in:AAT',
-
             'main' => 'required|array',
             'main.code' => 'nullable|string|max:50',
             'main.name' => 'required|string|max:500',
             'main.description' => 'nullable|string',
-
+            'main.fk_programme' => 'required|integer|exists:programme,id',
             'links' => 'nullable|array',
-
-            // liens possibles depuis GenericSingleImportService
             'links.ues' => 'nullable|array',
             'links.ues.*.code' => 'nullable|string|max:50',
             'links.ues.*.libelle' => 'nullable|string|max:500',
-
             'links.aavs' => 'nullable|array',
             'links.aavs.*.code' => 'nullable|string|max:50',
             'links.aavs.*.libelle' => 'nullable|string|max:1000',
@@ -762,12 +794,8 @@ class ImportController extends Controller
             throw new ValidationException($validator);
         }
 
-        // --------------------------
-        // 1) Création AAT
-        // --------------------------
         DB::beginTransaction();
         try {
-
             $aatCode = trim($main['code'] ?? '');
             $aatName = trim($main['name'] ?? '');
             $aatDesc = $main['description'] ?? null;
@@ -776,12 +804,25 @@ class ImportController extends Controller
                 $aatCode = $this->codeGen->nextAAT();
             }
 
+            $aatProgrammeId = (int) $main['fk_programme'];
+            $programmeBelongsToUniversity = DB::table('programme')
+                ->where('id', $aatProgrammeId)
+                ->where('university_id', $uid)
+                ->exists();
+
+            if (!$programmeBelongsToUniversity) {
+                throw ValidationException::withMessages([
+                    'main.fk_programme' => ["Le programme sélectionné n'appartient pas à votre université."],
+                ]);
+            }
+
             try {
                 $aat = AAT::create([
                     'code' => $aatCode,
                     'name' => $aatName,
                     'description' => $aatDesc,
                     'university_id' => $uid,
+                    'fk_programme' => $aatProgrammeId,
                 ]);
             } catch (QueryException $e) {
                 if (($e->errorInfo[0] ?? null) === '23000') {
@@ -791,68 +832,63 @@ class ImportController extends Controller
                 }
                 if (($e->errorInfo[0] ?? null) === '22001') {
                     throw ValidationException::withMessages([
-                        'main.name' => ["Le libellé d'une UE est trop long pour l'import (maximum 255 caractères)."]
+                        'main.name' => ["Le libelle d'un AAT est trop long pour l'import (maximum 500 caracteres)."]
                     ]);
                 }
                 throw $e;
             }
 
-            // --------------------------
-            // 2) Lier les UE (pivot ue_aat)
-            // --------------------------
             $ues = $links['ues'] ?? [];
             if (!empty($ues)) {
                 foreach ($ues as $ueData) {
                     $ueCode = trim($ueData['code'] ?? '');
                     $ueName = trim($ueData['libelle'] ?? '');
 
-                    if ($ueCode === '' && $ueName === '') continue;
+                    if ($ueCode === '' && $ueName === '') {
+                        continue;
+                    }
 
                     if ($ueCode === '' && $ueName !== '') {
                         $ueCode = $this->codeGen->nextUE();
                     }
 
-                    // UE scoped université
                     $ue = UniteEnseignement::where('code', $ueCode)
                         ->where('university_id', $uid)
                         ->first();
 
-                    // pas trouvé + pas de libellé => ignore
-                    if (!$ue && $ueName === '') continue;
+                    if (!$ue && $ueName === '') {
+                        continue;
+                    }
 
                     if (!$ue) {
                         $ue = UniteEnseignement::create([
                             'code' => $ueCode,
                             'name' => $ueName !== '' ? $ueName : null,
                             'university_id' => $uid,
-                            //  ects/description peuvent être nullables selon ta table
-                            'ects' => 1, // <-- ajuste si ects est NOT NULL
+                            'ects' => 1,
                         ]);
-                    } elseif (($ue->name === null || trim((string)$ue->name) === '') && $ueName !== '') {
+                    } elseif (($ue->name === null || trim((string) $ue->name) === '') && $ueName !== '') {
                         $ue->name = $ueName;
                         $ue->save();
                     }
 
-                    // pivot défini sur UniteEnseignement::aat()
                     $ue->aat()->syncWithoutDetaching([
                         $aat->id => [
-                            // si ton pivot contient university_id, garde-le
                             'university_id' => $uid,
                         ]
                     ]);
                 }
             }
 
-            // --------------------------
-            // 3) Lier les AAV (pivot AAT <-> AAV)
-            // --------------------------
             $aavs = $links['aavs'] ?? [];
             if (!empty($aavs)) {
                 foreach ($aavs as $aavData) {
                     $aavCode = trim($aavData['code'] ?? '');
                     $aavName = trim($aavData['libelle'] ?? '');
 
-                    if ($aavCode === '' && $aavName === '') continue;
+                    if ($aavCode === '' && $aavName === '') {
+                        continue;
+                    }
 
                     if ($aavCode === '' && $aavName !== '') {
                         $aavCode = $this->codeGen->nextAAV();
@@ -862,7 +898,9 @@ class ImportController extends Controller
                         ->where('university_id', $uid)
                         ->first();
 
-                    if (!$aav && $aavName === '') continue;
+                    if (!$aav && $aavName === '') {
+                        continue;
+                    }
 
                     if (!$aav) {
                         $aav = AcquisApprentissageVise::create([
@@ -870,7 +908,7 @@ class ImportController extends Controller
                             'name' => $aavName !== '' ? $aavName : null,
                             'university_id' => $uid,
                         ]);
-                    } elseif (($aav->name === null || trim((string)$aav->name) === '') && $aavName !== '') {
+                    } elseif (($aav->name === null || trim((string) $aav->name) === '') && $aavName !== '') {
                         $aav->name = $aavName;
                         $aav->save();
                     }
@@ -878,7 +916,7 @@ class ImportController extends Controller
                     if (method_exists($aat, 'aav')) {
                         $aat->aav()->syncWithoutDetaching([
                             $aav->id => [
-                                'university_id' => $uid, // si pivot a ce champ
+                                'university_id' => $uid,
                             ]
                         ]);
                     }
@@ -886,7 +924,6 @@ class ImportController extends Controller
             }
 
             DB::commit();
-
             $this->ueAnomalyService->recomputeForAAT((int) $aat->id, (int) $uid);
 
             return $aat;
@@ -895,5 +932,101 @@ class ImportController extends Controller
             throw $e;
         }
     }
-}
 
+    private function resolveAATProgrammeIdFromConfig(array $config, int $universityId): ?int
+    {
+        $selectedProgramme = $config['selectedAATProgramme'] ?? null;
+        if (!is_array($selectedProgramme)) {
+            return null;
+        }
+
+        $directProgrammeId = isset($selectedProgramme['id']) && is_numeric($selectedProgramme['id'])
+            ? (int) $selectedProgramme['id']
+            : null;
+
+        if ($directProgrammeId !== null) {
+            $exists = DB::table('programme')
+                ->where('id', $directProgrammeId)
+                ->where('university_id', $universityId)
+                ->exists();
+
+            if ($exists) {
+                return $directProgrammeId;
+            }
+        }
+
+        $code = trim((string) ($selectedProgramme['code'] ?? ''));
+        if ($code !== '') {
+            $candidate = DB::table('programme')
+                ->where('university_id', $universityId)
+                ->where('code', $code)
+                ->value('id');
+
+            if ($candidate !== null) {
+                return (int) $candidate;
+            }
+        }
+
+        $name = trim((string) ($selectedProgramme['name'] ?? $selectedProgramme['libelle'] ?? ''));
+        if ($name !== '') {
+            $candidate = DB::table('programme')
+                ->where('university_id', $universityId)
+                ->where('name', $name)
+                ->value('id');
+
+            if ($candidate !== null) {
+                return (int) $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveProgrammeIdFromLinks(array $links, int $universityId): ?int
+    {
+        $programmeLinks = $links['programmes'] ?? [];
+        foreach ($programmeLinks as $programmeLink) {
+            $directProgrammeId = isset($programmeLink['id']) && is_numeric($programmeLink['id'])
+                ? (int) $programmeLink['id']
+                : null;
+
+            if ($directProgrammeId !== null) {
+                $exists = DB::table('programme')
+                    ->where('id', $directProgrammeId)
+                    ->where('university_id', $universityId)
+                    ->exists();
+
+                if ($exists) {
+                    return $directProgrammeId;
+                }
+            }
+
+            $code = trim((string) ($programmeLink['code'] ?? ''));
+            $name = trim((string) ($programmeLink['libelle'] ?? ''));
+
+            if ($code !== '') {
+                $candidate = DB::table('programme')
+                    ->where('university_id', $universityId)
+                    ->where('code', $code)
+                    ->value('id');
+
+                if ($candidate !== null) {
+                    return (int) $candidate;
+                }
+            }
+
+            if ($name !== '') {
+                $candidate = DB::table('programme')
+                    ->where('university_id', $universityId)
+                    ->where('name', $name)
+                    ->value('id');
+
+                if ($candidate !== null) {
+                    return (int) $candidate;
+                }
+            }
+        }
+
+        return null;
+    }
+}

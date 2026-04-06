@@ -39,4 +39,9 @@ class Programme extends Model
             'fk_acquis_apprentissage_prerequis'
         );
     }
+
+    public function aats()
+    {
+        return $this->hasMany(AcquisApprentissageTerminaux::class, 'fk_programme');
+    }
 }

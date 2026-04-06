@@ -44,6 +44,22 @@
                 </span>
             </div>
             <div class="mb-4" v-html="aat.description"></div>
+            <div class="mb-2" v-if="aat.fk_programme">
+                <h5 class="d-inline-block primary_color">Programme :</h5>
+                <router-link
+                    :to="{
+                        name: 'pro-detail',
+                        params: { id: aat.fk_programme },
+                    }"
+                >
+                    <span class="PRO">
+                        {{ aat.programme_code }}
+                    </span>
+                </router-link>
+                <span v-if="aat.programme_name">
+                    - {{ aat.programme_name }}
+                </span>
+            </div>
 			<div class="mb-4"><h5 class="d-inline-block primary_color">Contribution Maximum :</h5> <span class="strong_mapping">{{ aat.level_contribution }}</span></div>
             <div class="listComponent mb-4">
                 <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('aavLinked')">

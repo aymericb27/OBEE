@@ -33,6 +33,50 @@
                     />
                 </div>
             </div>
+            <div class="row">
+                <div class="mb-3 col-md-7">
+                    <h5 class="primary_color">
+                        Programme
+                        <strong class="text-danger">*</strong>
+                    </h5>
+                    <select
+                        v-model.number="form.fk_programme"
+                        class="form-control"
+                        required
+                    >
+                        <option :value="null" disabled>
+                            Sélectionner un programme
+                        </option>
+                        <option
+                            v-for="programme in listProgramme"
+                            :key="programme.id"
+                            :value="programme.id"
+                        >
+                            {{ programme.code }} - {{ programme.name }}
+                        </option>
+                    </select>
+                </div>
+                <div class="mb-3 col-md-5">
+                    <h5 class="primary_color">
+                        Nombre de niveaux de contribution
+                        <strong class="text-danger">*</strong>
+                    </h5>
+                    <select
+                        v-model="form.level_contribution"
+                        class="form-control"
+                        required
+                    >
+                        <option :value="3">3</option>
+                        <option :value="4">4</option>
+                        <option :value="5">5</option>
+                        <option :value="6">6</option>
+                        <option :value="7">7</option>
+                        <option :value="8">8</option>
+                        <option :value="9">9</option>
+                        <option :value="10">10</option>
+                    </select>
+                </div>
+            </div>
 
             <div class="form-group mb-3">
                 <h5 class="primary_color">description</h5>
@@ -44,26 +88,7 @@
                     required
                 ></quill-editor>
             </div>
-            <div class="mb-3">
-                <h5 class="primary_color">
-                    Nombre de niveaux de contribution
-                    <strong class="text-danger">*</strong>
-                </h5>
-                <select
-                    v-model="form.level_contribution"
-                    class="form-control w-50"
-                    required
-                >
-                    <option :value="3">3</option>
-                    <option :value="4">4</option>
-                    <option :value="5">5</option>
-                    <option :value="6">6</option>
-                    <option :value="7">7</option>
-                    <option :value="8">8</option>
-                    <option :value="9">9</option>
-                    <option :value="10">10</option>
-                </select>
-            </div>
+
             <button class="btn btn-primary">
                 {{ form.id ? "Modifier l'" : "Créer l'" }} acquis
                 d'apprentissage terminal
@@ -83,32 +108,58 @@ export default {
 
     data() {
         return {
+            listProgramme: [],
             form: {
                 id: null,
                 code: "",
                 name: "",
                 description: "",
                 level_contribution: 3,
+                fk_programme: null,
             },
         };
     },
 
-    mounted() {
-        // mode édition
+    async mounted() {
+        await this.loadProgrammes();
+
+        // mode edition
         if (this.id) {
             this.form.id = this.id;
-            this.loadAAT();
+            await this.loadAAT();
+        } else {
+            this.form.fk_programme = this.getDefaultProgrammeId();
         }
     },
 
     methods: {
+        getDefaultProgrammeId() {
+            const routeProgramId = Number(this.$route.query.programID);
+            if (Number.isInteger(routeProgramId) && routeProgramId > 0) {
+                return routeProgramId;
+            }
+
+            if (this.listProgramme.length === 1) {
+                return this.listProgramme[0].id;
+            }
+
+            return null;
+        },
+        async loadProgrammes() {
+            const response = await axios.get("/pro/get");
+            this.listProgramme = response.data || [];
+        },
         async loadAAT() {
             const response = await axios.get("/aat/get/detailed", {
                 params: {
                     id: this.id,
                 },
             });
-            this.form = response.data;
+            this.form = {
+                ...response.data,
+                fk_programme:
+                    response.data?.fk_programme ?? this.getDefaultProgrammeId(),
+            };
         },
         async saveProgram() {
             const url = this.form.id ? "/aat/update" : "/aat/store";

@@ -27,34 +27,20 @@ class AcquisApprentissageTerminaux extends Controller
         ]);
 
         $result = AAT::query()
-            ->select('id', 'code', 'name', 'description', 'level_contribution');
+            ->leftJoin('programme', 'programme.id', '=', 'acquis_apprentissage_terminaux.fk_programme')
+            ->select(
+                'acquis_apprentissage_terminaux.id',
+                'acquis_apprentissage_terminaux.code',
+                'acquis_apprentissage_terminaux.name',
+                'acquis_apprentissage_terminaux.description',
+                'acquis_apprentissage_terminaux.level_contribution',
+                'acquis_apprentissage_terminaux.fk_programme',
+                'programme.code as programme_code',
+                'programme.name as programme_name',
+            );
 
         if (!empty($validated['program_id'])) {
-            $programId = (int) $validated['program_id'];
-
-            $result->where(function ($query) use ($programId) {
-                // Chemin 1: AAT -> UE -> PRO
-                $query->whereExists(function ($sub) use ($programId) {
-                    $sub->select(DB::raw(1))
-                        ->from('ue_aat')
-                        ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'ue_aat.fk_ue')
-                        ->whereColumn('ue_aat.fk_aat', 'acquis_apprentissage_terminaux.id')
-                        ->where('ue_programme.fk_programme', $programId);
-                })
-                    // Chemin 2: AAT -> AAV -> UE -> PRO
-                    ->orWhereExists(function ($sub) use ($programId) {
-                        $sub->select(DB::raw(1))
-                            ->from('aav_aat')
-                            ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'aav_aat.fk_aav')
-                            ->join('ue_programme', 'ue_programme.fk_unite_enseignement', '=', 'aavue_vise.fk_unite_enseignement')
-                            ->whereColumn('aav_aat.fk_aat', 'acquis_apprentissage_terminaux.id')
-                            ->where('ue_programme.fk_programme', $programId)
-                            ->where(function ($aavProgram) use ($programId) {
-                                $aavProgram->whereNull('aav_aat.fk_programme')
-                                    ->orWhere('aav_aat.fk_programme', $programId);
-                            });
-                    });
-            });
+            $result->where('acquis_apprentissage_terminaux.fk_programme', (int) $validated['program_id']);
         }
 
         $result = $result->get();
@@ -144,7 +130,7 @@ class AcquisApprentissageTerminaux extends Controller
                     'acquis_apprentissage_vise.code as code',
                     'acquis_apprentissage_vise.name as name',
                     'aav_aat.contribution as contribution',
-                    'aav_aat.fk_programme as fk_programme',
+                    'aat_target.fk_programme as fk_programme',
                     'programme.code as programme_code',
                     'programme.name as programme_name',
                     'ue_source.id as ue_source_id',
@@ -153,7 +139,8 @@ class AcquisApprentissageTerminaux extends Controller
                 )
                 ->join('aavue_vise', 'aavue_vise.fk_acquis_apprentissage_vise', '=', 'acquis_apprentissage_vise.id')
                 ->join('aav_aat', 'aav_aat.fk_aav', '=', 'acquis_apprentissage_vise.id')
-                ->leftJoin('programme', 'programme.id', '=', 'aav_aat.fk_programme')
+                ->join('acquis_apprentissage_terminaux as aat_target', 'aat_target.id', '=', 'aav_aat.fk_aat')
+                ->leftJoin('programme', 'programme.id', '=', 'aat_target.fk_programme')
                 ->join('unite_enseignement as ue_source', 'ue_source.id', '=', 'aavue_vise.fk_unite_enseignement')
                 ->where('aav_aat.fk_aat', $aatId)
                 ->whereIn('aavue_vise.fk_unite_enseignement', $ueIds)
@@ -218,6 +205,12 @@ class AcquisApprentissageTerminaux extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:2024',
             'level_contribution' => 'required|integer|min:3|max:10',
+            'fk_programme' => [
+                'required',
+                'integer',
+                Rule::exists('programme', 'id')
+                    ->where(fn($query) => $query->where('university_id', $universityId)),
+            ],
         ]);
 
         /*
@@ -237,6 +230,7 @@ class AcquisApprentissageTerminaux extends Controller
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'level_contribution' => $validated['level_contribution'],
+            'fk_programme' => (int) $validated['fk_programme'],
         ]);
 
         $this->ueAnomalyService->recomputeForAAT((int) $aat->id, $universityId);
@@ -252,7 +246,17 @@ class AcquisApprentissageTerminaux extends Controller
         $validated = $request->validate([
             'id' => 'required|integer',
         ]);
-        $response = AAT::select('code', 'id', 'name', 'description', 'level_contribution')
+        $response = AAT::leftJoin('programme', 'programme.id', '=', 'acquis_apprentissage_terminaux.fk_programme')
+            ->select(
+                'acquis_apprentissage_terminaux.code',
+                'acquis_apprentissage_terminaux.id',
+                'acquis_apprentissage_terminaux.name',
+                'acquis_apprentissage_terminaux.description',
+                'acquis_apprentissage_terminaux.level_contribution',
+                'acquis_apprentissage_terminaux.fk_programme',
+                'programme.code as programme_code',
+                'programme.name as programme_name',
+            )
             ->where('acquis_apprentissage_terminaux.id', $validated['id'])
             ->first();
 
@@ -268,7 +272,8 @@ class AcquisApprentissageTerminaux extends Controller
 
         $rows = DB::table('aav_aat')
             ->join('acquis_apprentissage_vise', 'acquis_apprentissage_vise.id', '=', 'aav_aat.fk_aav')
-            ->leftJoin('programme', 'programme.id', '=', 'aav_aat.fk_programme')
+            ->join('acquis_apprentissage_terminaux as aat_target', 'aat_target.id', '=', 'aav_aat.fk_aat')
+            ->leftJoin('programme', 'programme.id', '=', 'aat_target.fk_programme')
             ->where('aav_aat.fk_aat', $validated['id'])
             ->select(
                 'aav_aat.id as row_key',
@@ -276,7 +281,7 @@ class AcquisApprentissageTerminaux extends Controller
                 'acquis_apprentissage_vise.code',
                 'acquis_apprentissage_vise.name',
                 'aav_aat.contribution',
-                'aav_aat.fk_programme',
+                'aat_target.fk_programme',
                 'programme.code as programme_code',
                 'programme.name as programme_name'
             )
@@ -348,6 +353,12 @@ class AcquisApprentissageTerminaux extends Controller
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string|max:2024',
             'level_contribution' => 'required|integer|min:3|max:10',
+            'fk_programme' => [
+                'required',
+                'integer',
+                Rule::exists('programme', 'id')
+                    ->where(fn($query) => $query->where('university_id', $universityId)),
+            ],
         ]);
         // ----- Génération du code AATxxx -----
 
@@ -358,6 +369,7 @@ class AcquisApprentissageTerminaux extends Controller
             $validated['code'] = $this->codeGen->nextAAT();
         }
         $validated['university_id'] = $universityId;
+        $validated['fk_programme'] = (int) $validated['fk_programme'];
 
 
         $aav = AAT::create($validated);

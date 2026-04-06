@@ -12,7 +12,7 @@ use App\Services\UEAnomalyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 
 class AcquisApprentissageVise extends Controller
 {
@@ -30,13 +30,23 @@ class AcquisApprentissageVise extends Controller
             'description' => 'nullable|string|max:2024',
 
             'aat' => 'nullable|array',
-            'aat.*.id' => 'nullable|integer|exists:acquis_apprentissage_terminaux,id',
+            'aat.*.id' => [
+                'nullable',
+                'integer',
+                'distinct',
+                Rule::exists('acquis_apprentissage_terminaux', 'id')
+                    ->where(fn($query) => $query->where('university_id', $universityId)),
+            ],
             'aat.*.contribution' => 'nullable|integer|min:1|max:10',
-            'aat.*.fk_programme' => 'nullable|integer|exists:programme,id',
         ]);
 
-        $aatRows = $validated['aat'] ?? [];
-        $this->assertUniqueAatProgrammePairs($aatRows, 'aat');
+        $aatRows = collect($validated['aat'] ?? [])
+            ->map(fn($row) => [
+                'id' => (int) $row['id'],
+                'contribution' => isset($row['contribution']) ? (int) $row['contribution'] : null,
+            ])
+            ->values()
+            ->all();
 
         /*
      |--------------------------------------------------------------------------
@@ -67,7 +77,6 @@ class AcquisApprentissageVise extends Controller
             $pivotRows[] = [
                 'fk_aav' => $aav->id,
                 'fk_aat' => $aat['id'],
-                'fk_programme' => $aat['fk_programme'] ?? null,
                 'contribution' => $aat['contribution'],
                 'university_id' => $universityId,
                 'created_at' => now(),
@@ -153,13 +162,23 @@ class AcquisApprentissageVise extends Controller
             'description' => 'nullable|string|max:2024',
 
             'aats' => 'nullable|array',
-            'aats.*.id' => 'required|integer|exists:acquis_apprentissage_terminaux,id',
+            'aats.*.id' => [
+                'required',
+                'integer',
+                'distinct',
+                Rule::exists('acquis_apprentissage_terminaux', 'id')
+                    ->where(fn($query) => $query->where('university_id', $universityId)),
+            ],
             'aats.*.contribution' => 'required|integer|min:1|max:10',
-            'aats.*.fk_programme' => 'nullable|integer|exists:programme,id',
         ]);
 
-        $aatRows = $validated['aats'] ?? [];
-        $this->assertUniqueAatProgrammePairs($aatRows, 'aats');
+        $aatRows = collect($validated['aats'] ?? [])
+            ->map(fn($row) => [
+                'id' => (int) $row['id'],
+                'contribution' => isset($row['contribution']) ? (int) $row['contribution'] : null,
+            ])
+            ->values()
+            ->all();
 
         /*
      |--------------------------------------------------------------------------
@@ -189,7 +208,6 @@ class AcquisApprentissageVise extends Controller
                 $pivotRows[] = [
                     'fk_aav' => $aav->id,
                     'fk_aat' => $aat['id'],
-                    'fk_programme' => $aat['fk_programme'] ?? null,
                     'contribution' => $aat['contribution'],
                     'university_id' => $universityId,
                     'created_at' => now(),
@@ -293,7 +311,7 @@ class AcquisApprentissageVise extends Controller
                 '=',
                 'aav_aat.fk_aat'
             )
-            ->leftJoin('programme', 'programme.id', '=', 'aav_aat.fk_programme')
+            ->leftJoin('programme', 'programme.id', '=', 'acquis_apprentissage_terminaux.fk_programme')
             ->where('aav_aat.fk_aav', $validated['id'])
             ->select(
                 'aav_aat.id as row_key',
@@ -302,7 +320,7 @@ class AcquisApprentissageVise extends Controller
                 'acquis_apprentissage_terminaux.name',
                 'acquis_apprentissage_terminaux.level_contribution',
                 'aav_aat.contribution',
-                'aav_aat.fk_programme',
+                'acquis_apprentissage_terminaux.fk_programme',
                 'programme.code as programme_code',
                 'programme.name as programme_name',
             )
@@ -360,27 +378,5 @@ class AcquisApprentissageVise extends Controller
         $response = $response->get();
 
         return $response;
-    }
-
-    private function assertUniqueAatProgrammePairs(array $rows, string $field): void
-    {
-        $seen = [];
-
-        foreach ($rows as $idx => $row) {
-            $aatId = (int) ($row['id'] ?? 0);
-            $programmeId = array_key_exists('fk_programme', $row) && $row['fk_programme'] !== null
-                ? (int) $row['fk_programme']
-                : null;
-
-            $pairKey = $aatId . '|' . ($programmeId === null ? 'null' : $programmeId);
-
-            if (isset($seen[$pairKey])) {
-                throw ValidationException::withMessages([
-                    $field . '.' . $idx . '.fk_programme' => "Un AAV ne peut pas lier plusieurs fois le meme AAT pour le meme programme.",
-                ]);
-            }
-
-            $seen[$pairKey] = true;
-        }
     }
 }

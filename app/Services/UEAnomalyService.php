@@ -920,16 +920,20 @@ class UEAnomalyService
         }
 
         // Rule #7 (global UE scope): an AAV of the UE is anomalous only if it has
-        // no contribution to any AAT declared on the UE, regardless of programme linkage.
-        $globalAavAatRows = DB::table('aav_aat')
+        // no contribution to any AAT at all, regardless of UE->AAT declaration.
+        $allAavAatRows = DB::table('aav_aat')
             ->select('fk_aav', 'fk_aat')
             ->where('university_id', $universityId)
             ->whereIn('fk_aav', empty($ueAavIds) ? [-1] : $ueAavIds)
-            ->whereIn('fk_aat', empty($ueAatIds) ? [-1] : $ueAatIds)
             ->get();
 
+        // Keep UE-scoped rows for Rule #9 coherence checks.
+        $globalAavAatRows = $allAavAatRows
+            ->filter(fn($row) => in_array((int) $row->fk_aat, $ueAatIds, true))
+            ->values();
+
         $aavHasAtLeastOneAatContribution = [];
-        foreach ($globalAavAatRows as $row) {
+        foreach ($allAavAatRows as $row) {
             $aav = (int) $row->fk_aav;
             $aavHasAtLeastOneAatContribution[$aav] = true;
         }
@@ -1253,10 +1257,16 @@ class UEAnomalyService
         }
 
         return DB::table('aav_aat')
-            ->select('fk_programme', 'fk_aav', 'fk_aat', 'contribution')
-            ->where('university_id', $universityId)
-            ->whereIn('fk_programme', $programIds)
-            ->whereIn('fk_aav', $ueAavIds)
+            ->join('acquis_apprentissage_terminaux as aat_target', 'aat_target.id', '=', 'aav_aat.fk_aat')
+            ->select(
+                'aat_target.fk_programme as fk_programme',
+                'aav_aat.fk_aav',
+                'aav_aat.fk_aat',
+                'aav_aat.contribution'
+            )
+            ->where('aav_aat.university_id', $universityId)
+            ->whereIn('aat_target.fk_programme', $programIds)
+            ->whereIn('aav_aat.fk_aav', $ueAavIds)
             ->get();
     }
 
