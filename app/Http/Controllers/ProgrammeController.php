@@ -8,6 +8,7 @@ use App\Models\Programme;
 use App\Models\UniteEnseignement;
 use App\Services\CodeGeneratorService;
 use App\Services\UEAnomalyService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -330,7 +331,6 @@ class ProgrammeController extends Controller
 
         return $response;
     }
-
     public function copy(Request $request)
     {
         $validated = $request->validate([
@@ -437,9 +437,82 @@ class ProgrammeController extends Controller
                 }
             }
 
+            $sourceAats = DB::table('acquis_apprentissage_terminaux')
+                ->where('fk_programme', $sourceProgramme->id)
+                ->where('university_id', $universityId)
+                ->orderBy('id')
+                ->get();
+
+            $aatIdMap = [];
+            $nextAatNumber = $this->resolveNextAatNumericSuffix($universityId);
+            foreach ($sourceAats as $sourceAat) {
+                $newAatId = null;
+                do {
+                    $newAatCode = $this->buildNextAvailableAatCode($universityId, $nextAatNumber);
+                    try {
+                        $newAatId = DB::table('acquis_apprentissage_terminaux')->insertGetId([
+                            'code' => $newAatCode,
+                            'name' => $sourceAat->name,
+                            'description' => $sourceAat->description,
+                            'level_contribution' => $sourceAat->level_contribution,
+                            'fk_programme' => $newProgramme->id,
+                            'university_id' => $universityId,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    } catch (QueryException $exception) {
+                        $isDuplicateCode = str_contains((string) $exception->getMessage(), 'aat_university_code_unique')
+                            || str_contains((string) $exception->getMessage(), '1062 Duplicate entry');
+
+                        if (!$isDuplicateCode) {
+                            throw $exception;
+                        }
+                    }
+                } while ($newAatId === null);
+
+                $aatIdMap[(int) $sourceAat->id] = (int) $newAatId;
+            }
+
+            if (!empty($aatIdMap)) {
+                $sourceAavAatRows = DB::table('aav_aat')
+                    ->where('university_id', $universityId)
+                    ->whereIn('fk_aat', array_keys($aatIdMap))
+                    ->orderBy('id')
+                    ->get();
+
+                $aavAatRowsByKey = [];
+                foreach ($sourceAavAatRows as $sourceAavAatRow) {
+                    $sourceAatId = (int) $sourceAavAatRow->fk_aat;
+                    if (!isset($aatIdMap[$sourceAatId])) {
+                        continue;
+                    }
+
+                    $newAatId = $aatIdMap[$sourceAatId];
+                    $dedupKey = (int) $sourceAavAatRow->fk_aav . '|' . $newAatId;
+                    if (isset($aavAatRowsByKey[$dedupKey])) {
+                        continue;
+                    }
+
+                    $aavAatRowsByKey[$dedupKey] = [
+                        'fk_aav' => (int) $sourceAavAatRow->fk_aav,
+                        'fk_aat' => $newAatId,
+                        'contribution' => $sourceAavAatRow->contribution !== null
+                            ? (int) $sourceAavAatRow->contribution
+                            : null,
+                        'university_id' => $universityId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                if (!empty($aavAatRowsByKey)) {
+                    DB::table('aav_aat')->insert(array_values($aavAatRowsByKey));
+                }
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Programme copié avec succes',
+                'message' => 'Programme copie avec succes',
                 'id' => $newProgramme->id,
             ]);
         });
@@ -452,6 +525,31 @@ class ProgrammeController extends Controller
         return $response;
     }
 
+    private function resolveNextAatNumericSuffix(int $universityId): int
+    {
+        $maxNumericSuffix = DB::table('acquis_apprentissage_terminaux')
+            ->where('university_id', $universityId)
+            ->whereRaw("code REGEXP '^AAT[0-9]+$'")
+            ->selectRaw("MAX(CAST(SUBSTRING(code, 4) AS UNSIGNED)) as max_suffix")
+            ->value('max_suffix');
+
+        return ((int) $maxNumericSuffix) + 1;
+    }
+
+    private function buildNextAvailableAatCode(int $universityId, int &$nextAatNumber): string
+    {
+        do {
+            $candidate = 'AAT' . str_pad((string) $nextAatNumber, 3, '0', STR_PAD_LEFT);
+            $nextAatNumber++;
+
+            $exists = DB::table('acquis_apprentissage_terminaux')
+                ->where('university_id', $universityId)
+                ->where('code', $candidate)
+                ->exists();
+        } while ($exists);
+
+        return $candidate;
+    }
 
     public function getUE(Request $request)
     {
