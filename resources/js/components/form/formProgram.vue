@@ -813,6 +813,13 @@ export default {
                 (aat) => aat.temp_id !== tempId,
             );
         },
+        normalizeAATLevel(value) {
+            const level = Number(value);
+            if (!Number.isFinite(level)) {
+                return 3;
+            }
+            return Math.min(10, Math.max(3, Math.trunc(level)));
+        },
         openSourceProgramModal() {
             this.formErrors = null;
             this.showModalSourceProgram = true;
@@ -861,7 +868,9 @@ export default {
                     code: "",
                     name: (item.name || "").trim(),
                     description: (item.description || "").trim(),
-                    level_contribution: Number(item.level_contribution) || 3,
+                    level_contribution: this.normalizeAATLevel(
+                        item.level_contribution,
+                    ),
                     origin: "copy",
                     source_program_id: sourceProgramId,
                     source_program_code: sourceProgramCode,
@@ -904,7 +913,9 @@ export default {
                     code: (draft.code || "").trim() || null,
                     name: (draft.name || "").trim(),
                     description: (draft.description || "").trim() || null,
-                    level_contribution: Number(draft.level_contribution) || 3,
+                    level_contribution: this.normalizeAATLevel(
+                        draft.level_contribution,
+                    ),
                     fk_programme: id,
                 };
 
@@ -1003,10 +1014,16 @@ export default {
                         .slice(0, 3)
                         .map((row) => row.label)
                         .join(", ");
+                    const failedReasons = aatSyncResult.failed
+                        .slice(0, 2)
+                        .map((row) => row.message)
+                        .filter((msg) => typeof msg === "string" && msg.trim() !== "")
+                        .join(" | ");
 
                     this.formErrors =
                         `Le programme est enregistre mais ${aatSyncResult.failed.length} AAT n'ont pas pu etre crees.` +
-                        (failedLabels ? ` Exemples: ${failedLabels}.` : "");
+                        (failedLabels ? ` Exemples: ${failedLabels}.` : "") +
+                        (failedReasons ? ` Détails: ${failedReasons}.` : "");
                     return;
                 }
 
@@ -1029,8 +1046,6 @@ export default {
     },
 };
 </script>
-
-
 
 
 

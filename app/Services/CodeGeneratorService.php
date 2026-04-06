@@ -8,12 +8,9 @@ use Illuminate\Support\Facades\Auth;
 class CodeGeneratorService
 {
     /**
-     * Génère un code du type PREFIX + 3 digits (ex: AAV001)
+     * Generate a code of the form PREFIX + numeric suffix (e.g. AAV001).
      *
-     * @param class-string<Model> $modelClass  Ex: AcquisApprentissageVise::class
-     * @param string $prefix                  Ex: 'AAV', 'AAT', 'PRE', 'PRO'
-     * @param int $pad                        Ex: 3 => 001
-     * @param bool $scopedByUniversity        true => filtre university_id
+     * @param class-string<Model> $modelClass
      */
     public function generate(
         string $modelClass,
@@ -31,27 +28,50 @@ class CodeGeneratorService
             }
         }
 
-        // Trie par longueur puis par valeur pour éviter les effets de tri lexicographique
-        $last = $query->orderByRaw('LENGTH(code) DESC')
-            ->orderBy('code', 'desc')
-            ->first();
+        $codes = $query->pluck('code');
+        $strictPrefixPattern = '/^' . preg_quote($prefix, '/') . '(\\d+)$/';
 
-        $nextNumber = 1;
+        $maxSuffix = 0;
+        foreach ($codes as $code) {
+            if (!is_string($code)) {
+                continue;
+            }
 
-        if ($last && is_string($last->code)) {
-            $suffix = substr($last->code, strlen($prefix)); // ex: "012"
-            $n = (int) preg_replace('/\D/', '', $suffix);   // garde que les chiffres
-            $nextNumber = $n + 1;
+            if (!preg_match($strictPrefixPattern, $code, $matches)) {
+                continue;
+            }
+
+            $suffix = (int) ($matches[1] ?? 0);
+            if ($suffix > $maxSuffix) {
+                $maxSuffix = $suffix;
+            }
         }
 
-        return $prefix . str_pad((string) $nextNumber, $pad, '0', STR_PAD_LEFT);
+        $nextNumber = $maxSuffix + 1;
+
+        do {
+            $candidate = $prefix . str_pad((string) $nextNumber, $pad, '0', STR_PAD_LEFT);
+            $nextNumber++;
+
+            $exists = $modelClass::query()
+                ->when($scopedByUniversity, function ($query) {
+                    $universityId = Auth::user()?->university_id;
+                    if ($universityId) {
+                        $query->where('university_id', $universityId);
+                    }
+                })
+                ->where('code', $candidate)
+                ->exists();
+        } while ($exists);
+
+        return $candidate;
     }
 
-    // Helpers dédiés (plus lisibles dans ton storeUE)
     public function nextAAV(): string
     {
         return $this->generate(\App\Models\AcquisApprentissageVise::class, 'AAV', 3, true);
     }
+
     public function nextUE(): string
     {
         return $this->generate(\App\Models\UniteEnseignement::class, 'UE', 3, true);
@@ -64,7 +84,6 @@ class CodeGeneratorService
 
     public function nextPrerequis(): string
     {
-        // si tes prérequis sont aussi dans AcquisApprentissageVise:
         return $this->generate(\App\Models\AcquisApprentissageVise::class, 'PRE', 3, true);
     }
 
