@@ -23,6 +23,7 @@
                     <i
                         style="font-size: 24px"
                         class="fa-regular fa-trash-can mr-2 deleteBtn"
+                        title="supprimer"
                         @click="openModalDelete = true"
                     ></i>
                     <router-link
@@ -34,12 +35,14 @@
                         <i
                             style="font-size: 28px"
                             class="fa-regular fa-pen-to-square primary_color"
+                            title="éditer"
                         ></i>
                     </router-link>
                     <i
                         @click="exportAAT(aat.id)"
                         style="font-size: 28px"
                         class="fa-solid ml-2 fa-download green_color cursor_pointer"
+                        title="télécharger"
                     ></i>
                 </span>
             </div>
