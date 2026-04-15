@@ -92,6 +92,9 @@ class ImportController extends Controller
                         ], 422);
                     }
                 }
+                $configuredProgrammeLinks = ($config['type'] ?? null) === 'UE'
+                    ? $this->extractSelectedProgrammeLinksFromConfig($config)
+                    : [];
 
                 $stored = [];
                 $errors = [];
@@ -132,7 +135,9 @@ class ImportController extends Controller
                                         'description' => $data['description'] ?? null,
                                         'ects' => isset($data['ects']) ? (int) $data['ects'] : null,
                                     ],
-                                    'links' => [],
+                                    'links' => [
+                                        'programmes' => $configuredProgrammeLinks,
+                                    ],
                                 ];
                                 [$storedItem, $itemWarnings] = $this->normalizeStoreResult($this->storeUE($payload));
                                 $stored[] = $storedItem;
@@ -227,60 +232,14 @@ class ImportController extends Controller
                     $data['main']['fk_programme'] = $selectedAATProgrammeId;
                 }
 
-                if (($config['type'] ?? null) === 'UE' && !empty($config['selectedProgrammeLink']) && is_array($config['selectedProgrammeLink'])) {
-                    $selectedProgramme = $config['selectedProgrammeLink'];
-                    $selectedCode = trim((string) ($selectedProgramme['code'] ?? ''));
-                    $selectedLabel = trim((string) ($selectedProgramme['name'] ?? $selectedProgramme['libelle'] ?? ''));
-                    $selectedSemesters = [];
-
-                    if (!empty($selectedProgramme['semesters']) && is_array($selectedProgramme['semesters'])) {
-                        foreach ($selectedProgramme['semesters'] as $sem) {
-                            if (is_numeric($sem)) {
-                                $semValue = (int) $sem;
-                                if ($semValue > 0) {
-                                    $selectedSemesters[] = $semValue;
-                                }
-                            }
-                        }
-                    } elseif (isset($selectedProgramme['semester']) && is_numeric($selectedProgramme['semester'])) {
-                        $semValue = (int) $selectedProgramme['semester'];
-                        if ($semValue > 0) {
-                            $selectedSemesters[] = $semValue;
-                        }
-                    }
-
-                    $selectedSemesters = array_values(array_unique($selectedSemesters));
-
-                    if (!empty($selectedSemesters) && ($selectedCode !== '' || $selectedLabel !== '')) {
-                        $data['links']['programmes'] = $data['links']['programmes'] ?? [];
-
-                        foreach ($selectedSemesters as $selectedSemester) {
-                            $alreadyExists = false;
-                            foreach ($data['links']['programmes'] as $programme) {
-                                $programmeCode = trim((string) ($programme['code'] ?? ''));
-                                $programmeLabel = trim((string) ($programme['libelle'] ?? ''));
-                                $programmeSemester = isset($programme['semestre']) && is_numeric($programme['semestre'])
-                                    ? (int) $programme['semestre']
-                                    : null;
-
-                                if (
-                                    $programmeSemester === $selectedSemester &&
-                                    $programmeCode === $selectedCode &&
-                                    $programmeLabel === $selectedLabel
-                                ) {
-                                    $alreadyExists = true;
-                                    break;
-                                }
-                            }
-
-                            if (!$alreadyExists) {
-                                $data['links']['programmes'][] = [
-                                    'code' => $selectedCode !== '' ? $selectedCode : null,
-                                    'libelle' => $selectedLabel !== '' ? $selectedLabel : null,
-                                    'semestre' => $selectedSemester,
-                                ];
-                            }
-                        }
+                if (($config['type'] ?? null) === 'UE') {
+                    $configuredProgrammeLinks = $this->extractSelectedProgrammeLinksFromConfig($config);
+                    if (!empty($configuredProgrammeLinks)) {
+                        $existingProgrammeLinks = $data['links']['programmes'] ?? [];
+                        $data['links']['programmes'] = $this->mergeProgrammeLinks(
+                            $existingProgrammeLinks,
+                            $configuredProgrammeLinks
+                        );
                     }
                 }
 
@@ -338,6 +297,113 @@ class ImportController extends Controller
         }
 
         return [$result, []];
+    }
+
+    private function extractSelectedProgrammeLinksFromConfig(array $config): array
+    {
+        $selectedProgrammes = [];
+        if (!empty($config['selectedProgrammeLinks']) && is_array($config['selectedProgrammeLinks'])) {
+            $selectedProgrammes = $config['selectedProgrammeLinks'];
+        } elseif (!empty($config['selectedProgrammeLink']) && is_array($config['selectedProgrammeLink'])) {
+            $selectedProgrammes = [$config['selectedProgrammeLink']];
+        }
+
+        $links = [];
+        $seen = [];
+
+        foreach ($selectedProgrammes as $selectedProgramme) {
+            if (!is_array($selectedProgramme)) {
+                continue;
+            }
+
+            $selectedCode = trim((string) ($selectedProgramme['code'] ?? ''));
+            $selectedLabel = trim((string) ($selectedProgramme['name'] ?? $selectedProgramme['libelle'] ?? ''));
+            $selectedSemesters = [];
+
+            if (!empty($selectedProgramme['semesters']) && is_array($selectedProgramme['semesters'])) {
+                foreach ($selectedProgramme['semesters'] as $sem) {
+                    if (is_numeric($sem)) {
+                        $semValue = (int) $sem;
+                        if ($semValue > 0) {
+                            $selectedSemesters[] = $semValue;
+                        }
+                    }
+                }
+            } elseif (isset($selectedProgramme['semester']) && is_numeric($selectedProgramme['semester'])) {
+                $semValue = (int) $selectedProgramme['semester'];
+                if ($semValue > 0) {
+                    $selectedSemesters[] = $semValue;
+                }
+            }
+
+            $selectedSemesters = array_values(array_unique($selectedSemesters));
+
+            if (empty($selectedSemesters) || ($selectedCode === '' && $selectedLabel === '')) {
+                continue;
+            }
+
+            foreach ($selectedSemesters as $selectedSemester) {
+                $dedupeKey = $selectedCode . '|' . $selectedLabel . '|' . $selectedSemester;
+                if (isset($seen[$dedupeKey])) {
+                    continue;
+                }
+
+                $seen[$dedupeKey] = true;
+                $links[] = [
+                    'code' => $selectedCode !== '' ? $selectedCode : null,
+                    'libelle' => $selectedLabel !== '' ? $selectedLabel : null,
+                    'semestre' => $selectedSemester,
+                ];
+            }
+        }
+
+        return $links;
+    }
+
+    private function mergeProgrammeLinks(array $existingProgrammeLinks, array $selectedProgrammeLinks): array
+    {
+        $merged = [];
+        $seen = [];
+
+        $pushLink = function ($programme) use (&$merged, &$seen) {
+            if (!is_array($programme)) {
+                return;
+            }
+
+            $programmeCode = trim((string) ($programme['code'] ?? ''));
+            $programmeLabel = trim((string) ($programme['libelle'] ?? $programme['name'] ?? ''));
+            $programmeSemester = isset($programme['semestre']) && is_numeric($programme['semestre'])
+                ? (int) $programme['semestre']
+                : null;
+
+            if ($programmeSemester === null || $programmeSemester < 1) {
+                return;
+            }
+            if ($programmeCode === '' && $programmeLabel === '') {
+                return;
+            }
+
+            $dedupeKey = $programmeCode . '|' . $programmeLabel . '|' . $programmeSemester;
+            if (isset($seen[$dedupeKey])) {
+                return;
+            }
+
+            $seen[$dedupeKey] = true;
+            $merged[] = [
+                'code' => $programmeCode !== '' ? $programmeCode : null,
+                'libelle' => $programmeLabel !== '' ? $programmeLabel : null,
+                'semestre' => $programmeSemester,
+            ];
+        };
+
+        foreach ($existingProgrammeLinks as $programme) {
+            $pushLink($programme);
+        }
+        foreach ($selectedProgrammeLinks as $programme) {
+            $pushLink($programme);
+        }
+
+        return $merged;
     }
 
     public function storeUE(array $values)

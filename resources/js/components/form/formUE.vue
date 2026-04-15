@@ -869,6 +869,7 @@ export default {
         },
         async submitFormUE() {
             try {
+                this.formErrors = null;
                 const normalizedPro = (this.ue.pro || []).map((pro) => {
                     const semesterRaw = pro?.semester;
                     const semesterNumber =
@@ -887,6 +888,18 @@ export default {
                                 : null,
                     };
                 });
+
+                const hasAtLeastOneProgramme = normalizedPro.some((pro) => {
+                    const programId = Number(pro?.id);
+                    return Number.isInteger(programId) && programId > 0;
+                });
+
+                if (!hasAtLeastOneProgramme) {
+                    this.formErrors =
+                        "Au moins un programme est obligatoire pour enregistrer une UE.";
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    return;
+                }
 
                 if (this.id) {
                     const response = await axios.put("/ue/update", {

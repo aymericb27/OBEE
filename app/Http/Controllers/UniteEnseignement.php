@@ -36,14 +36,19 @@ class UniteEnseignement extends Controller
             'ueprerequis.*.id' => ['integer', 'exists:unite_enseignement,id'],
             'aavvise' => ['array'],
             'aavvise.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
-            'pro' => ['array'],
-            'pro.*.id' => ['nullable', 'integer', 'exists:programme,id'],
+            'pro' => ['required', 'array', 'min:1'],
+            'pro.*.id' => ['required', 'integer', 'exists:programme,id'],
             'pro.*.semester' => ['nullable', 'integer', 'min:1'],
             'aat' => ['array'],
             'aat.*.id' => ['nullable', 'integer', 'exists:acquis_apprentissage_terminaux,id'],
             'aat.*.contribution' => ['nullable', 'integer', 'min:1', 'max:3'],
             'ueParentID' => ["nullable", 'integer', 'exists:unite_enseignement,id'],
             'ueParentContribution' => ["nullable", 'integer', 'min:1', 'max:3']
+        ], [
+            'pro.required' => "Au moins un programme est obligatoire pour créer une UE.",
+            'pro.array' => "La liste des programmes est invalide.",
+            'pro.min' => "Au moins un programme est obligatoire pour créer une UE.",
+            'pro.*.id.required' => "Chaque programme sélectionné doit avoir un identifiant valide.",
         ]);
 
         // ✅ si vide => générer
@@ -196,14 +201,19 @@ class UniteEnseignement extends Controller
             'ueprerequis.*.id' => ['integer', 'exists:unite_enseignement,id'],
             'aavvise' => ['array'],
             'aavvise.*.id' => ['integer', 'exists:acquis_apprentissage_vise,id'],
-            'pro' => ['array'],
-            'pro.*.id' => ['integer', 'exists:programme,id'],
+            'pro' => ['required', 'array', 'min:1'],
+            'pro.*.id' => ['required', 'integer', 'exists:programme,id'],
             'pro.*.semester' => ['nullable', 'integer', 'min:1'],
             'aat' => ['array'],
             'aat.*.id' => ['nullable', 'integer', 'exists:acquis_apprentissage_terminaux,id'],
             'aat.*.contribution' => ['nullable', 'integer', 'min:1', 'max:3'],
             'ueParentID' => ["nullable", 'integer', 'exists:unite_enseignement,id'],
             'ueParentContribution' => ["nullable", 'integer', 'min:1', 'max:3']
+        ], [
+            'pro.required' => "Au moins un programme est obligatoire pour modifier une UE.",
+            'pro.array' => "La liste des programmes est invalide.",
+            'pro.min' => "Au moins un programme est obligatoire pour modifier une UE.",
+            'pro.*.id.required' => "Chaque programme sélectionné doit avoir un identifiant valide.",
         ]);
 
         // ✅ Récupération de l’UE

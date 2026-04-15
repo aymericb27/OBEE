@@ -91,6 +91,66 @@
                     {{ selectedAATProgramme.name || "-" }}
                 </div>
             </div>
+            <div v-if="canChooseProgrammeSemester" class="listComponent mb-4">
+                <div class="mb-2">
+                    <h5 class="d-inline-block mb-0 primary_color">
+                        Liste des programmes qui comportent cette UE
+                        <button
+                            type="button"
+                            class="btn btn-primary ml-2 mb-2"
+                            @click="openProgramModal"
+                        >
+                            ajouter un programme
+                        </button>
+                    </h5>
+                </div>
+
+                <div class="row border-bottom">
+                    <div class="col-md-1 p-2"></div>
+                    <div class="col-md-2 p-2">Code</div>
+                    <div class="col-md-6 p-2">Libellé</div>
+                    <div class="col-md-3 p-2">Semestres</div>
+                </div>
+
+                <div
+                    v-if="!selectedProgrammeLinks.length"
+                    class="p-2 text-center"
+                >
+                    aucune donnée à afficher
+                </div>
+                <div
+                    v-else
+                    v-for="(pro, index) in selectedProgrammeLinks"
+                    :key="pro.id"
+                    class="row"
+                    :class="[index % 2 === 0 ? 'bg-light' : 'bg-white']"
+                >
+                    <div class="col-md-1 text-right p-2">
+                        <i
+                            @click="removeSelectedProgramme(pro.id)"
+                            class="text-danger fa fa-close pr-0"
+                            style="cursor: pointer"
+                        ></i>
+                    </div>
+                    <div class="col-md-2 p-2 PRO">{{ pro.code || "-" }}</div>
+                    <div class="col-md-6 p-2">{{ pro.name || "-" }}</div>
+                    <div class="col-md-3 p-2">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary mb-1"
+                            @click="openSemesterModalForProgram(pro.id)"
+                        >
+                            choisir
+                        </button>
+                        <div v-if="pro.semesters.length" class="small text-muted">
+                            S{{ pro.semesters.join(", S") }}
+                        </div>
+                        <div v-else class="small text-muted">
+                            Aucun semestre
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- SECTION : Upload du fichier -->
             <!-- SECTION : Upload du fichier (Drag & Drop) -->
@@ -203,22 +263,6 @@
                 class="mt-4"
             >
                 <h5 v-if="config.type == 'UE'">Unité d'enseignement</h5>
-                <div v-if="canChooseProgrammeSemester" class="mb-3">
-                    <button
-                        type="button"
-                        class="primary_color btn btn-link p-0 text-decoration-underline"
-                        @click="openProgramModal"
-                    >
-                        choisir un semestre parmis les programmes
-                    </button>
-
-                    <div v-if="selectedProgrammeLink" class="mt-2">
-                        <h5 class="d-inline-block">Programme</h5>
-                        : {{ selectedProgrammeLink.code }} -
-                        {{ selectedProgrammeLink.name }} | Semestres
-                        {{ selectedProgrammeLink.semesters.join(", ") }}
-                    </div>
-                </div>
 
                 <div
                     class="row mb-2"
@@ -293,9 +337,16 @@
         type="PRO"
         v-if="showProgramModal"
         :visible="showProgramModal"
-        :singleSelect="true"
+        :singleSelect="canChooseAATProgramme"
+        :listToExclude="
+            canChooseProgrammeSemester ? selectedProgrammeLinks : []
+        "
         routeGET="/pro/get"
-        title="Choisir un programme"
+        :title="
+            canChooseAATProgramme
+                ? 'Choisir un programme'
+                : 'Choisir des programmes'
+        "
         @selected="handleProgramSelected"
         @close="showProgramModal = false"
     />
@@ -312,7 +363,12 @@
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Choisir un semestre</h5>
+                    <h5 class="modal-title">
+                        Choisir un semestre
+                        <span v-if="activeSemesterProgramName">
+                            - {{ activeSemesterProgramName }}
+                        </span>
+                    </h5>
                 </div>
 
                 <div class="modal-body">
@@ -322,21 +378,21 @@
 
                     <div
                         v-for="sem in availableSemesters"
-                        :key="sem.semester"
+                        :key="sem"
                         class="form-check mb-3"
                     >
                         <input
-                            :id="`semester-${sem.semester}`"
+                            :id="`semester-${activeSemesterProgramId}-${sem}`"
                             v-model="selectedSemesters"
                             class="form-check-input"
                             type="checkbox"
-                            :value="sem.semester"
+                            :value="sem"
                         />
                         <label
                             class="form-check-label mt-0"
-                            :for="`semester-${sem.semester}`"
+                            :for="`semester-${activeSemesterProgramId}-${sem}`"
                         >
-                            Semestre {{ sem.semester }}
+                            Semestre {{ sem }}
                         </label>
                     </div>
                 </div>
@@ -440,7 +496,8 @@ export default {
             isHydrating: true,
             showProgramModal: false,
             showSemesterModal: false,
-            selectedProgramDraft: null,
+            activeSemesterProgramId: null,
+            activeSemesterProgramName: "",
             selectedSemesters: [],
             availableSemesters: [],
 
@@ -449,7 +506,7 @@ export default {
             editTarget: null,
             missingUELinksMessage: "",
             importWarnings: [],
-            selectedProgrammeLink: null,
+            selectedProgrammeLinks: [],
             selectedAATProgramme: null,
             isLoading: false,
             excelFile: null,
@@ -507,6 +564,9 @@ export default {
     },
 
     computed: {
+        currentProgram() {
+            return currentProgramState;
+        },
         relatedBlocks() {
             return [
                 {
@@ -641,9 +701,7 @@ export default {
             return [];
         },
         canChooseProgrammeSemester() {
-            return (
-                this.config.importMode === "single" && this.config.type === "UE"
-            );
+            return this.config.type === "UE";
         },
         canChooseAATProgramme() {
             return this.config.type === "AAT";
@@ -660,13 +718,25 @@ export default {
             if (newType !== "UE") {
                 this.resetProgrammeSemesterSelection();
             }
+            if (newType === "UE") {
+                this.ensureDefaultUEProgrammeFromCurrent();
+            }
             if (newType === "AAT") {
                 this.ensureDefaultAATProgrammeFromCurrent();
             }
         },
         "config.importMode"(newMode) {
-            if (newMode !== "single") {
-                this.resetProgrammeSemesterSelection();
+            if (newMode === "single" && this.config.type === "UE") {
+                this.ensureDefaultUEProgrammeFromCurrent();
+            }
+        },
+        "currentProgram.id"(newId, oldId) {
+            if (newId === oldId) return;
+            if (this.canChooseProgrammeSemester) {
+                this.ensureDefaultUEProgrammeFromCurrent(true);
+            }
+            if (this.canChooseAATProgramme) {
+                this.ensureDefaultAATProgrammeFromCurrent(true);
             }
         },
     },
@@ -702,6 +772,7 @@ export default {
         }
 
         this.isHydrating = false;
+        this.ensureDefaultUEProgrammeFromCurrent();
         this.ensureDefaultAATProgrammeFromCurrent();
     },
 
@@ -913,6 +984,145 @@ export default {
                 return;
             this.showProgramModal = true;
         },
+        normalizeSemesterValues(rawValues) {
+            const source = Array.isArray(rawValues) ? rawValues : [];
+            const normalized = [];
+
+            for (const value of source) {
+                const raw =
+                    typeof value === "object" && value !== null
+                        ? value.semester
+                        : value;
+                const semester = Number(raw);
+                if (
+                    Number.isInteger(semester) &&
+                    semester > 0 &&
+                    !normalized.includes(semester)
+                ) {
+                    normalized.push(semester);
+                }
+            }
+
+            return normalized.sort((a, b) => a - b);
+        },
+        async getProgrammeSemesterNumbers(programId) {
+            try {
+                const response = await axios.get("/pro/get/detailed", {
+                    params: { id: programId },
+                });
+                return this.normalizeSemesterValues(response.data?.semester);
+            } catch (error) {
+                return [];
+            }
+        },
+        async ensureDefaultUEProgrammeFromCurrent(force = false) {
+            if (!this.canChooseProgrammeSemester) return;
+
+            const currentId = Number(this.currentProgram?.id);
+            if (!Number.isInteger(currentId) || currentId <= 0) return;
+
+            const existingIndex = this.selectedProgrammeLinks.findIndex(
+                (item) => Number(item?.id) === currentId,
+            );
+
+            if (!force && existingIndex >= 0) return;
+
+            const fallbackProgramme = {
+                id: currentId,
+                code: String(this.currentProgram?.code || "").trim(),
+                name: String(this.currentProgram?.name || "").trim(),
+            };
+
+            if (!fallbackProgramme.code && !fallbackProgramme.name) {
+                try {
+                    const response = await axios.get("/pro/get/detailed", {
+                        params: { id: currentId },
+                    });
+                    fallbackProgramme.code = String(
+                        response.data?.code || "",
+                    ).trim();
+                    fallbackProgramme.name = String(
+                        response.data?.name || "",
+                    ).trim();
+                } catch (error) {}
+            }
+
+            const availableSemesters =
+                await this.getProgrammeSemesterNumbers(currentId);
+            const existingProgramme =
+                existingIndex >= 0 ? this.selectedProgrammeLinks[existingIndex] : null;
+
+            const nextProgramme = {
+                id: currentId,
+                code:
+                    fallbackProgramme.code ||
+                    String(existingProgramme?.code || "").trim(),
+                name:
+                    fallbackProgramme.name ||
+                    String(existingProgramme?.name || "").trim(),
+                semesters: this.normalizeSemesterValues(
+                    existingProgramme?.semesters,
+                ).filter((semester) => availableSemesters.includes(semester)),
+                availableSemesters,
+            };
+
+            const others = this.selectedProgrammeLinks.filter(
+                (item) => Number(item?.id) !== currentId,
+            );
+            this.selectedProgrammeLinks = [nextProgramme, ...others];
+        },
+        async ensureProgrammeSemesterOptions(programId) {
+            const targetIndex = this.selectedProgrammeLinks.findIndex(
+                (item) => Number(item?.id) === Number(programId),
+            );
+            if (targetIndex < 0) return [];
+
+            const current = this.selectedProgrammeLinks[targetIndex];
+            const semesters =
+                current?.availableSemesters?.length > 0
+                    ? this.normalizeSemesterValues(current.availableSemesters)
+                    : await this.getProgrammeSemesterNumbers(programId);
+
+            this.selectedProgrammeLinks.splice(targetIndex, 1, {
+                ...current,
+                availableSemesters: semesters,
+                semesters: this.normalizeSemesterValues(current?.semesters).filter(
+                    (semester) => semesters.includes(semester),
+                ),
+            });
+
+            return semesters;
+        },
+        removeSelectedProgramme(programId) {
+            const id = Number(programId);
+            this.selectedProgrammeLinks = this.selectedProgrammeLinks.filter(
+                (item) => Number(item?.id) !== id,
+            );
+            if (this.activeSemesterProgramId === id) {
+                this.closeSemesterModal();
+            }
+        },
+        async openSemesterModalForProgram(programId) {
+            const id = Number(programId);
+            if (!Number.isInteger(id) || id <= 0) return;
+
+            const semesters = await this.ensureProgrammeSemesterOptions(id);
+            const programme = this.selectedProgrammeLinks.find(
+                (item) => Number(item?.id) === id,
+            );
+
+            if (!programme) return;
+
+            this.activeSemesterProgramId = id;
+            this.activeSemesterProgramName = [programme.code, programme.name]
+                .filter(Boolean)
+                .join(" - ");
+            this.availableSemesters = semesters;
+            this.selectedSemesters = this.normalizeSemesterValues(
+                programme.semesters,
+            ).filter((semester) => semesters.includes(semester));
+            this.showSemesterModal = true;
+        },
         async ensureDefaultAATProgrammeFromCurrent(force = false) {
             if (!this.canChooseAATProgramme) return;
 
@@ -946,15 +1156,18 @@ export default {
             }
         },
         async handleProgramSelected(selectedItems) {
-            if (!Array.isArray(selectedItems) || selectedItems.length !== 1) {
-                this.errors = ["Veuillez sélectionner un seul programme."];
-                return;
-            }
-
-            const program = selectedItems[0];
-            if (!program?.id) return;
-
             if (this.canChooseAATProgramme) {
+                if (
+                    !Array.isArray(selectedItems) ||
+                    selectedItems.length !== 1
+                ) {
+                    this.errors = ["Veuillez sélectionner un seul programme."];
+                    return;
+                }
+
+                const program = selectedItems[0];
+                if (!program?.id) return;
+
                 this.selectedAATProgramme = {
                     id: Number(program.id),
                     code: String(program.code || "").trim(),
@@ -964,65 +1177,118 @@ export default {
                 return;
             }
 
-            this.showProgramModal = false;
-            this.selectedProgramDraft = program;
-            this.selectedSemesters = [];
-            this.availableSemesters = [];
-
-            try {
-                const response = await axios.get("/pro/get/detailed", {
-                    params: { id: program.id },
-                });
-                const semesters = Array.isArray(response.data?.semester)
-                    ? response.data.semester
-                    : [];
-
-                this.availableSemesters = semesters;
-                this.showSemesterModal = true;
-            } catch (error) {
-                this.errors = [
-                    "Impossible de charger les semestres du programme sélectionné.",
-                ];
-                this.selectedProgramDraft = null;
-            }
-        },
-        confirmSemesterSelection() {
-            if (
-                !this.selectedProgramDraft ||
-                !Array.isArray(this.selectedSemesters) ||
-                !this.selectedSemesters.length
-            ) {
+            if (!this.canChooseProgrammeSemester) {
+                this.showProgramModal = false;
                 return;
             }
 
-            this.selectedProgrammeLink = {
-                id: this.selectedProgramDraft.id,
-                code: this.selectedProgramDraft.code,
-                name: this.selectedProgramDraft.name,
-                semesters: this.selectedSemesters
-                    .map((s) => Number(s))
-                    .filter((s) => Number.isInteger(s) && s > 0)
-                    .sort((a, b) => a - b),
-            };
+            this.showProgramModal = false;
+            if (!Array.isArray(selectedItems) || !selectedItems.length) {
+                return;
+            }
 
-            this.showSemesterModal = false;
-            this.selectedProgramDraft = null;
-            this.selectedSemesters = [];
-            this.availableSemesters = [];
+            this.errors = [];
+
+            const existingById = new Map(
+                this.selectedProgrammeLinks.map((item) => [
+                    Number(item?.id),
+                    item,
+                ]),
+            );
+
+            const programs = await Promise.all(
+                selectedItems.map(async (program) => {
+                    const programId = Number(program?.id);
+                    if (!Number.isInteger(programId) || programId <= 0) {
+                        return null;
+                    }
+
+                    const semesterOptions =
+                        await this.getProgrammeSemesterNumbers(programId);
+                    const existing = existingById.get(programId);
+
+                    return {
+                        id: programId,
+                        code: String(
+                            program?.code || existing?.code || "",
+                        ).trim(),
+                        name: String(
+                            program?.name || existing?.name || "",
+                        ).trim(),
+                        semesters: this.normalizeSemesterValues(
+                            existing?.semesters,
+                        ).filter((semester) =>
+                            semesterOptions.includes(semester),
+                        ),
+                        availableSemesters: semesterOptions,
+                    };
+                }),
+            );
+
+            const selectedPrograms = programs.filter(Boolean);
+            if (!selectedPrograms.length) {
+                return;
+            }
+
+            const existing = [...this.selectedProgrammeLinks];
+            for (const selectedProgramme of selectedPrograms) {
+                const index = existing.findIndex(
+                    (item) => Number(item?.id) === Number(selectedProgramme.id),
+                );
+                if (index >= 0) {
+                    existing.splice(index, 1, {
+                        ...existing[index],
+                        ...selectedProgramme,
+                    });
+                } else {
+                    existing.push(selectedProgramme);
+                }
+            }
+
+            this.selectedProgrammeLinks = existing;
+
+            if (selectedPrograms.length === 1) {
+                await this.openSemesterModalForProgram(selectedPrograms[0].id);
+            }
+        },
+        confirmSemesterSelection() {
+            if (!this.activeSemesterProgramId) {
+                return;
+            }
+
+            const selected = this.normalizeSemesterValues(
+                this.selectedSemesters,
+            ).filter((semester) => this.availableSemesters.includes(semester));
+
+            this.selectedProgrammeLinks = this.selectedProgrammeLinks.map(
+                (programme) => {
+                    if (
+                        Number(programme?.id) !==
+                        Number(this.activeSemesterProgramId)
+                    ) {
+                        return programme;
+                    }
+
+                    return {
+                        ...programme,
+                        semesters: selected,
+                    };
+                },
+            );
+
+            this.closeSemesterModal();
         },
         closeSemesterModal() {
             this.showSemesterModal = false;
-            this.selectedProgramDraft = null;
+            this.activeSemesterProgramId = null;
+            this.activeSemesterProgramName = "";
             this.selectedSemesters = [];
             this.availableSemesters = [];
         },
         resetProgrammeSemesterSelection() {
             this.showProgramModal = false;
-            this.showSemesterModal = false;
-            this.selectedProgramDraft = null;
-            this.selectedSemesters = [];
-            this.availableSemesters = [];
-            this.selectedProgrammeLink = null;
+            this.closeSemesterModal();
+            this.selectedProgrammeLinks = [];
         },
 
         async sendImport() {
@@ -1043,13 +1309,20 @@ export default {
             form.append("file", this.excelFile);
 
             const payloadConfig = JSON.parse(JSON.stringify(this.config));
-            if (this.canChooseProgrammeSemester && this.selectedProgrammeLink) {
-                payloadConfig.selectedProgrammeLink = {
-                    id: this.selectedProgrammeLink.id,
-                    code: this.selectedProgrammeLink.code,
-                    name: this.selectedProgrammeLink.name,
-                    semesters: this.selectedProgrammeLink.semesters,
-                };
+            if (
+                this.canChooseProgrammeSemester &&
+                this.selectedProgrammeLinks.length
+            ) {
+                payloadConfig.selectedProgrammeLinks = this.selectedProgrammeLinks
+                    .map((programme) => ({
+                        id: Number(programme.id),
+                        code: String(programme.code || "").trim(),
+                        name: String(programme.name || "").trim(),
+                        semesters: this.normalizeSemesterValues(
+                            programme.semesters,
+                        ),
+                    }))
+                    .filter((programme) => programme.semesters.length > 0);
             }
             if (this.canChooseAATProgramme && this.selectedAATProgramme) {
                 payloadConfig.selectedAATProgramme = {
@@ -1201,6 +1474,29 @@ export default {
             const type = this.config.type;
             const mode = this.config.importMode;
             const selectedAATProgrammeId = Number(this.selectedAATProgramme?.id);
+            const selectedProgrammeCount = this.selectedProgrammeLinks.length;
+            const selectedSemesterCount = this.selectedProgrammeLinks.reduce(
+                (count, programme) =>
+                    count +
+                    this.normalizeSemesterValues(programme?.semesters).length,
+                0,
+            );
+
+            if (type === "UE") {
+                if (selectedProgrammeCount < 1) {
+                    this.errors = [
+                        "Au moins un programme doit être sélectionné pour l'import d'une UE.",
+                    ];
+                    return false;
+                }
+
+                if (selectedSemesterCount < 1) {
+                    this.errors = [
+                        "Au moins un semestre doit être sélectionné pour l'import d'une UE.",
+                    ];
+                    return false;
+                }
+            }
 
             if (
                 type === "AAT" &&
