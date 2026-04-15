@@ -77,6 +77,25 @@
                 />
             </div>
             <div class="listComponent mb-4">
+                <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('aats')">
+                    <h5 class="d-inline-block primary_color">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        Liste des acquis d'apprentissage terminaux
+                    </h5>
+                    <i class="fa-solid primary_color" :class="isExpanded('aats') ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                </div>
+                <list
+                    :isBorder="true"
+                    v-if="pro.id"
+                    v-show="isExpanded('aats')"
+                    routeGET="/aat/get"
+                    :paramsRouteGET="{ program_id: pro.id }"
+                    linkDetailed="aat-detail"
+                    typeList="AAT"
+                    :listColonne="['code', 'name']"
+                />
+            </div>
+            <div class="listComponent mb-4">
                 <div class="mb-2 d-flex justify-content-between align-items-center cursor_pointer" @click="toggleSection('prerequis')">
                     <h5 class="d-inline-block primary_color">
                         <i class="fa-solid fa-key"></i>
@@ -127,6 +146,7 @@ export default {
             openModalDelete: false,
             expandedSections: {
                 ues: true,
+                aats: true,
                 prerequis: true,
             },
             pro: {
