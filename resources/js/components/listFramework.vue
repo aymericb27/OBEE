@@ -146,6 +146,8 @@ import axios from "axios";
 import list from "./list.vue";
 import modalExport from "./modalExport.vue";
 import { currentProgramState } from "../stores/currentProgram";
+const DISPLAY_ELEMENT_STORAGE_KEY = "listFramework.displayElement";
+const ALLOWED_DISPLAY_ELEMENTS = ["UE", "AAT", "AAV", "PRE", "PREPRO", "PRO"];
 export default {
     computed: {
         currentProgram() {
@@ -184,6 +186,33 @@ export default {
         modalExport,
     },
     methods: {
+        getSavedDisplayElement() {
+            try {
+                const savedElement = sessionStorage.getItem(
+                    DISPLAY_ELEMENT_STORAGE_KEY,
+                );
+                if (ALLOWED_DISPLAY_ELEMENTS.includes(savedElement)) {
+                    return savedElement;
+                }
+            } catch (error) {
+                console.warn(
+                    "Impossible de lire la liste sélectionnée depuis la session.",
+                    error,
+                );
+            }
+
+            return "UE";
+        },
+        persistDisplayElement(element) {
+            try {
+                sessionStorage.setItem(DISPLAY_ELEMENT_STORAGE_KEY, element);
+            } catch (error) {
+                console.warn(
+                    "Impossible d'enregistrer la liste sélectionnée en session.",
+                    error,
+                );
+            }
+        },
         syncCurrentProgramFilter() {
             const programId = this.currentProgram.id || "";
             this.formFilter.program_id = programId;
@@ -242,6 +271,7 @@ export default {
                 this.routeGET = "/aav/pro/prerequis/get";
                 this.linkDetailed = "aav-detail";
             }
+            this.persistDisplayElement(element);
             this.reloadKey++; // force la liste à se recharger
         },
         handleExportModal(value) {
@@ -278,7 +308,7 @@ export default {
         //this.loadErrorInProgram();
         this.loadProgram();
         this.syncCurrentProgramFilter();
-        this.selectProgram("UE");
+        this.selectProgram(this.getSavedDisplayElement());
     },
 };
 </script>
@@ -287,3 +317,5 @@ export default {
     font-size: 0.95rem;
 }
 </style>
+
+
