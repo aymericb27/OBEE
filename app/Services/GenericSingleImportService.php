@@ -48,6 +48,7 @@ class GenericSingleImportService
 
         $type = $config['type'] ?? 'UE';
         $errors = [];
+        $useVerticalAavAat = $type === 'UE' && !empty($config['aavAatVertical']);
 
         // 1) Objet principal
         $main = $this->extractMainByType($type, $config['cells'][$config['type']] ?? [], $errors);
@@ -56,7 +57,9 @@ class GenericSingleImportService
         $links = [
             'ues'        => $this->extractLineLists($config['ue'] ?? [], 'UE', $errors),
             'aats'       => $this->extractLineLists($config['aat'] ?? [], 'AAT', $errors),
-            'aavs'       => $this->extractLineLists($config['aav'] ?? [], 'AAV', $errors),
+            'aavs'       => $useVerticalAavAat
+                ? $this->extractVerticalAavAatLists($config['aav'] ?? [], $errors)
+                : $this->extractLineLists($config['aav'] ?? [], 'AAV', $errors),
             'prerequis'  => $this->extractLineLists($config['prerequis'] ?? [], 'Prérequis', $errors),
             'prerequis_ues' => $this->extractLineLists($config['prerequis_ue'] ?? [], 'Prérequis UE', $errors),
             'programmes' => $this->extractProgrammeLists($config['programmes'] ?? [], 'Programmes', $errors),
@@ -191,6 +194,125 @@ class GenericSingleImportService
      * Programmes: optionnel si ton front les envoie différemment
      * Ici on supporte: ['code'=>'C5','libelle'=>'C6','semestre'=>'C7']
      */
+    /**
+     * Lecture verticale des AAT lies a chaque AAV.
+     * Point de depart: cellule "libelle" de la liste AAV.
+     * Pour chaque colonne AAV:
+     *   ligne+1: id AAT, ligne+2: libelle AAT, ligne+3: niveau
+     * Puis repetition du triplet jusqu'a trouver 3 cases vides.
+     * Arret global apres 3 colonnes vides consecutives.
+     */
+    private function extractVerticalAavAatLists(array $aavBlock, array &$errors): array
+    {
+        $startLibelleCell = strtoupper(trim((string)($aavBlock['libelle'] ?? '')));
+        if ($startLibelleCell === '') {
+            $errors['AAV.vertical'][] = "En lecture verticale, indiquez la cellule de depart du libelle AAV.";
+            return [];
+        }
+
+        try {
+            [$aavLibelleStartColLetters, $aavLibelleStartRowRaw] = Coordinate::coordinateFromString($startLibelleCell);
+        } catch (\Throwable $e) {
+            $errors['AAV.vertical'][] = "La cellule de depart du libelle AAV est invalide: {$startLibelleCell}.";
+            return [];
+        }
+
+        $aavLibelleStartRow = (int) $aavLibelleStartRowRaw;
+        $aavLibelleStartCol = Coordinate::columnIndexFromString($aavLibelleStartColLetters);
+
+        $hasCodeStart = false;
+        $aavCodeStartRow = null;
+        $aavCodeStartCol = null;
+        $startCodeCell = strtoupper(trim((string)($aavBlock['code'] ?? '')));
+        if ($startCodeCell !== '') {
+            try {
+                [$aavCodeStartColLetters, $aavCodeStartRowRaw] = Coordinate::coordinateFromString($startCodeCell);
+                $aavCodeStartRow = (int) $aavCodeStartRowRaw;
+                $aavCodeStartCol = Coordinate::columnIndexFromString($aavCodeStartColLetters);
+                $hasCodeStart = true;
+            } catch (\Throwable $e) {
+                $errors['AAV.vertical'][] = "La cellule de depart du sigle AAV est invalide: {$startCodeCell}.";
+            }
+        }
+
+        $rows = [];
+        $emptyColumnCount = 0;
+        $maxColumns = 500;
+        $maxTripletsPerColumn = 500;
+
+        for ($offset = 0; $offset < $maxColumns; $offset++) {
+            $colIndex = $aavLibelleStartCol + $offset;
+            $colLetters = Coordinate::stringFromColumnIndex($colIndex);
+
+            $aavLibelle = $this->readCell($colLetters . $aavLibelleStartRow);
+            $aavCode = null;
+            if ($hasCodeStart && $aavCodeStartRow !== null && $aavCodeStartCol !== null) {
+                $codeLetters = Coordinate::stringFromColumnIndex($aavCodeStartCol + $offset);
+                $aavCode = $this->readCell($codeLetters . $aavCodeStartRow);
+            }
+
+            $triplets = [];
+            $tripletStartRow = $aavLibelleStartRow + 1;
+
+            for ($tripletIndex = 0; $tripletIndex < $maxTripletsPerColumn; $tripletIndex++) {
+                $aatCode = $this->readCell($colLetters . $tripletStartRow);
+                $aatLibelle = $this->readCell($colLetters . ($tripletStartRow + 1));
+                $contribution = $this->readCell($colLetters . ($tripletStartRow + 2));
+
+                if ($aatCode === null && $aatLibelle === null && $contribution === null) {
+                    break;
+                }
+
+                $triplets[] = [
+                    'AATCode' => $aatCode,
+                    'AATLibelle' => $aatLibelle,
+                    'contribution' => $contribution,
+                ];
+
+                $tripletStartRow += 3;
+            }
+
+            $hasAavHeader = $aavCode !== null || $aavLibelle !== null;
+            if (!$hasAavHeader && empty($triplets)) {
+                $emptyColumnCount++;
+                if ($emptyColumnCount >= 3) {
+                    break;
+                }
+                continue;
+            }
+
+            $emptyColumnCount = 0;
+
+            if (!$hasAavHeader && !empty($triplets)) {
+                $errors['AAV.vertical'][] = "La colonne {$colLetters} contient des AAT sans libelle AAV.";
+                continue;
+            }
+
+            if (empty($triplets)) {
+                $rows[] = [
+                    'code' => $aavCode,
+                    'libelle' => $aavLibelle,
+                    'AATCode' => null,
+                    'AATLibelle' => null,
+                    'contribution' => null,
+                ];
+                continue;
+            }
+
+            foreach ($triplets as $triplet) {
+                $rows[] = [
+                    'code' => $aavCode,
+                    'libelle' => $aavLibelle,
+                    'AATCode' => $triplet['AATCode'],
+                    'AATLibelle' => $triplet['AATLibelle'],
+                    'contribution' => $triplet['contribution'],
+                ];
+            }
+        }
+
+        return $rows;
+    }
+
     private function extractProgrammeLists(array $block, string $label, array &$errors): array
     {
         $rows = [];

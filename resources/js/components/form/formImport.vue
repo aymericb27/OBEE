@@ -311,6 +311,50 @@
                                 />
                             </div>
                         </div>
+
+                        <div
+                            v-if="
+                                config.type === 'UE' &&
+                                config.importMode === 'single' &&
+                                block.id === 'aav'
+                            "
+                            class="mt-3"
+                        >
+                            <div class="form-check">
+                                <input
+                                    id="aav-aat-vertical-read"
+                                    v-model="config.aavAatVertical"
+                                    class="form-check-input"
+                                    type="checkbox"
+                                />
+                                <label
+                                    class="form-check-label mt-0"
+                                    for="aav-aat-vertical-read"
+                                >
+                                    Lecture verticale des AAT lies aux AAV
+                                    (format id/libelle/niveau)
+                                    <span
+                                        class="ms-1 d-inline-flex align-items-center"
+                                        role="button"
+                                        tabindex="0"
+                                        title="Aide lecture verticale"
+                                        @click.stop="
+                                            showVerticalAavAatHelp = true
+                                        "
+                                        @keydown.enter.prevent="
+                                            showVerticalAavAatHelp = true
+                                        "
+                                        @keydown.space.prevent="
+                                            showVerticalAavAatHelp = true
+                                        "
+                                    >
+                                        <i
+                                            class="fa-solid fa-circle-question primary_color"
+                                        ></i>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="primary_color mt-4">
@@ -478,6 +522,68 @@
 
     <!-- Backdrop -->
     <div v-if="showImportModeHelp" class="modal-backdrop fade show"></div>
+
+    <!-- Modal aide lecture verticale AAV/AAT -->
+    <div
+        v-if="showVerticalAavAatHelp"
+        class="modal fade show"
+        tabindex="-1"
+        style="display: block"
+        role="dialog"
+        aria-modal="true"
+        @click.self="showVerticalAavAatHelp = false"
+    >
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Aide: lecture verticale AAV/AAT</h5>
+                </div>
+
+                <div class="modal-body helper">
+                    <p class="mb-2">
+                        Quand cette case est cochee, le systeme lit les AAT
+                        lies a chaque AAV automatiquement, colonne par colonne.
+                    </p>
+                    <ul>
+                        <li>
+                            La cellule <strong>Libelles</strong> de la liste AAV
+                            est le point de depart (ex: <code>C15</code>).
+                        </li>
+                        <li>
+                            Pour l'AAV en <code>C15</code>, lecture verticale:
+                            <code>C16</code>=id AAT, <code>C17</code>=libelle
+                            AAT, <code>C18</code>=niveau, puis
+                            <code>C19/C20/C21</code>, etc.
+                        </li>
+                        <li>
+                            Quand un triplet complet est vide (id/libelle/niveau
+                            vides), la lecture de cette colonne s'arrete.
+                        </li>
+                        <li>
+                            Ensuite on passe a la colonne suivante:
+                            <code>D15</code>, puis <code>D16/D17/D18</code>,
+                            etc.
+                        </li>
+                        <li>
+                            Les AAT doivent deja exister en base. Si un AAT est
+                            introuvable, un avertissement est renvoye a
+                            l'import.
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-primary"
+                        @click="showVerticalAavAatHelp = false"
+                    >
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div v-if="showVerticalAavAatHelp" class="modal-backdrop fade show"></div>
 </template>
 
 <script>
@@ -493,6 +599,7 @@ export default {
         return {
             isDragging: false,
             showImportModeHelp: false,
+            showVerticalAavAatHelp: false,
             isHydrating: true,
             showProgramModal: false,
             showSemesterModal: false,
@@ -559,6 +666,7 @@ export default {
                     code: "",
                     libelle: "",
                 },
+                aavAatVertical: false,
             },
         };
     },
@@ -764,6 +872,10 @@ export default {
                     aav: { ...this.config.aav, ...(saved.aav || {}) },
                     aat: { ...this.config.aat, ...(saved.aat || {}) },
                     ue: { ...this.config.ue, ...(saved.ue || {}) },
+                    aavAatVertical:
+                        typeof saved.aavAatVertical === "boolean"
+                            ? saved.aavAatVertical
+                            : this.config.aavAatVertical,
                 };
             } catch (e) {
                 // Si le JSON est corrompu
@@ -1522,6 +1634,16 @@ export default {
                 if (!String(codeCell || "").trim()) {
                     this.errors = ["Le champ Sigle est obligatoire."];
                     return false;
+                }
+
+                if (type === "UE" && this.config.aavAatVertical) {
+                    const aavStartCell = this.config?.aav?.libelle;
+                    if (!String(aavStartCell || "").trim()) {
+                        this.errors = [
+                            "En lecture verticale, indiquez la cellule de depart du libelle AAV (ex: C15).",
+                        ];
+                        return false;
+                    }
                 }
             }
 

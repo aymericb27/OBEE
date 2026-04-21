@@ -494,6 +494,7 @@ class ImportController extends Controller
             'links.aavs.*.code' => 'nullable|string|max:50',
             'links.aavs.*.libelle' => 'nullable|string|max:1000',
             'links.aavs.*.AATCode' => 'nullable|string|max:50',
+            'links.aavs.*.AATLibelle' => 'nullable|string|max:500',
             'links.aavs.*.contribution' => 'nullable|integer|in:1,2,3',
 
             'links.prerequis' => 'nullable|array',
@@ -679,23 +680,48 @@ class ImportController extends Controller
             // -------------------------
             $aavs = $links['aavs'] ?? [];
             if (!empty($aavs)) {
+                $aatByCode = [];
+                $aatByLabel = [];
+                $aatRows = AAT::where('university_id', $uid)->get(['id', 'code', 'name']);
+                foreach ($aatRows as $aatRow) {
+                    $codeKey = strtolower(trim((string) $aatRow->code));
+                    $labelKey = strtolower(trim((string) $aatRow->name));
+
+                    if ($codeKey !== '') {
+                        $aatByCode[$codeKey] = $aatRow;
+                    }
+                    if ($labelKey !== '') {
+                        if (!isset($aatByLabel[$labelKey])) {
+                            $aatByLabel[$labelKey] = [];
+                        }
+                        $aatByLabel[$labelKey][] = $aatRow;
+                    }
+                }
+
                 foreach ($aavs as $aavData) {
-                    $code = trim($aavData['code'] ?? '');
-                    $name = trim($aavData['libelle'] ?? '');
+                    $code = trim((string) ($aavData['code'] ?? ''));
+                    $name = trim((string) ($aavData['libelle'] ?? ''));
 
                     if ($code === '' && $name === '') continue;
 
-                    if ($code === '' && $name !== '') {
-                        $code = $this->codeGen->nextAAV();
+                    $aav = null;
+                    if ($code !== '') {
+                        $aav = AcquisApprentissageVise::where('code', $code)
+                            ->where('university_id', $uid)
+                            ->first();
                     }
-
-                    $aav = AcquisApprentissageVise::where('code', $code)
-                        ->where('university_id', $uid)
-                        ->first();
+                    if (!$aav && $name !== '') {
+                        $aav = AcquisApprentissageVise::where('name', $name)
+                            ->where('university_id', $uid)
+                            ->first();
+                    }
 
                     if (!$aav && $name === '') continue;
 
                     if (!$aav) {
+                        if ($code === '') {
+                            $code = $this->codeGen->nextAAV();
+                        }
                         $aav = AcquisApprentissageVise::create([
                             'code' => $code,
                             'name' => $name !== '' ? $name : null,
@@ -708,6 +734,45 @@ class ImportController extends Controller
 
                     $ue->aavvise()->syncWithoutDetaching([
                         $aav->id => ['university_id' => $uid]
+                    ]);
+
+                    $aatCode = trim((string) ($aavData['AATCode'] ?? ''));
+                    $aatLibelle = trim((string) ($aavData['AATLibelle'] ?? ''));
+
+                    if ($aatCode === '' && $aatLibelle === '') {
+                        continue;
+                    }
+
+                    $aat = null;
+                    if ($aatCode !== '') {
+                        $aat = $aatByCode[strtolower($aatCode)] ?? null;
+                    }
+
+                    if (!$aat && $aatLibelle !== '') {
+                        $labelMatches = $aatByLabel[strtolower($aatLibelle)] ?? [];
+                        if (count($labelMatches) === 1) {
+                            $aat = $labelMatches[0];
+                        } elseif (count($labelMatches) > 1) {
+                            $warnings[] = "Le libelle AAT \"$aatLibelle\" est ambigu pour l'AAV \"$name\". Le lien n'a pas ete importe.";
+                            continue;
+                        }
+                    }
+
+                    if (!$aat) {
+                        $identifier = $aatCode !== '' ? $aatCode : $aatLibelle;
+                        $warnings[] = "L'AAT \"$identifier\" n'existe pas dans la base pour l'AAV \"$name\". Le lien n'a pas ete importe.";
+                        continue;
+                    }
+
+                    $contribution = is_numeric($aavData['contribution'] ?? null)
+                        ? (int) $aavData['contribution']
+                        : null;
+
+                    $aav->aats()->syncWithoutDetaching([
+                        $aat->id => [
+                            'contribution' => $contribution,
+                            'university_id' => $uid,
+                        ]
                     ]);
                 }
             }
@@ -799,7 +864,10 @@ class ImportController extends Controller
 
             $this->ueAnomalyService->recomputeForUEIds($affectedUeIds);
 
-            return $ue;
+            return [
+                'entity' => $ue,
+                'warnings' => $warnings,
+            ];
         } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
