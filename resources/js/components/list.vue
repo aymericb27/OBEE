@@ -158,7 +158,7 @@
                         </div>
 
                         <div
-                            class="col-md-1 p-2"
+                            class="col-md-1 p-2 text-center"
                             v-if="listColonne.includes('semestre')"
                         >
                             {{ item.semestre }}

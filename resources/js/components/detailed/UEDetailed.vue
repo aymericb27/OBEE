@@ -57,6 +57,10 @@
                 <span> </span>
                 <div class="pb-4 border-bottom mb-4">
                     <div v-html="ue.description"></div>
+                    <div class="mt-2">
+                        <strong>Crédits :</strong>
+                        {{ ue.ects ?? "-" }} ECTS
+                    </div>
                     <div v-if="ue.parent && ue.parent.length">
                         Cette unité est un élément constitutif de
                         <strong>
@@ -232,7 +236,7 @@
                         :paramsRouteGET="{ id: ue.id }"
                         linkDetailed="pro-detail"
                         typeList="PRO"
-                        :listColonne="['code', 'name']"
+                        :listColonne="['code', 'name', 'semestre']"
                     />
                 </div>
                 <div class="listComponent mb-4">
@@ -840,4 +844,3 @@ export default {
     margin-bottom: 0.25rem;
 }
 </style>
-

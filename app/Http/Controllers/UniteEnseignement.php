@@ -347,7 +347,7 @@ class UniteEnseignement extends Controller
             'programme.id',
             'programme.name',
             'programme.code',
-            'pro_semester.semester'
+            'pro_semester.semester as semestre'
         )
             ->join('ue_programme', 'ue_programme.fk_programme', '=', 'programme.id')
             ->leftJoin('pro_semester', 'pro_semester.id', '=', 'ue_programme.fk_semester')
@@ -756,5 +756,3 @@ class UniteEnseignement extends Controller
         ]);
     }
 }
-
-
