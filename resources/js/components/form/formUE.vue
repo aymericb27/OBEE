@@ -16,7 +16,11 @@
             <form @submit.prevent="submitFormUE">
                 <div class="p-4 border rounded bg-white mt-3">
                     <h3 v-if="!ueParent.name" class="mb-4 primary_color">
-                        Introduire une unité d'enseignement
+                        {{
+                            id
+                                ? "Modifier une unité d'enseignement"
+                                : "Introduire une unité d'enseignement"
+                        }}
                     </h3>
                     <h3 v-if="ueParent.name" class="mb-4 primary_color">
                         Introduire un élément constitutif
